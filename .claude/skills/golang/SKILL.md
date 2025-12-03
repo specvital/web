@@ -134,7 +134,7 @@ description: |
 
 ## Recommended Libraries
 
-- Web: Fiber
+- Web: Chi (go-chi/chi)
 - DB: Bun, SQLBoiler (when managing migrations externally)
 - Logging: slog
 - CLI: cobra
