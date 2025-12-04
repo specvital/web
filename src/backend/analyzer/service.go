@@ -149,7 +149,7 @@ func (s *Service) parseTestFiles(ctx context.Context, owner, repo string, files 
 	registry := strategies.DefaultRegistry()
 
 	var mu sync.Mutex
-	var suites []TestSuite
+	suites := []TestSuite{}
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(maxConcurrentFetches)
