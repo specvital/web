@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/go-chi/cors"
+	"github.com/specvital/web/src/backend/common/config"
 )
 
 const (
 	corsMaxAge     = 3600
-	defaultOrigin  = "http://localhost:3000"
 	envCORSOrigins = "CORS_ORIGINS"
 	envEnv         = "ENV"
 	envProduction  = "production"
@@ -40,7 +40,7 @@ func GetAllowedOrigins() ([]string, error) {
 		if os.Getenv(envEnv) == envProduction {
 			return nil, ErrCORSOriginsNotSet
 		}
-		return []string{defaultOrigin}, nil
+		return []string{config.DefaultOrigin}, nil
 	}
 
 	var result []string

@@ -15,14 +15,12 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 	"github.com/specvital/web/src/backend/analyzer"
+	"github.com/specvital/web/src/backend/common/config"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/health"
 )
 
-const (
-	defaultPort     = "3000"
-	shutdownTimeout = 10 * time.Second
-)
+const shutdownTimeout = 10 * time.Second
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -74,7 +72,7 @@ func newRouter(origins []string) *chi.Mux {
 func startServer(handler http.Handler) error {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = defaultPort
+		port = config.DefaultPort
 	}
 
 	addr := fmt.Sprintf(":%s", port)
