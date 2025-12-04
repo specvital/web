@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 	"github.com/specvital/web/src/backend/analyzer"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/health"
@@ -24,8 +25,20 @@ const (
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		if err := godotenv.Load("../../.env"); err != nil {
+			slog.Debug(".env files not found, using system environment variables")
+		}
+	}
+
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+
+	if os.Getenv("GITHUB_TOKEN") == "" {
+		slog.Warn("GITHUB_TOKEN not set")
+	}
+
+	analyzer.InitializeParserStrategies()
 
 	if err := run(); err != nil {
 		slog.Error("application failed", "error", err)

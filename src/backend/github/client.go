@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -24,6 +25,10 @@ const (
 	acceptHeader     = "application/vnd.github+json"
 	apiVersionHeader = "X-GitHub-Api-Version"
 	apiVersion       = "2022-11-28"
+
+	maxIdleConns        = 100
+	maxIdleConnsPerHost = 10
+	idleConnTimeout     = 90 * time.Second
 )
 
 var validNamePattern = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
@@ -38,10 +43,19 @@ type Client struct {
 }
 
 func NewClient(token string) *Client {
+	transport := &http.Transport{
+		MaxIdleConns:        maxIdleConns,
+		MaxIdleConnsPerHost: maxIdleConnsPerHost,
+		IdleConnTimeout:     idleConnTimeout,
+		DisableKeepAlives:   false,
+	}
 	return &Client{
-		baseURL:    defaultBaseURL,
-		httpClient: &http.Client{Timeout: defaultTimeout},
-		token:      token,
+		baseURL: defaultBaseURL,
+		httpClient: &http.Client{
+			Timeout:   defaultTimeout,
+			Transport: transport,
+		},
+		token: token,
 	}
 }
 
@@ -252,6 +266,7 @@ func (c *Client) checkResponse(resp *http.Response, body []byte) error {
 	case http.StatusOK:
 		return nil
 	case http.StatusNotFound:
+		slog.Warn("GitHub API 404", "body", string(body[:min(200, len(body))]))
 		return ErrNotFound
 	case http.StatusForbidden:
 		rateLimit := c.GetRateLimit()

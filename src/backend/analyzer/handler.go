@@ -2,13 +2,16 @@ package analyzer
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/specvital/web/src/backend/common/dto"
+	"github.com/specvital/web/src/backend/github"
 )
 
 // Mock repo prefixes for testing error states (development only).
@@ -22,8 +25,26 @@ const (
 	mockRateLimitPrefix = "ratelimit-"
 )
 
+var (
+	analyzerService *Service
+	serviceOnce     sync.Once
+)
+
+func getService() *Service {
+	serviceOnce.Do(func() {
+		token := os.Getenv("GITHUB_TOKEN")
+		slog.Info("initializing analyzer service", "hasToken", token != "")
+		githubClient := github.NewClient(token)
+		analyzerService = NewService(githubClient)
+	})
+	return analyzerService
+}
+
+func isMockMode() bool {
+	return os.Getenv("MOCK_MODE") == "true"
+}
+
 func isMockErrorsEnabled() bool {
-	// Never enable mock errors in production environment
 	env := os.Getenv("ENV")
 	if env == "production" || env == "prod" {
 		return false
@@ -46,7 +67,6 @@ func handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Mock error states for testing frontend error handling (development only).
 	if isMockErrorsEnabled() {
 		if strings.HasPrefix(repo, mockPrivatePrefix) {
 			dto.SendProblemDetail(w, r, http.StatusForbidden, "Forbidden", "This repository is private or you don't have access")
@@ -62,11 +82,44 @@ func handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result := GenerateMockResult(owner, repo)
+	if isMockMode() {
+		result := GenerateMockResult(owner, repo)
+		sendJSON(w, result)
+		return
+	}
 
+	result, err := getService().Analyze(r.Context(), owner, repo)
+	if err != nil {
+		handleAnalyzeError(w, r, err)
+		return
+	}
+
+	sendJSON(w, result)
+}
+
+func handleAnalyzeError(w http.ResponseWriter, r *http.Request, err error) {
+	slog.Error("analysis failed", "error", err)
+
+	switch {
+	case errors.Is(err, github.ErrNotFound):
+		dto.SendProblemDetail(w, r, http.StatusNotFound, "Not Found", "Repository not found")
+	case errors.Is(err, github.ErrForbidden):
+		dto.SendProblemDetail(w, r, http.StatusForbidden, "Forbidden", "This repository is private or you don't have access")
+	case errors.Is(err, github.ErrRateLimited):
+		dto.SendProblemDetail(w, r, http.StatusTooManyRequests, "Too Many Requests", "GitHub API rate limit exceeded. Please try again later")
+	case errors.Is(err, github.ErrTreeTruncated):
+		dto.SendProblemDetail(w, r, http.StatusUnprocessableEntity, "Repository Too Large", "This repository is too large to analyze")
+	case errors.Is(err, ErrRateLimitTooLow):
+		dto.SendProblemDetail(w, r, http.StatusTooManyRequests, "Too Many Requests", "GitHub API rate limit too low. Please try again later")
+	default:
+		dto.SendProblemDetail(w, r, http.StatusInternalServerError, "Internal Server Error", "An unexpected error occurred during analysis")
+	}
+}
+
+func sendJSON(w http.ResponseWriter, data any) {
 	w.Header().Set(dto.ContentTypeHeader, dto.JSONContentType)
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(result); err != nil {
-		slog.Error("failed to encode analysis result", "error", err)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		slog.Error("failed to encode response", "error", err)
 	}
 }

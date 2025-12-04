@@ -11,6 +11,8 @@ import (
 )
 
 func TestHandleAnalyze(t *testing.T) {
+	t.Setenv("MOCK_MODE", "true")
+
 	r := chi.NewRouter()
 	RegisterRoutes(r)
 
@@ -197,6 +199,7 @@ func TestHandleAnalyzeMockErrors(t *testing.T) {
 
 	t.Run("mock errors disabled returns normal response", func(t *testing.T) {
 		t.Setenv("ENABLE_MOCK_ERRORS", "false")
+		t.Setenv("MOCK_MODE", "true")
 
 		testRouter := chi.NewRouter()
 		RegisterRoutes(testRouter)
