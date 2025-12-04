@@ -13,6 +13,7 @@
   "dependencies": {
     "@radix-ui/react-slot": "1.2.3",
     "@tailwindcss/postcss": "4.1.17",
+    "@tanstack/react-virtual": "3.11.1",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "lucide-react": "0.513.0",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.0",
     "@types/node": "22.15.33",
     "@types/react": "19.1.8",

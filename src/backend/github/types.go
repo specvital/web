@@ -15,7 +15,7 @@ type CommitInfo struct {
 type RateLimitInfo struct {
 	Limit     int   `json:"limit"`
 	Remaining int   `json:"remaining"`
-	ResetAt   int64 `json:"reset_at"`
+	ResetAt   int64 `json:"resetAt"`
 }
 
 type treeResponse struct {

@@ -64,9 +64,16 @@ const analysisResultSchema = z.object({
 });
 
 // RFC 7807 ProblemDetail schema for runtime validation
+const rateLimitInfoSchema = z.object({
+  limit: z.number(),
+  remaining: z.number(),
+  resetAt: z.number(),
+});
+
 const problemDetailSchema = z.object({
   detail: z.string(),
   instance: z.string().optional(),
+  rateLimit: rateLimitInfoSchema.optional(),
   status: z.number(),
   title: z.string(),
   type: z.string().optional(),

@@ -20,7 +20,10 @@ import (
 	"github.com/specvital/web/src/backend/health"
 )
 
-const shutdownTimeout = 10 * time.Second
+const (
+	apiTimeout      = 10 * time.Minute
+	shutdownTimeout = 10 * time.Second
+)
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -62,6 +65,8 @@ func newRouter(origins []string) *chi.Mux {
 	r.Use(middleware.Logger())
 	r.Use(chimiddleware.Recoverer)
 	r.Use(middleware.CORS(origins))
+	r.Use(chimiddleware.Timeout(apiTimeout))
+	r.Use(middleware.Compress())
 
 	analyzer.RegisterRoutes(r)
 	health.RegisterRoutes(r)

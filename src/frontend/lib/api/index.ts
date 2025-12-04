@@ -5,6 +5,7 @@ export type {
   Framework,
   FrameworkSummary,
   ProblemDetail,
+  RateLimitInfo,
   Summary,
   TestCase,
   TestStatus,

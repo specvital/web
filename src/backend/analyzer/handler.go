@@ -100,19 +100,29 @@ func handleAnalyze(w http.ResponseWriter, r *http.Request) {
 func handleAnalyzeError(w http.ResponseWriter, r *http.Request, err error) {
 	slog.Error("analysis failed", "error", err)
 
+	rateLimit := getService().GetRateLimit()
+	var rateLimitExt *dto.RateLimitExtension
+	if rateLimit.Limit > 0 {
+		rateLimitExt = &dto.RateLimitExtension{
+			Limit:     rateLimit.Limit,
+			Remaining: rateLimit.Remaining,
+			ResetAt:   rateLimit.ResetAt,
+		}
+	}
+
 	switch {
 	case errors.Is(err, github.ErrNotFound):
-		dto.SendProblemDetail(w, r, http.StatusNotFound, "Not Found", "Repository not found")
+		dto.SendProblemDetailWithRateLimit(w, r, http.StatusNotFound, "Not Found", "Repository not found", rateLimitExt)
 	case errors.Is(err, github.ErrForbidden):
-		dto.SendProblemDetail(w, r, http.StatusForbidden, "Forbidden", "This repository is private or you don't have access")
+		dto.SendProblemDetailWithRateLimit(w, r, http.StatusForbidden, "Forbidden", "This repository is private or you don't have access", rateLimitExt)
 	case errors.Is(err, github.ErrRateLimited):
-		dto.SendProblemDetail(w, r, http.StatusTooManyRequests, "Too Many Requests", "GitHub API rate limit exceeded. Please try again later")
+		dto.SendProblemDetailWithRateLimit(w, r, http.StatusTooManyRequests, "Too Many Requests", "GitHub API rate limit exceeded. Please try again later", rateLimitExt)
 	case errors.Is(err, github.ErrTreeTruncated):
-		dto.SendProblemDetail(w, r, http.StatusUnprocessableEntity, "Repository Too Large", "This repository is too large to analyze")
+		dto.SendProblemDetailWithRateLimit(w, r, http.StatusUnprocessableEntity, "Repository Too Large", "This repository is too large to analyze", rateLimitExt)
 	case errors.Is(err, ErrRateLimitTooLow):
-		dto.SendProblemDetail(w, r, http.StatusTooManyRequests, "Too Many Requests", "GitHub API rate limit too low. Please try again later")
+		dto.SendProblemDetailWithRateLimit(w, r, http.StatusTooManyRequests, "Too Many Requests", "GitHub API rate limit too low. Please try again later", rateLimitExt)
 	default:
-		dto.SendProblemDetail(w, r, http.StatusInternalServerError, "Internal Server Error", "An unexpected error occurred during analysis")
+		dto.SendProblemDetailWithRateLimit(w, r, http.StatusInternalServerError, "Internal Server Error", "An unexpected error occurred during analysis", rateLimitExt)
 	}
 }
 

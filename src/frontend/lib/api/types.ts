@@ -1,12 +1,19 @@
 // Synced with backend: src/backend/analyzer/types.go
 
-// RFC 7807 Problem Details for HTTP APIs
+// RFC 7807 Problem Details for HTTP APIs with optional rate limit extension
 export type ProblemDetail = {
   detail: string;
   instance?: string;
+  rateLimit?: RateLimitInfo;
   status: number;
   title: string;
   type?: string;
+};
+
+export type RateLimitInfo = {
+  limit: number;
+  remaining: number;
+  resetAt: number;
 };
 
 export type TestStatus = "active" | "skipped" | "todo";

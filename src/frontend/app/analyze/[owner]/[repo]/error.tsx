@@ -3,6 +3,7 @@
 import { AlertCircle, Ban, Clock, FileQuestion, Lock, ServerCrash } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { RateLimitWarning } from "@/components/rate-limit-warning";
 import { ApiError, ERROR_TYPES, getErrorMessage } from "@/lib/api";
 
 type ErrorProps = {
@@ -85,6 +86,8 @@ export default function Error({ error, reset }: ErrorProps) {
   const icon = getErrorIcon(error);
   const showRetry = shouldShowRetry(error);
 
+  const rateLimit = error instanceof ApiError ? error.problemDetail?.rateLimit : undefined;
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-md space-y-6 text-center">
@@ -98,6 +101,8 @@ export default function Error({ error, reset }: ErrorProps) {
             <p className="text-xs text-muted-foreground">Error code: {error.status}</p>
           )}
         </div>
+
+        {rateLimit && <RateLimitWarning rateLimit={rateLimit} />}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           {showRetry && (

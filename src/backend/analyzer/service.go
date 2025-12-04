@@ -295,3 +295,7 @@ func (s *Service) CheckRateLimit() (int, error) {
 	}
 	return rateLimit.Remaining, nil
 }
+
+func (s *Service) GetRateLimit() github.RateLimitInfo {
+	return s.githubClient.GetRateLimit()
+}
