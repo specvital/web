@@ -1,9 +1,8 @@
 package config
 
-import "fmt"
-
 const (
-	DefaultPort = "8000"
+	DefaultPort           = "8000"
+	DefaultFrontendOrigin = "http://localhost:5173"
 )
 
-var DefaultOrigin = fmt.Sprintf("http://localhost:%s", DefaultPort)
+var DefaultOrigin = DefaultFrontendOrigin

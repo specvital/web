@@ -20,7 +20,7 @@ func TestGetAllowedOrigins(t *testing.T) {
 			name:       "default origins when no env set",
 			setOrigins: false,
 			setEnv:     false,
-			want:       []string{"http://localhost:3000"},
+			want:       []string{"http://localhost:5173"},
 			wantErr:    nil,
 		},
 		{
@@ -115,7 +115,7 @@ func TestGetAllowedOrigins(t *testing.T) {
 }
 
 func TestCORS_ReturnsHandler(t *testing.T) {
-	origins := []string{"http://localhost:3000"}
+	origins := []string{"http://localhost:5173"}
 
 	handler := CORS(origins)
 	if handler == nil {
