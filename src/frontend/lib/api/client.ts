@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { AnalysisResult, ProblemDetail } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const DEFAULT_TIMEOUT_MS = 30000;
 
 // Error type constants

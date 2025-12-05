@@ -32,20 +32,20 @@ just deps
 
 ```env
 GITHUB_TOKEN=your_github_token  # Optional: increases rate limit
-PORT=3000                       # Optional: default 3000
+PORT=8000                       # Optional: default 8000
 ALLOWED_ORIGINS=http://localhost:5173  # Optional: CORS origins
 ```
 
 **Frontend** (`src/frontend/.env`):
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ### Development
 
 ```bash
-# Run backend (port 3000)
+# Run backend (port 8000)
 just run backend
 
 # Run frontend (port 5173) - in another terminal

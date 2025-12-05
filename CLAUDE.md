@@ -53,7 +53,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 just deps                    # Install all dependencies
 
 # Development
-just run backend             # Go server on :3000 (uses air for hot reload)
+just run backend             # Go server on :8000 (uses air for hot reload)
 just run frontend            # Next.js on :5173 (uses turbopack)
 
 # Build & Test
@@ -116,9 +116,9 @@ src/frontend/
 **Backend** (`src/backend/.env`):
 
 - `GITHUB_TOKEN` - increases rate limit (60 → 5000/hour)
-- `PORT` - default 3000
+- `PORT` - default 8000
 - `ALLOWED_ORIGINS` - CORS origins
 
 **Frontend** (`src/frontend/.env`):
 
-- `NEXT_PUBLIC_API_URL` - backend URL (default: http://localhost:3000)
+- `NEXT_PUBLIC_API_URL` - backend URL (default: http://localhost:8000)

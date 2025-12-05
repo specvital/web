@@ -1,6 +1,6 @@
 # API Documentation
 
-Base URL: `http://localhost:3000` (default)
+Base URL: `http://localhost:8000` (default)
 
 ## Endpoints
 
@@ -194,16 +194,16 @@ When rate limit is exhausted, the API returns `429 Too Many Requests`.
 
 ```bash
 # Analyze repository
-curl http://localhost:3000/api/analyze/facebook/react
+curl http://localhost:8000/api/analyze/facebook/react
 
 # Health check
-curl http://localhost:3000/health
+curl http://localhost:8000/health
 ```
 
 ### JavaScript
 
 ```typescript
-const response = await fetch("http://localhost:3000/api/analyze/facebook/react");
+const response = await fetch("http://localhost:8000/api/analyze/facebook/react");
 const result = await response.json();
 console.log(result.summary.total); // Total test count
 ```
