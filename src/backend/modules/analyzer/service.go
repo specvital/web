@@ -51,27 +51,27 @@ var testFilePatterns = []*regexp.Regexp{
 }
 
 type Service struct {
-	githubClient *github.Client
+	gitHost GitHost
 }
 
-func NewService(githubClient *github.Client) *Service {
+func NewService(gitHost GitHost) *Service {
 	return &Service{
-		githubClient: githubClient,
+		gitHost: gitHost,
 	}
 }
 
 func (s *Service) Analyze(ctx context.Context, owner, repo string) (*AnalysisResult, error) {
-	rateLimit := s.githubClient.GetRateLimit()
+	rateLimit := s.gitHost.GetRateLimit()
 	if rateLimit.Remaining > 0 && rateLimit.Remaining < minRateLimitRemaining {
 		return nil, fmt.Errorf("%w: %d remaining", ErrRateLimitTooLow, rateLimit.Remaining)
 	}
 
-	commitInfo, err := s.githubClient.GetLatestCommit(ctx, owner, repo)
+	commitInfo, err := s.gitHost.GetLatestCommit(ctx, owner, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest commit: %w", err)
 	}
 
-	files, err := s.githubClient.ListFiles(ctx, owner, repo)
+	files, err := s.gitHost.ListFiles(ctx, owner, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
@@ -155,9 +155,8 @@ func (s *Service) parseTestFiles(ctx context.Context, owner, repo string, files 
 	g.SetLimit(maxConcurrentFetches)
 
 	for _, file := range files {
-		file := file
 		g.Go(func() error {
-			content, err := s.githubClient.GetFileContent(ctx, owner, repo, file.Path)
+			content, err := s.gitHost.GetFileContent(ctx, owner, repo, file.Path)
 			if err != nil {
 				slog.Warn("failed to get file content", "path", file.Path, "error", err)
 				return nil
@@ -289,7 +288,7 @@ func mapStatus(status domain.TestStatus) TestStatus {
 }
 
 func (s *Service) CheckRateLimit() (int, error) {
-	rateLimit := s.githubClient.GetRateLimit()
+	rateLimit := s.gitHost.GetRateLimit()
 	if rateLimit.Remaining > 0 && rateLimit.Remaining < minRateLimitRemaining {
 		return rateLimit.Remaining, fmt.Errorf("rate limit too low: %d remaining", rateLimit.Remaining)
 	}
@@ -297,5 +296,5 @@ func (s *Service) CheckRateLimit() (int, error) {
 }
 
 func (s *Service) GetRateLimit() github.RateLimitInfo {
-	return s.githubClient.GetRateLimit()
+	return s.gitHost.GetRateLimit()
 }
