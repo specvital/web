@@ -1,7 +1,7 @@
 "use client";
 
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useRef } from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { TestSuite } from "@/lib/api";
 import { TestSuiteAccordion } from "./test-suite-accordion";
 
@@ -9,10 +9,23 @@ type TestListProps = {
   suites: TestSuite[];
 };
 
-const VIRTUALIZATION_THRESHOLD = 100;
+const ITEM_GAP = 12;
+const ESTIMATED_ITEM_HEIGHT = 60;
 
 export const TestList = ({ suites }: TestListProps) => {
-  const parentRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+
+  useLayoutEffect(() => {
+    setScrollMargin(listRef.current?.offsetTop ?? 0);
+  }, []);
+
+  const virtualizer = useWindowVirtualizer({
+    count: suites.length,
+    estimateSize: () => ESTIMATED_ITEM_HEIGHT + ITEM_GAP,
+    overscan: 5,
+    scrollMargin,
+  });
 
   if (suites.length === 0) {
     return (
@@ -22,69 +35,42 @@ export const TestList = ({ suites }: TestListProps) => {
     );
   }
 
-  const shouldVirtualize = suites.length > VIRTUALIZATION_THRESHOLD;
-
-  if (!shouldVirtualize) {
-    return (
-      <div className="space-y-3">
-        {suites.map((suite) => (
-          <TestSuiteAccordion key={`${suite.filePath}-${suite.framework}`} suite={suite} />
-        ))}
-      </div>
-    );
-  }
-
-  return <VirtualizedTestList parentRef={parentRef} suites={suites} />;
-};
-
-type VirtualizedTestListProps = {
-  parentRef: React.RefObject<HTMLDivElement | null>;
-  suites: TestSuite[];
-};
-
-const VirtualizedTestList = ({ parentRef, suites }: VirtualizedTestListProps) => {
-  const virtualizer = useVirtualizer({
-    count: suites.length,
-    estimateSize: () => 60,
-    getScrollElement: () => parentRef.current,
-    overscan: 5,
-  });
+  const virtualItems = virtualizer.getVirtualItems();
 
   return (
     <div
-      ref={parentRef}
-      className="h-[70vh] overflow-auto rounded-lg border bg-card"
+      ref={listRef}
       style={{
-        contain: "strict",
+        height: `${virtualizer.getTotalSize()}px`,
+        width: "100%",
+        position: "relative",
       }}
     >
-      <div
-        className="relative w-full p-3"
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualItem) => {
-          const suite = suites[virtualItem.index];
-          if (!suite) {
-            return null;
-          }
+      {virtualItems.map((virtualItem) => {
+        const suite = suites[virtualItem.index];
+        if (!suite) {
+          return null;
+        }
 
-          return (
-            <div
-              key={virtualItem.key}
-              data-index={virtualItem.index}
-              ref={virtualizer.measureElement}
-              className="absolute top-0 left-0 w-full mb-3"
-              style={{
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-            >
+        return (
+          <div
+            key={virtualItem.key}
+            data-index={virtualItem.index}
+            ref={virtualizer.measureElement}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              transform: `translateY(${virtualItem.start - scrollMargin}px)`,
+            }}
+          >
+            <div className="pb-3">
               <TestSuiteAccordion suite={suite} />
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
