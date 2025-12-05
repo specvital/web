@@ -15,8 +15,8 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 	"github.com/specvital/web/src/backend/common/config"
-	"github.com/specvital/web/src/backend/common/health"
 	"github.com/specvital/web/src/backend/common/middleware"
+	"github.com/specvital/web/src/backend/common/server"
 	"github.com/specvital/web/src/backend/modules/analyzer"
 )
 
@@ -53,11 +53,13 @@ func run() error {
 		return fmt.Errorf("failed to get allowed origins: %w", err)
 	}
 
-	router := newRouter(origins)
+	app := server.NewApp()
+	router := newRouter(origins, app.RouteRegistrars())
+
 	return startServer(router)
 }
 
-func newRouter(origins []string) *chi.Mux {
+func newRouter(origins []string, registrars []server.RouteRegistrar) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(chimiddleware.RequestID)
@@ -68,8 +70,9 @@ func newRouter(origins []string) *chi.Mux {
 	r.Use(chimiddleware.Timeout(apiTimeout))
 	r.Use(middleware.Compress())
 
-	analyzer.RegisterRoutes(r)
-	health.RegisterRoutes(r)
+	for _, reg := range registrars {
+		reg.RegisterRoutes(r)
+	}
 
 	return r
 }

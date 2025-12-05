@@ -10,10 +10,14 @@ import (
 )
 
 func TestHandleHealth(t *testing.T) {
+	handler := NewHandler()
+	r := chi.NewRouter()
+	handler.RegisterRoutes(r)
+
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
 
-	handleHealth(w, req)
+	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
@@ -29,21 +33,7 @@ func TestHandleHealth(t *testing.T) {
 		t.Errorf("failed to decode response: %v", err)
 	}
 
-	if response.Status != "ok" {
-		t.Errorf("expected status 'ok', got '%s'", response.Status)
-	}
-}
-
-func TestRegisterRoutes(t *testing.T) {
-	r := chi.NewRouter()
-	RegisterRoutes(r)
-
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	w := httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	if response.Status != statusOK {
+		t.Errorf("expected status %s, got %s", statusOK, response.Status)
 	}
 }

@@ -6,15 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/specvital/web/src/backend/common/dto"
 )
 
 func TestHandleAnalyze(t *testing.T) {
 	t.Setenv("MOCK_MODE", "true")
 
-	r := chi.NewRouter()
-	RegisterRoutes(r)
+	_, r := setupTestHandler()
 
 	t.Run("returns mock analysis result", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze/facebook/react", nil)
@@ -116,11 +114,9 @@ func TestHandleAnalyze(t *testing.T) {
 }
 
 func TestHandleAnalyzeMockErrors(t *testing.T) {
-	// Enable mock errors for this test
 	t.Setenv("ENABLE_MOCK_ERRORS", "true")
 
-	r := chi.NewRouter()
-	RegisterRoutes(r)
+	_, r := setupTestHandler()
 
 	t.Run("returns 403 for private repository mock", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze/owner/private-repo", nil)
@@ -201,8 +197,7 @@ func TestHandleAnalyzeMockErrors(t *testing.T) {
 		t.Setenv("ENABLE_MOCK_ERRORS", "false")
 		t.Setenv("MOCK_MODE", "true")
 
-		testRouter := chi.NewRouter()
-		RegisterRoutes(testRouter)
+		_, testRouter := setupTestHandler()
 
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze/owner/private-repo", nil)
 		rec := httptest.NewRecorder()

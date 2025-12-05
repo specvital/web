@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/specvital/web/src/backend/common/clients/github"
@@ -25,19 +24,12 @@ const (
 	mockRateLimitPrefix = "ratelimit-"
 )
 
-var (
-	analyzerService *Service
-	serviceOnce     sync.Once
-)
+type Handler struct {
+	service *Service
+}
 
-func getService() *Service {
-	serviceOnce.Do(func() {
-		token := os.Getenv("GITHUB_TOKEN")
-		slog.Info("initializing analyzer service", "hasToken", token != "")
-		githubClient := github.NewClient(token)
-		analyzerService = NewService(githubClient)
-	})
-	return analyzerService
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
 }
 
 func isMockMode() bool {
@@ -52,13 +44,13 @@ func isMockErrorsEnabled() bool {
 	return os.Getenv("ENABLE_MOCK_ERRORS") == "true"
 }
 
-func RegisterRoutes(r chi.Router) {
+func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/api/analyze", func(r chi.Router) {
-		r.Get("/{owner}/{repo}", handleAnalyze)
+		r.Get("/{owner}/{repo}", h.handleAnalyze)
 	})
 }
 
-func handleAnalyze(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 	owner := chi.URLParam(r, "owner")
 	repo := chi.URLParam(r, "repo")
 
@@ -88,19 +80,19 @@ func handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := getService().Analyze(r.Context(), owner, repo)
+	result, err := h.service.Analyze(r.Context(), owner, repo)
 	if err != nil {
-		handleAnalyzeError(w, r, err)
+		h.handleAnalyzeError(w, r, err)
 		return
 	}
 
 	sendJSON(w, result)
 }
 
-func handleAnalyzeError(w http.ResponseWriter, r *http.Request, err error) {
+func (h *Handler) handleAnalyzeError(w http.ResponseWriter, r *http.Request, err error) {
 	slog.Error("analysis failed", "error", err)
 
-	rateLimit := getService().GetRateLimit()
+	rateLimit := h.service.GetRateLimit()
 	var rateLimitExt *dto.RateLimitExtension
 	if rateLimit.Limit > 0 {
 		rateLimitExt = &dto.RateLimitExtension{

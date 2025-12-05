@@ -14,11 +14,17 @@ type Response struct {
 	Status string `json:"status"`
 }
 
-func RegisterRoutes(r chi.Router) {
-	r.Get("/health", handleHealth)
+type Handler struct{}
+
+func NewHandler() *Handler {
+	return &Handler{}
 }
 
-func handleHealth(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) RegisterRoutes(r chi.Router) {
+	r.Get("/health", h.handleHealth)
+}
+
+func (h *Handler) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(Response{Status: statusOK}); err != nil {
