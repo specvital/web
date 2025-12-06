@@ -170,6 +170,19 @@ func filterConfigFiles(files []github.FileInfo) []github.FileInfo {
 	return configFiles
 }
 
+func matchesConfigPattern(def *framework.Definition, baseName string) bool {
+	for _, m := range def.Matchers {
+		if cm, ok := m.(*matchers.ConfigMatcher); ok {
+			for _, p := range cm.Patterns {
+				if filepath.Base(p) == baseName {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func (s *Service) buildProjectScope(ctx context.Context, owner, repo string, configFiles []github.FileInfo) *framework.AggregatedProjectScope {
 	scope := framework.NewProjectScope()
 	registry := framework.DefaultRegistry()
@@ -182,10 +195,18 @@ func (s *Service) buildProjectScope(ctx context.Context, owner, repo string, con
 			continue
 		}
 
+		baseName := filepath.Base(cf.Path)
+
 		for _, def := range registry.All() {
 			if def.ConfigParser == nil {
 				continue
 			}
+
+			// Only try ConfigParser if file matches this framework's patterns
+			if !matchesConfigPattern(def, baseName) {
+				continue
+			}
+
 			configScope, err := def.ConfigParser.Parse(ctx, cf.Path, []byte(content))
 			if err != nil {
 				continue
