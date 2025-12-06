@@ -13,35 +13,20 @@ import (
 
 	"github.com/specvital/core/pkg/domain"
 	"github.com/specvital/core/pkg/parser/detection"
-	"github.com/specvital/core/pkg/parser/detection/matchers"
-	"github.com/specvital/core/pkg/parser/strategies"
-	"github.com/specvital/core/pkg/parser/strategies/gotesting"
-	"github.com/specvital/core/pkg/parser/strategies/jest"
-	"github.com/specvital/core/pkg/parser/strategies/playwright"
-	"github.com/specvital/core/pkg/parser/strategies/vitest"
+	"github.com/specvital/core/pkg/parser/framework"
+	"github.com/specvital/core/pkg/parser/framework/matchers"
 	"github.com/specvital/web/src/backend/common/clients/github"
 	"golang.org/x/sync/errgroup"
+
+	// Framework registration via blank imports
+	_ "github.com/specvital/core/pkg/parser/strategies/gotesting"
+	_ "github.com/specvital/core/pkg/parser/strategies/jest"
+	_ "github.com/specvital/core/pkg/parser/strategies/playwright"
+	_ "github.com/specvital/core/pkg/parser/strategies/vitest"
 )
 
 // ErrRateLimitTooLow indicates GitHub API rate limit is insufficient for analysis.
 var ErrRateLimitTooLow = errors.New("rate limit too low")
-
-var (
-	strategiesOnce    sync.Once
-	detectorOnce      sync.Once
-	frameworkDetector *detection.Detector
-)
-
-// InitializeParserStrategies registers all test file parsing strategies.
-// Must be called once during application startup.
-func InitializeParserStrategies() {
-	strategiesOnce.Do(func() {
-		gotesting.RegisterDefault()
-		jest.RegisterDefault()
-		playwright.RegisterDefault()
-		vitest.RegisterDefault()
-	})
-}
 
 const (
 	minRateLimitRemaining = 10
@@ -54,6 +39,27 @@ var testFilePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`\.spec\.[jt]sx?$`),
 	regexp.MustCompile(`_test\.go$`),
 	regexp.MustCompile(`(^|/)__tests__/.+\.[jt]sx?$`),
+}
+
+var (
+	configPatternsOnce sync.Once
+	configPatterns     map[string]bool
+)
+
+func getConfigPatterns() map[string]bool {
+	configPatternsOnce.Do(func() {
+		configPatterns = make(map[string]bool)
+		for _, def := range framework.DefaultRegistry().All() {
+			for _, m := range def.Matchers {
+				if cm, ok := m.(*matchers.ConfigMatcher); ok {
+					for _, p := range cm.Patterns {
+						configPatterns[filepath.Base(p)] = true
+					}
+				}
+			}
+		}
+	})
+	return configPatterns
 }
 
 type Service struct {
@@ -94,7 +100,10 @@ func (s *Service) Analyze(ctx context.Context, owner, repo string) (*AnalysisRes
 		}, nil
 	}
 
-	suites, err := s.parseTestFiles(ctx, owner, repo, testFiles)
+	configFiles := filterConfigFiles(files)
+	projectScope := s.buildProjectScope(ctx, owner, repo, configFiles)
+
+	suites, err := s.parseTestFiles(ctx, owner, repo, testFiles, projectScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse test files: %w", err)
 	}
@@ -146,13 +155,65 @@ func shouldSkipPath(path string) bool {
 	return false
 }
 
-func (s *Service) parseTestFiles(ctx context.Context, owner, repo string, files []github.FileInfo) ([]TestSuite, error) {
+func filterConfigFiles(files []github.FileInfo) []github.FileInfo {
+	patterns := getConfigPatterns()
+	var configFiles []github.FileInfo
+	for _, file := range files {
+		if file.Type != "file" {
+			continue
+		}
+		baseName := filepath.Base(file.Path)
+		if patterns[baseName] {
+			configFiles = append(configFiles, file)
+		}
+	}
+	return configFiles
+}
+
+func (s *Service) buildProjectScope(ctx context.Context, owner, repo string, configFiles []github.FileInfo) *framework.AggregatedProjectScope {
+	scope := framework.NewProjectScope()
+	registry := framework.DefaultRegistry()
+
+	loadedCount := 0
+	for _, cf := range configFiles {
+		content, err := s.gitHost.GetFileContent(ctx, owner, repo, cf.Path)
+		if err != nil {
+			slog.Warn("failed to get config file content", "path", cf.Path, "error", err)
+			continue
+		}
+
+		for _, def := range registry.All() {
+			if def.ConfigParser == nil {
+				continue
+			}
+			configScope, err := def.ConfigParser.Parse(ctx, cf.Path, []byte(content))
+			if err != nil {
+				continue
+			}
+			if configScope != nil {
+				scope.AddConfig(cf.Path, configScope)
+				loadedCount++
+				break
+			}
+		}
+	}
+
+	if len(configFiles) > 0 && loadedCount == 0 {
+		slog.Warn("all config files failed to load", "total", len(configFiles))
+	}
+
+	return scope
+}
+
+func (s *Service) parseTestFiles(ctx context.Context, owner, repo string, files []github.FileInfo, projectScope *framework.AggregatedProjectScope) ([]TestSuite, error) {
 	if len(files) > maxFilesToProcess {
 		slog.Warn("truncating test files", "total", len(files), "limit", maxFilesToProcess)
 		files = files[:maxFilesToProcess]
 	}
 
-	registry := strategies.DefaultRegistry()
+	registry := framework.DefaultRegistry()
+	detector := detection.NewDetector(registry)
+	detector.SetProjectScope(projectScope)
 
 	var mu sync.Mutex
 	suites := []TestSuite{}
@@ -168,7 +229,7 @@ func (s *Service) parseTestFiles(ctx context.Context, owner, repo string, files 
 				return nil
 			}
 
-			testFile, err := parseWithStrategies(ctx, registry, []byte(content), file.Path)
+			testFile, err := parseTestFile(ctx, registry, detector, []byte(content), file.Path)
 			if err != nil {
 				slog.Warn("failed to parse test file", "path", file.Path, "error", err)
 				return nil
@@ -195,27 +256,18 @@ func (s *Service) parseTestFiles(ctx context.Context, owner, repo string, files 
 	return suites, nil
 }
 
-func getFrameworkDetector() *detection.Detector {
-	detectorOnce.Do(func() {
-		frameworkDetector = detection.NewDetector(matchers.DefaultRegistry(), nil)
-	})
-	return frameworkDetector
-}
-
-func parseWithStrategies(ctx context.Context, registry *strategies.Registry, source []byte, filename string) (*domain.TestFile, error) {
-	// Level 1 & 2: Use hierarchical detection (imports → config)
-	result := getFrameworkDetector().Detect(ctx, filename, source)
-	strat := registry.FindByName(result.Framework)
-
-	// Level 3: Fallback to legacy CanHandle-based detection
-	if strat == nil {
-		strat = registry.FindStrategy(filename, source)
-	}
-
-	if strat == nil {
+func parseTestFile(ctx context.Context, registry *framework.Registry, detector *detection.Detector, source []byte, filename string) (*domain.TestFile, error) {
+	result := detector.Detect(ctx, filename, source)
+	if result.Framework == "" {
 		return nil, nil
 	}
-	return strat.Parse(ctx, source, filename)
+
+	def := registry.Find(result.Framework)
+	if def == nil || def.Parser == nil {
+		return nil, nil
+	}
+
+	return def.Parser.Parse(ctx, source, filename)
 }
 
 func convertToTestSuite(filePath string, testFile *domain.TestFile) TestSuite {

@@ -1,10 +1,58 @@
 package analyzer
 
 import (
+	"context"
 	"testing"
 
 	"github.com/specvital/web/src/backend/common/clients/github"
 )
+
+// Test helpers
+
+type mockGitHost struct {
+	files        map[string]string
+	latestCommit *github.CommitInfo
+	fileList     []github.FileInfo
+	rateLimit    github.RateLimitInfo
+}
+
+func (m *mockGitHost) GetLatestCommit(ctx context.Context, owner, repo string) (*github.CommitInfo, error) {
+	return m.latestCommit, nil
+}
+
+func (m *mockGitHost) ListFiles(ctx context.Context, owner, repo string) ([]github.FileInfo, error) {
+	return m.fileList, nil
+}
+
+func (m *mockGitHost) GetFileContent(ctx context.Context, owner, repo, path string) (string, error) {
+	if content, ok := m.files[path]; ok {
+		return content, nil
+	}
+	return "", github.ErrNotFound
+}
+
+func (m *mockGitHost) GetRateLimit() github.RateLimitInfo {
+	return m.rateLimit
+}
+
+func assertFilePathsMatch(t *testing.T, got []github.FileInfo, wantPaths []string) {
+	t.Helper()
+	if len(got) != len(wantPaths) {
+		t.Errorf("got %d files, want %d", len(got), len(wantPaths))
+		return
+	}
+
+	wantMap := make(map[string]bool)
+	for _, p := range wantPaths {
+		wantMap[p] = true
+	}
+
+	for _, f := range got {
+		if !wantMap[f.Path] {
+			t.Errorf("unexpected file: %s", f.Path)
+		}
+	}
+}
 
 func TestIsTestFile(t *testing.T) {
 	tests := []struct {
@@ -189,5 +237,183 @@ func TestCalculateSummaryEmpty(t *testing.T) {
 	}
 	if len(summary.Frameworks) != 0 {
 		t.Errorf("len(summary.Frameworks) = %d, want 0", len(summary.Frameworks))
+	}
+}
+
+func TestGetConfigPatterns(t *testing.T) {
+	patterns := getConfigPatterns()
+
+	// Should return non-empty map from core's matchers
+	if len(patterns) == 0 {
+		t.Error("getConfigPatterns() returned empty map, expected patterns from core")
+	}
+
+	// Should contain known vitest config patterns
+	expectedPatterns := []string{
+		"vitest.config.ts",
+		"vitest.config.js",
+		"jest.config.ts",
+		"jest.config.js",
+		"playwright.config.ts",
+	}
+
+	for _, p := range expectedPatterns {
+		if !patterns[p] {
+			t.Errorf("expected pattern %q not found in config patterns", p)
+		}
+	}
+
+	// Should be idempotent (sync.Once)
+	patterns2 := getConfigPatterns()
+	if len(patterns) != len(patterns2) {
+		t.Error("getConfigPatterns() not idempotent")
+	}
+}
+
+func TestBuildProjectScope(t *testing.T) {
+	tests := []struct {
+		name         string
+		configFiles  []github.FileInfo
+		fileContents map[string]string
+		wantNil      bool
+	}{
+		{
+			name:         "empty config files returns non-nil scope",
+			configFiles:  []github.FileInfo{},
+			fileContents: map[string]string{},
+			wantNil:      false,
+		},
+		{
+			name: "vitest config with globals",
+			configFiles: []github.FileInfo{
+				{Path: "vitest.config.ts", Type: "file"},
+			},
+			fileContents: map[string]string{
+				"vitest.config.ts": `import { defineConfig } from 'vitest/config'
+export default defineConfig({
+  test: {
+    globals: true,
+  },
+})`,
+			},
+			wantNil: false,
+		},
+		{
+			name: "multiple config files",
+			configFiles: []github.FileInfo{
+				{Path: "vitest.config.ts", Type: "file"},
+				{Path: "playwright.config.ts", Type: "file"},
+			},
+			fileContents: map[string]string{
+				"vitest.config.ts":     `export default { test: { globals: true } }`,
+				"playwright.config.ts": `export default { use: { headless: true } }`,
+			},
+			wantNil: false,
+		},
+		{
+			name: "missing config file content gracefully handled",
+			configFiles: []github.FileInfo{
+				{Path: "vitest.config.ts", Type: "file"},
+			},
+			fileContents: map[string]string{},
+			wantNil:      false,
+		},
+		{
+			name: "malformed config content handled gracefully",
+			configFiles: []github.FileInfo{
+				{Path: "vitest.config.ts", Type: "file"},
+			},
+			fileContents: map[string]string{
+				"vitest.config.ts": `this is { invalid javascript syntax`,
+			},
+			wantNil: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockGitHost{
+				files: tt.fileContents,
+			}
+			service := NewService(mock)
+
+			result := service.buildProjectScope(context.Background(), "owner", "repo", tt.configFiles)
+
+			if tt.wantNil && result != nil {
+				t.Error("expected nil ProjectScope, got non-nil")
+			}
+			if !tt.wantNil && result == nil {
+				t.Error("expected non-nil ProjectScope, got nil")
+			}
+		})
+	}
+}
+
+func TestFilterConfigFiles(t *testing.T) {
+	tests := []struct {
+		name     string
+		files    []github.FileInfo
+		expected []string
+	}{
+		{
+			name: "filters vitest config files",
+			files: []github.FileInfo{
+				{Path: "vitest.config.ts", Type: "file"},
+				{Path: "src/app.ts", Type: "file"},
+				{Path: "src/app.test.ts", Type: "file"},
+			},
+			expected: []string{"vitest.config.ts"},
+		},
+		{
+			name: "filters multiple config files",
+			files: []github.FileInfo{
+				{Path: "vitest.config.ts", Type: "file"},
+				{Path: "jest.config.js", Type: "file"},
+				{Path: "playwright.config.ts", Type: "file"},
+				{Path: "src/index.ts", Type: "file"},
+			},
+			expected: []string{"vitest.config.ts", "jest.config.js", "playwright.config.ts"},
+		},
+		{
+			name: "filters nested config files",
+			files: []github.FileInfo{
+				{Path: "packages/app/vitest.config.ts", Type: "file"},
+				{Path: "packages/lib/jest.config.js", Type: "file"},
+			},
+			expected: []string{"packages/app/vitest.config.ts", "packages/lib/jest.config.js"},
+		},
+		{
+			name: "ignores directories",
+			files: []github.FileInfo{
+				{Path: "vitest.config.ts", Type: "dir"},
+				{Path: "jest.config.js", Type: "file"},
+			},
+			expected: []string{"jest.config.js"},
+		},
+		{
+			name: "returns empty for no config files",
+			files: []github.FileInfo{
+				{Path: "src/app.ts", Type: "file"},
+				{Path: "package.json", Type: "file"},
+			},
+			expected: []string{},
+		},
+		{
+			name: "handles all vitest config extensions",
+			files: []github.FileInfo{
+				{Path: "vitest.config.ts", Type: "file"},
+				{Path: "vitest.config.js", Type: "file"},
+				{Path: "vitest.config.mts", Type: "file"},
+				{Path: "vitest.config.mjs", Type: "file"},
+			},
+			expected: []string{"vitest.config.ts", "vitest.config.js", "vitest.config.mts", "vitest.config.mjs"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := filterConfigFiles(tt.files)
+			assertFilePathsMatch(t, result, tt.expected)
+		})
 	}
 }

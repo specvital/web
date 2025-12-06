@@ -17,7 +17,6 @@ import (
 	"github.com/specvital/web/src/backend/common/config"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/common/server"
-	"github.com/specvital/web/src/backend/modules/analyzer"
 )
 
 const (
@@ -38,8 +37,6 @@ func main() {
 	if os.Getenv("GITHUB_TOKEN") == "" {
 		slog.Warn("GITHUB_TOKEN not set")
 	}
-
-	analyzer.InitializeParserStrategies()
 
 	if err := run(); err != nil {
 		slog.Error("application failed", "error", err)
