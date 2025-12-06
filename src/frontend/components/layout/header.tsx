@@ -3,8 +3,7 @@
 import { Home } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { LanguageSelector } from "@/components/language-selector";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSelector, ThemeToggle } from "@/components/theme";
 import { Link, usePathname } from "@/i18n/navigation";
 
 export const Header = () => {

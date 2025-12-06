@@ -4,7 +4,7 @@ import { AlertCircle, Ban, Clock, FileQuestion, Lock, ServerCrash } from "lucide
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { RateLimitWarning } from "@/components/rate-limit-warning";
+import { RateLimitWarning } from "@/components/feedback";
 import { ApiError, ERROR_TYPES, getErrorMessage } from "@/lib/api";
 
 const ERROR_TITLE_KEYS = {

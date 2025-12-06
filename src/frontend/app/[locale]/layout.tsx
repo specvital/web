@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/header";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Header } from "@/components/layout";
+import { ThemeProvider } from "@/components/theme";
 import { isValidLocale, locales } from "@/i18n/config";
 import "../globals.css";
 

@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { Summary } from "@/lib/api/types";
-import { getFrameworkColor } from "@/lib/framework-colors";
+import { getFrameworkColor } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
 type StatsCardProps = {

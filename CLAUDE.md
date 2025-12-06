@@ -96,16 +96,51 @@ src/backend/
 
 ```
 src/frontend/
-├── app/
+├── app/[locale]/                       # i18n routing (next-intl)
 │   ├── page.tsx                        # Home - URL input form
-│   └── analyze/[owner]/[repo]/page.tsx # Dashboard - test results
+│   ├── layout.tsx                      # Locale layout with Header
+│   └── analyze/[owner]/[repo]/
+│       ├── page.tsx                    # Dashboard - test results
+│       ├── error.tsx                   # Error boundary
+│       └── loading.tsx                 # Loading skeleton
+│
+├── features/                           # Domain modules
+│   ├── analysis/                       # Analysis feature
+│   │   ├── components/                 # stats-card, test-list, etc.
+│   │   └── index.ts                    # Barrel export
+│   └── home/                           # Home feature
+│       ├── components/                 # url-input-form
+│       ├── lib/                        # github-url validation
+│       └── index.ts
+│
+├── components/                         # Shared components
+│   ├── ui/                             # shadcn/ui primitives
+│   ├── layout/                         # header
+│   ├── theme/                          # theme-provider, toggle, language-selector
+│   ├── feedback/                       # rate-limit-warning
+│   └── skeletons/                      # Loading skeletons
+│
+├── lib/                                # Shared utilities
+│   ├── api/                            # API client, types, errors
+│   ├── utils/                          # cn, formatAnalysisDate
+│   └── styles/                         # framework-colors
+│
+├── i18n/                               # Internationalization config
+└── messages/                           # i18n messages (en.json, ko.json)
+```
+
+#### Adding New Features
+
+```typescript
+// 1. Create feature folder
+features/[feature-name]/
 ├── components/
-│   ├── url-input-form.tsx   # GitHub URL input with validation
-│   ├── test-list.tsx        # Virtualized test tree (1000+ items)
-│   └── stats-card.tsx       # Summary statistics
-└── lib/api/
-    ├── client.ts            # fetchAnalysis with Zod validation
-    └── types.ts             # Synced with backend types
+├── api/           # (optional)
+├── hooks/         # (optional)
+└── index.ts       # Barrel export
+
+// 2. Import from feature
+import { Component } from "@/features/[feature-name]";
 ```
 
 ### Data Flow

@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { UrlInputForm } from "@/components/url-input-form";
+import { UrlInputForm } from "@/features/home";
 
 export const dynamic = "force-static";
 

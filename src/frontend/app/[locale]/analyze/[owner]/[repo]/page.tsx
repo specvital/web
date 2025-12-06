@@ -5,10 +5,9 @@ import { locales } from "@/i18n/config";
 import { ExternalLink, GitCommit } from "lucide-react";
 import type { AnalysisResult } from "@/lib/api";
 import { fetchAnalysis } from "@/lib/api";
-import { isValidGitHubUrl } from "@/lib/github-url";
+import { isValidGitHubUrl } from "@/features/home";
 import { formatAnalysisDate, SHORT_SHA_LENGTH } from "@/lib/utils";
-import { StatsCard } from "@/components/stats-card";
-import { TestList } from "@/components/test-list";
+import { StatsCard, TestList } from "@/features/analysis";
 
 export const dynamic = "force-dynamic";
 
