@@ -68,12 +68,7 @@ const AnalyzePage = async ({ params }: AnalyzePageProps) => {
           </div>
         </header>
 
-        <StatsCard
-          active={result.summary.active}
-          skipped={result.summary.skipped}
-          todo={result.summary.todo}
-          total={result.summary.total}
-        />
+        <StatsCard summary={result.summary} />
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">{t("testSuites")}</h2>

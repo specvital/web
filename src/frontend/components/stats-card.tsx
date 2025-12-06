@@ -1,17 +1,19 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import type { Summary } from "@/lib/api/types";
+import { getFrameworkColor } from "@/lib/framework-colors";
 import { cn } from "@/lib/utils";
 
 type StatsCardProps = {
-  active: number;
-  skipped: number;
-  todo: number;
-  total: number;
+  summary: Summary;
 };
 
-export const StatsCard = ({ active, skipped, todo, total }: StatsCardProps) => {
+export const StatsCard = ({ summary }: StatsCardProps) => {
   const t = useTranslations("stats");
+  const { active, frameworks, skipped, todo, total } = summary;
+
+  const showFrameworkBreakdown = frameworks.length > 1;
 
   return (
     <div className={cn("rounded-lg border bg-card p-6 shadow-xs")}>
@@ -34,6 +36,48 @@ export const StatsCard = ({ active, skipped, todo, total }: StatsCardProps) => {
           <span className="text-sm text-muted-foreground">{t("todo")}</span>
         </div>
       </div>
+
+      {showFrameworkBreakdown ? (
+        <div className="mt-6 pt-6 border-t">
+          <h4 className="text-sm font-medium text-muted-foreground mb-4">{t("byFramework")}</h4>
+          <div className="space-y-4">
+            {frameworks.map((fw, index) => {
+              const percentage = total > 0 ? Math.round((fw.total / total) * 100) : 0;
+              return (
+                <div key={fw.framework} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 font-medium">
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: getFrameworkColor(index, fw.framework) }}
+                      />
+                      {fw.framework}
+                      <span className="text-muted-foreground font-normal">({percentage}%)</span>
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {fw.total} {t("tests")}
+                    </span>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    <span className="text-green-600">{fw.active}</span> {t("active")}
+                    {" · "}
+                    <span className="text-amber-600">{fw.skipped}</span> {t("skipped")}
+                    {" · "}
+                    <span className="text-blue-600">{fw.todo}</span> {t("todo")}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : frameworks.length === 1 ? (
+        <div className="mt-4 pt-4 border-t">
+          <span className="text-sm text-muted-foreground">
+            {t("framework")}:{" "}
+            <span className="font-medium text-foreground">{frameworks[0].framework}</span>
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 };

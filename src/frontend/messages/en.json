@@ -25,11 +25,14 @@
     "noTestSuites": "No test suites found in this repository."
   },
   "stats": {
-    "label": "Test Summary",
+    "label": "Test Statistics",
     "total": "Total",
     "active": "Active",
     "skipped": "Skipped",
-    "todo": "Todo"
+    "todo": "Todo",
+    "byFramework": "By Framework",
+    "framework": "Framework",
+    "tests": "tests"
   },
   "errors": {
     "somethingWentWrong": "Something went wrong",

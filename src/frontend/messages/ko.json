@@ -25,11 +25,14 @@
     "noTestSuites": "이 저장소에서 테스트 스위트를 찾을 수 없습니다."
   },
   "stats": {
-    "label": "테스트 요약",
+    "label": "테스트 통계",
     "total": "전체",
     "active": "활성",
     "skipped": "건너뜀",
-    "todo": "할 일"
+    "todo": "할 일",
+    "byFramework": "프레임워크별",
+    "framework": "프레임워크",
+    "tests": "개"
   },
   "errors": {
     "somethingWentWrong": "문제가 발생했습니다",
