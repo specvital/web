@@ -7,7 +7,6 @@ import { isValidGitHubUrl } from "@/lib/github-url";
 import { formatAnalysisDate, SHORT_SHA_LENGTH } from "@/lib/utils";
 import { StatsCard } from "@/components/stats-card";
 import { TestList } from "@/components/test-list";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -46,9 +45,6 @@ const AnalyzePage = async ({ params }: AnalyzePageProps) => {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <div className="fixed right-4 top-4">
-        <ThemeToggle />
-      </div>
       <div className="space-y-6">
         <header className="space-y-2">
           <div className="flex items-center justify-between">
