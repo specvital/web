@@ -18,14 +18,8 @@ import (
 	"github.com/specvital/web/src/backend/common/clients/github"
 	"golang.org/x/sync/errgroup"
 
-	// Framework registration via blank imports
-	_ "github.com/specvital/core/pkg/parser/strategies/gotesting"
-	_ "github.com/specvital/core/pkg/parser/strategies/jest"
-	_ "github.com/specvital/core/pkg/parser/strategies/junit5"
-	_ "github.com/specvital/core/pkg/parser/strategies/playwright"
-	_ "github.com/specvital/core/pkg/parser/strategies/pytest"
-	_ "github.com/specvital/core/pkg/parser/strategies/unittest"
-	_ "github.com/specvital/core/pkg/parser/strategies/vitest"
+	// Framework registration via blank import
+	_ "github.com/specvital/core/pkg/parser/strategies/all"
 )
 
 // ErrRateLimitTooLow indicates GitHub API rate limit is insufficient for analysis.
