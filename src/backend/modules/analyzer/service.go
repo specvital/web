@@ -22,6 +22,7 @@ import (
 	_ "github.com/specvital/core/pkg/parser/strategies/gotesting"
 	_ "github.com/specvital/core/pkg/parser/strategies/jest"
 	_ "github.com/specvital/core/pkg/parser/strategies/playwright"
+	_ "github.com/specvital/core/pkg/parser/strategies/pytest"
 	_ "github.com/specvital/core/pkg/parser/strategies/vitest"
 )
 
@@ -39,6 +40,9 @@ var testFilePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`\.spec\.[jt]sx?$`),
 	regexp.MustCompile(`_test\.go$`),
 	regexp.MustCompile(`(^|/)__tests__/.+\.[jt]sx?$`),
+	regexp.MustCompile(`(^|/)test_[^/]+\.py$`),
+	regexp.MustCompile(`_test\.py$`),
+	regexp.MustCompile(`(^|/)conftest\.py$`),
 }
 
 var (
@@ -354,10 +358,15 @@ func mapFramework(framework string) Framework {
 		return FrameworkPlaywright
 	case "gotesting", "go", "go-testing":
 		return FrameworkGo
+	case "pytest":
+		return FrameworkPytest
 	default:
 		ext := filepath.Ext(framework)
 		if ext == ".go" {
 			return FrameworkGo
+		}
+		if ext == ".py" {
+			return FrameworkPytest
 		}
 		return FrameworkJest
 	}

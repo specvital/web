@@ -9,6 +9,7 @@ const FRAMEWORK_STYLES: Record<Framework, string> = {
   go: "bg-cyan-100 text-cyan-800",
   jest: "bg-red-100 text-red-800",
   playwright: "bg-purple-100 text-purple-800",
+  pytest: "bg-yellow-100 text-yellow-800",
   vitest: "bg-green-100 text-green-800",
 };
 

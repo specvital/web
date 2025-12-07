@@ -15,6 +15,7 @@ const (
 	FrameworkVitest     Framework = "vitest"
 	FrameworkPlaywright Framework = "playwright"
 	FrameworkGo         Framework = "go"
+	FrameworkPytest     Framework = "pytest"
 )
 
 type TestCase struct {

@@ -74,6 +74,13 @@ func TestIsTestFile(t *testing.T) {
 		{"src/service/user_test.go", true},
 		{"internal/handler_test.go", true},
 
+		// Python test files
+		{"tests/test_user.py", true},
+		{"test_main.py", true},
+		{"src/user_test.py", true},
+		{"tests/conftest.py", true},
+		{"conftest.py", true},
+
 		// Non-test files
 		{"src/components/Button.ts", false},
 		{"src/components/Button.tsx", false},
@@ -176,6 +183,8 @@ func TestMapFramework(t *testing.T) {
 		{"gotesting", FrameworkGo},
 		{"go", FrameworkGo},
 		{"Go", FrameworkGo},
+		{"pytest", FrameworkPytest},
+		{"Pytest", FrameworkPytest},
 		{"unknown", FrameworkJest},
 	}
 
