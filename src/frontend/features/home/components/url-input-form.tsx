@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { useState, useTransition } from "react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ export const UrlInputForm = () => {
   const t = useTranslations("home");
   const [error, setError] = useState<string | null>(null);
   const [url, setUrl] = useState("");
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +27,10 @@ export const UrlInputForm = () => {
 
     setError(null);
     const { owner, repo } = result.data;
-    router.push(`/analyze/${owner}/${repo}`);
+
+    startTransition(() => {
+      router.push(`/analyze/${owner}/${repo}`);
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,14 +52,24 @@ export const UrlInputForm = () => {
           placeholder={t("inputPlaceholder")}
           value={url}
           onChange={handleChange}
+          disabled={isPending}
           aria-invalid={!!error}
           aria-describedby={error ? "url-error" : undefined}
           aria-label={t("inputLabel")}
           className="flex-1"
         />
-        <Button type="submit" size="lg" aria-label={t("analyzeButton")}>
-          {t("analyzeButton")}
-          <ArrowRight aria-hidden="true" />
+        <Button type="submit" size="lg" disabled={isPending} aria-label={t("analyzeButton")}>
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              <span className="sr-only">Loading...</span>
+            </>
+          ) : (
+            <>
+              {t("analyzeButton")}
+              <ArrowRight aria-hidden="true" />
+            </>
+          )}
         </Button>
       </div>
       {error && (

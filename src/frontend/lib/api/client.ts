@@ -4,7 +4,13 @@ import type { AnalysisResult, ProblemDetail } from "./types";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const DEFAULT_TIMEOUT_MS = 30000;
 
-// Error type constants
+const getApiUrl = (path: string): string => {
+  if (typeof window === "undefined") {
+    return `${API_URL}${path}`;
+  }
+  return path;
+};
+
 export const ERROR_TYPES = {
   BAD_REQUEST: "BAD_REQUEST",
   FORBIDDEN: "FORBIDDEN",
@@ -19,7 +25,6 @@ export const ERROR_TYPES = {
 
 export type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
 
-// Zod schema for runtime validation matching Go backend types
 const testStatusSchema = z.enum(["active", "skipped", "todo"]);
 
 const frameworkSchema = z.enum(["jest", "vitest", "playwright", "go"]);
@@ -63,7 +68,6 @@ const analysisResultSchema = z.object({
   summary: summarySchema,
 });
 
-// RFC 7807 ProblemDetail schema for runtime validation
 const rateLimitInfoSchema = z.object({
   limit: z.number(),
   remaining: z.number(),
@@ -87,7 +91,7 @@ export class ApiError extends Error {
     message: string,
     public readonly status?: number,
     public readonly responseBody?: unknown,
-    errorTypeOverride?: ErrorType,
+    errorTypeOverride?: ErrorType
   ) {
     super(message);
     this.name = "ApiError";
@@ -187,9 +191,9 @@ export const getErrorMessage = (error: unknown): string => {
 export const fetchAnalysis = async (
   owner: string,
   repo: string,
-  timeoutMs = DEFAULT_TIMEOUT_MS,
+  timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<AnalysisResult> => {
-  const url = `${API_URL}/api/analyze/${owner}/${repo}`;
+  const url = getApiUrl(`/api/analyze/${owner}/${repo}`);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -210,7 +214,7 @@ export const fetchAnalysis = async (
     }
 
     throw new ApiError(
-      `Failed to fetch analysis: ${error instanceof Error ? error.message : "Network error"}`,
+      `Failed to fetch analysis: ${error instanceof Error ? error.message : "Network error"}`
     );
   } finally {
     clearTimeout(timeoutId);
@@ -225,11 +229,7 @@ export const fetchAnalysis = async (
       responseBody = await response.text();
     }
 
-    throw new ApiError(
-      `API request failed: ${response.statusText}`,
-      response.status,
-      responseBody,
-    );
+    throw new ApiError(`API request failed: ${response.statusText}`, response.status, responseBody);
   }
 
   let data: unknown;
@@ -238,7 +238,7 @@ export const fetchAnalysis = async (
     data = await response.json();
   } catch (error) {
     throw new ApiError(
-      `Failed to parse response as JSON: ${error instanceof Error ? error.message : "Parse error"}`,
+      `Failed to parse response as JSON: ${error instanceof Error ? error.message : "Parse error"}`
     );
   }
 

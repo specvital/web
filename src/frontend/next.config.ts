@@ -11,6 +11,8 @@ const cspValue = isDev
   ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
   : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:;";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   headers: async () => [
@@ -22,6 +24,13 @@ const nextConfig: NextConfig = {
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         { key: "Content-Security-Policy", value: cspValue },
       ],
+    },
+  ],
+  // Proxy API requests to backend (solves CORS and localhost access issues)
+  rewrites: async () => [
+    {
+      source: "/api/:path*",
+      destination: `${API_URL}/api/:path*`,
     },
   ],
 };
