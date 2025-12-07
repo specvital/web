@@ -173,19 +173,14 @@ func TestMapFramework(t *testing.T) {
 		input    string
 		expected Framework
 	}{
-		{"jest", FrameworkJest},
-		{"Jest", FrameworkJest},
-		{"JEST", FrameworkJest},
-		{"vitest", FrameworkVitest},
-		{"Vitest", FrameworkVitest},
-		{"playwright", FrameworkPlaywright},
-		{"Playwright", FrameworkPlaywright},
-		{"gotesting", FrameworkGo},
-		{"go", FrameworkGo},
-		{"Go", FrameworkGo},
-		{"pytest", FrameworkPytest},
-		{"Pytest", FrameworkPytest},
-		{"unknown", FrameworkJest},
+		// Normalized names
+		{"go-testing", "go"},
+		// Pass-through (core names used as-is)
+		{"jest", "jest"},
+		{"vitest", "vitest"},
+		{"playwright", "playwright"},
+		{"pytest", "pytest"},
+		{"unknown", "unknown"},
 	}
 
 	for _, tt := range tests {
@@ -202,7 +197,7 @@ func TestCalculateSummary(t *testing.T) {
 	suites := []TestSuite{
 		{
 			FilePath:  "src/app.test.ts",
-			Framework: FrameworkJest,
+			Framework: "jest",
 			Tests: []TestCase{
 				{Status: TestStatusActive},
 				{Status: TestStatusActive},
@@ -211,7 +206,7 @@ func TestCalculateSummary(t *testing.T) {
 		},
 		{
 			FilePath:  "src/utils.test.ts",
-			Framework: FrameworkVitest,
+			Framework: "vitest",
 			Tests: []TestCase{
 				{Status: TestStatusActive},
 				{Status: TestStatusTodo},

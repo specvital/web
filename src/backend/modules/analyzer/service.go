@@ -348,28 +348,17 @@ func extractTestsFromSuite(filePath string, framework Framework, suite domain.Te
 	return tests
 }
 
-func mapFramework(framework string) Framework {
-	switch strings.ToLower(framework) {
-	case "jest":
-		return FrameworkJest
-	case "vitest":
-		return FrameworkVitest
-	case "playwright":
-		return FrameworkPlaywright
-	case "gotesting", "go", "go-testing":
-		return FrameworkGo
-	case "pytest":
-		return FrameworkPytest
-	default:
-		ext := filepath.Ext(framework)
-		if ext == ".go" {
-			return FrameworkGo
-		}
-		if ext == ".py" {
-			return FrameworkPytest
-		}
-		return FrameworkJest
+// mapFramework normalizes core framework names for display.
+// Only maps names that need normalization, others pass through as-is.
+var frameworkDisplayNames = map[string]string{
+	"go-testing": "go",
+}
+
+func mapFramework(name string) Framework {
+	if display, ok := frameworkDisplayNames[name]; ok {
+		return display
 	}
+	return name
 }
 
 func mapStatus(status domain.TestStatus) TestStatus {

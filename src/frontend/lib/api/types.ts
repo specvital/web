@@ -18,7 +18,7 @@ export type RateLimitInfo = {
 
 export type TestStatus = "active" | "skipped" | "todo";
 
-export type Framework = "jest" | "vitest" | "playwright" | "go" | "pytest";
+export type Framework = string;
 
 export type TestCase = {
   filePath: string;

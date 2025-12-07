@@ -8,15 +8,7 @@ const (
 	TestStatusTodo    TestStatus = "todo"
 )
 
-type Framework string
-
-const (
-	FrameworkJest       Framework = "jest"
-	FrameworkVitest     Framework = "vitest"
-	FrameworkPlaywright Framework = "playwright"
-	FrameworkGo         Framework = "go"
-	FrameworkPytest     Framework = "pytest"
-)
+type Framework = string
 
 type TestCase struct {
 	FilePath  string     `json:"filePath"`

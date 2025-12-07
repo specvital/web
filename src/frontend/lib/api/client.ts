@@ -27,7 +27,7 @@ export type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
 
 const testStatusSchema = z.enum(["active", "skipped", "todo"]);
 
-const frameworkSchema = z.enum(["jest", "vitest", "playwright", "go", "pytest"]);
+const frameworkSchema = z.string();
 
 const testCaseSchema = z.object({
   filePath: z.string(),
