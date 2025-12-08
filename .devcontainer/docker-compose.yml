@@ -11,7 +11,16 @@ services:
       - claude-sessions:/root/.claude
     env_file:
       - ${HOME}/.env.secrets
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@specvital-postgres:5432/specvital?sslmode=disable
+      REDIS_URL: redis://specvital-redis:6379
+    networks:
+      - specvital-network
     command: sleep infinity
+
+networks:
+  specvital-network:
+    external: true
 
 volumes:
   claude-sessions:
