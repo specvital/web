@@ -1,4 +1,4 @@
-import { Check, Circle, CircleDashed } from "lucide-react";
+import { Check, Circle, CircleDashed, Crosshair, XCircle } from "lucide-react";
 import type { TestCase } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,11 @@ const STATUS_CONFIG = {
     color: "text-green-600",
     label: "Active test",
   },
+  focused: {
+    icon: Crosshair,
+    color: "text-purple-500",
+    label: "Focused test",
+  },
   skipped: {
     icon: CircleDashed,
     color: "text-amber-500",
@@ -21,6 +26,11 @@ const STATUS_CONFIG = {
     icon: Circle,
     color: "text-blue-500",
     label: "Todo test",
+  },
+  xfail: {
+    icon: XCircle,
+    color: "text-red-400",
+    label: "Expected failure",
   },
 } as const;
 

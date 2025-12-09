@@ -25,13 +25,14 @@ export const ERROR_TYPES = {
 
 export type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
 
-const testStatusSchema = z.enum(["active", "skipped", "todo"]);
+const testStatusSchema = z.enum(["active", "focused", "skipped", "todo", "xfail"]);
 const frameworkSchema = z.string();
 
 const testCaseSchema = z.object({
   filePath: z.string(),
   framework: frameworkSchema,
   line: z.number(),
+  modifier: z.string().optional(),
   name: z.string(),
   status: testStatusSchema,
 });
@@ -44,18 +45,22 @@ const testSuiteSchema = z.object({
 
 const frameworkSummarySchema = z.object({
   active: z.number(),
+  focused: z.number(),
   framework: frameworkSchema,
   skipped: z.number(),
   todo: z.number(),
   total: z.number(),
+  xfail: z.number(),
 });
 
 const summarySchema = z.object({
   active: z.number(),
+  focused: z.number(),
   frameworks: z.array(frameworkSummarySchema),
   skipped: z.number(),
   todo: z.number(),
   total: z.number(),
+  xfail: z.number(),
 });
 
 const analysisResultSchema = z.object({

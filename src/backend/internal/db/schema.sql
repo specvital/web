@@ -33,7 +33,9 @@ CREATE TYPE public.analysis_status AS ENUM (
 CREATE TYPE public.test_status AS ENUM (
     'active',
     'skipped',
-    'todo'
+    'todo',
+    'focused',
+    'xfail'
 );
 
 
@@ -83,7 +85,8 @@ CREATE TABLE public.test_cases (
     name character varying(500) NOT NULL,
     line_number integer,
     status public.test_status DEFAULT 'active'::public.test_status NOT NULL,
-    tags jsonb DEFAULT '[]'::jsonb NOT NULL
+    tags jsonb DEFAULT '[]'::jsonb NOT NULL,
+    modifier character varying(50)
 );
 
 

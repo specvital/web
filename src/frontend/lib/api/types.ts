@@ -16,7 +16,7 @@ export type RateLimitInfo = {
   resetAt: number;
 };
 
-export type TestStatus = "active" | "skipped" | "todo";
+export type TestStatus = "active" | "focused" | "skipped" | "todo" | "xfail";
 
 export type Framework = string;
 
@@ -24,6 +24,7 @@ export type TestCase = {
   filePath: string;
   framework: Framework;
   line: number;
+  modifier?: string;
   name: string;
   status: TestStatus;
 };
@@ -36,18 +37,22 @@ export type TestSuite = {
 
 export type FrameworkSummary = {
   active: number;
+  focused: number;
   framework: Framework;
   skipped: number;
   todo: number;
   total: number;
+  xfail: number;
 };
 
 export type Summary = {
   active: number;
+  focused: number;
   frameworks: FrameworkSummary[];
   skipped: number;
   todo: number;
   total: number;
+  xfail: number;
 };
 
 export type AnalysisResult = {

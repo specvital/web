@@ -194,10 +194,12 @@ describe("fetchAnalysis", () => {
     suites: [],
     summary: {
       active: 10,
+      focused: 0,
       frameworks: [],
       skipped: 2,
       todo: 1,
       total: 13,
+      xfail: 0,
     },
   };
 
