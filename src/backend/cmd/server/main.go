@@ -17,6 +17,7 @@ import (
 	"github.com/specvital/web/src/backend/common/config"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/common/server"
+	"github.com/specvital/web/src/backend/internal/api"
 )
 
 const (
@@ -58,12 +59,12 @@ func run() error {
 		}
 	}()
 
-	router := newRouter(origins, app.RouteRegistrars())
+	router := newRouter(origins, app.RouteRegistrars(), app.APIHandler())
 
 	return startServer(router)
 }
 
-func newRouter(origins []string, registrars []server.RouteRegistrar) *chi.Mux {
+func newRouter(origins []string, registrars []server.RouteRegistrar, apiHandler api.StrictServerInterface) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(chimiddleware.RequestID)
@@ -77,6 +78,9 @@ func newRouter(origins []string, registrars []server.RouteRegistrar) *chi.Mux {
 	for _, reg := range registrars {
 		reg.RegisterRoutes(r)
 	}
+
+	strictHandler := api.NewStrictHandler(apiHandler, nil)
+	api.HandlerFromMux(strictHandler, r)
 
 	return r
 }

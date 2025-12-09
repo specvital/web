@@ -1,0 +1,27 @@
+package api
+
+import "net/http"
+
+func NewBadRequest(detail string) BadRequestApplicationProblemPlusJSONResponse {
+	return BadRequestApplicationProblemPlusJSONResponse{
+		Detail: detail,
+		Status: http.StatusBadRequest,
+		Title:  "Bad Request",
+	}
+}
+
+func NewNotFound(detail string) NotFoundApplicationProblemPlusJSONResponse {
+	return NotFoundApplicationProblemPlusJSONResponse{
+		Detail: detail,
+		Status: http.StatusNotFound,
+		Title:  "Not Found",
+	}
+}
+
+func NewInternalError(detail string) InternalErrorApplicationProblemPlusJSONResponse {
+	return InternalErrorApplicationProblemPlusJSONResponse{
+		Detail: detail,
+		Status: http.StatusInternalServerError,
+		Title:  "Internal Server Error",
+	}
+}

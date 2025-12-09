@@ -5,14 +5,15 @@ import (
 	"fmt"
 
 	"github.com/specvital/web/src/backend/common/health"
+	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/internal/db"
 	"github.com/specvital/web/src/backend/internal/infra"
 	"github.com/specvital/web/src/backend/modules/analyzer"
 )
 
 type Handlers struct {
-	Analyzer *analyzer.Handler
-	Health   *health.Handler
+	API    api.StrictServerInterface
+	Health *health.Handler
 }
 
 type App struct {
@@ -40,15 +41,21 @@ func initHandlers(infra *infra.Container) *Handlers {
 	repo := analyzer.NewRepository(queries)
 	queueSvc := analyzer.NewQueueService(infra.Queue)
 
+	analyzerService := analyzer.NewAnalyzerService(repo, queueSvc)
+	analyzerServer := analyzer.NewAnalyzerServer(analyzerService)
+
 	return &Handlers{
-		Analyzer: analyzer.NewHandler(repo, queueSvc),
-		Health:   health.NewHandler(),
+		API:    analyzerServer,
+		Health: health.NewHandler(),
 	}
+}
+
+func (a *App) APIHandler() api.StrictServerInterface {
+	return a.Handlers.API
 }
 
 func (a *App) RouteRegistrars() []RouteRegistrar {
 	return []RouteRegistrar{
-		a.Handlers.Analyzer,
 		a.Handlers.Health,
 	}
 }

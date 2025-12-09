@@ -4,16 +4,17 @@ import (
 	"context"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/specvital/web/src/backend/internal/api"
 )
 
 // mockRepository is a test double for Repository.
 type mockRepository struct {
-	completedAnalysis *CompletedAnalysis
 	analysisStatus    *AnalysisStatus
-	createdAnalysisID string
-	suitesWithCases   []TestSuiteWithCases
-	err               error
+	completedAnalysis *CompletedAnalysis
 	createErr         error
+	createdAnalysisID string
+	err               error
+	suitesWithCases   []TestSuiteWithCases
 }
 
 func (m *mockRepository) CreatePendingAnalysis(ctx context.Context, owner, repo string) (string, error) {
@@ -26,16 +27,6 @@ func (m *mockRepository) CreatePendingAnalysis(ctx context.Context, owner, repo 
 	return m.createdAnalysisID, nil
 }
 
-func (m *mockRepository) GetLatestCompletedAnalysis(ctx context.Context, owner, repo string) (*CompletedAnalysis, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	if m.completedAnalysis == nil {
-		return nil, ErrNotFound
-	}
-	return m.completedAnalysis, nil
-}
-
 func (m *mockRepository) GetAnalysisStatus(ctx context.Context, owner, repo string) (*AnalysisStatus, error) {
 	if m.err != nil {
 		return nil, m.err
@@ -46,8 +37,14 @@ func (m *mockRepository) GetAnalysisStatus(ctx context.Context, owner, repo stri
 	return m.analysisStatus, nil
 }
 
-func (m *mockRepository) MarkAnalysisFailed(ctx context.Context, analysisID, errorMsg string) error {
-	return nil
+func (m *mockRepository) GetLatestCompletedAnalysis(ctx context.Context, owner, repo string) (*CompletedAnalysis, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	if m.completedAnalysis == nil {
+		return nil, ErrNotFound
+	}
+	return m.completedAnalysis, nil
 }
 
 func (m *mockRepository) GetTestSuitesWithCases(ctx context.Context, analysisID string) ([]TestSuiteWithCases, error) {
@@ -55,6 +52,10 @@ func (m *mockRepository) GetTestSuitesWithCases(ctx context.Context, analysisID 
 		return []TestSuiteWithCases{}, nil
 	}
 	return m.suitesWithCases, nil
+}
+
+func (m *mockRepository) MarkAnalysisFailed(ctx context.Context, analysisID, errorMsg string) error {
+	return nil
 }
 
 // mockQueueService is a test double for QueueService.
@@ -78,24 +79,21 @@ func (m *mockQueueService) Close() error {
 	return nil
 }
 
-// setupTestHandler creates a new Handler with mock dependencies and chi router.
-func setupTestHandler() (*Handler, *chi.Mux) {
+// setupTestServer creates a new AnalyzerServer with mock dependencies and chi router.
+func setupTestServer() (*AnalyzerServer, *chi.Mux) {
 	repo := &mockRepository{}
 	queue := &mockQueueService{}
-	handler := NewHandler(repo, queue)
-
-	r := chi.NewRouter()
-	handler.RegisterRoutes(r)
-
-	return handler, r
+	return setupTestServerWithMocks(repo, queue)
 }
 
-// setupTestHandlerWithMocks creates a Handler with provided mocks for more control in tests.
-func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService) (*Handler, *chi.Mux) {
-	handler := NewHandler(repo, queue)
+// setupTestServerWithMocks creates an AnalyzerServer with provided mocks for more control in tests.
+func setupTestServerWithMocks(repo *mockRepository, queue *mockQueueService) (*AnalyzerServer, *chi.Mux) {
+	service := NewAnalyzerService(repo, queue)
+	server := NewAnalyzerServer(service)
 
 	r := chi.NewRouter()
-	handler.RegisterRoutes(r)
+	strictHandler := api.NewStrictHandler(server, nil)
+	api.HandlerFromMux(strictHandler, r)
 
-	return handler, r
+	return server, r
 }
