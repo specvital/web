@@ -2,6 +2,8 @@ set dotenv-load := true
 
 root_dir := justfile_directory()
 
+bootstrap: install-psql install-sqlc install-playwright
+
 deps: deps-root deps-frontend
 
 deps-root:
