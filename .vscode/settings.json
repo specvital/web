@@ -203,6 +203,14 @@
           "shortcut": "f",
           "terminalName": "frontend",
           "useVsCodeApi": false
+        },
+        {
+          "color": "",
+          "command": "just run-collector",
+          "name": "run-collector",
+          "shortcut": "c",
+          "terminalName": "run-collector",
+          "useVsCodeApi": false
         }
       ]
     },
