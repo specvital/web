@@ -80,7 +80,7 @@ just lint go                 # gofmt
 
 ### Backend (Go + Chi + OpenAPI)
 
-**Architecture**: OpenAPI-First with Strict Server Interface
+**Architecture**: OpenAPI-First with Layered Architecture
 
 ```
 src/backend/
@@ -92,18 +92,28 @@ src/backend/
 │   ├── openapi.yaml        # API spec (single source of truth)
 │   └── oapi-codegen.yaml   # Code generation config
 ├── modules/
-│   └── analyzer/           # Core analysis module
-│       ├── server.go       # StrictServerInterface implementation
-│       └── service.go      # Business logic (GitHub → Core parser)
+│   └── analyzer/           # Core analysis module (layered)
+│       ├── domain/         # Domain layer
+│       │   ├── analysis.go # Domain models (Analysis, TestSuite, TestCase)
+│       │   ├── errors.go   # Domain errors (ErrNotFound, ErrAlreadyQueued)
+│       │   └── status.go   # Status type definitions
+│       ├── mapper/         # Mapper layer
+│       │   └── response.go # Domain → API response conversion
+│       ├── handler.go      # HTTP handler (StrictServerInterface)
+│       └── service.go      # Business logic (returns domain types)
 ├── github/                 # GitHub API client
 │   ├── client.go           # ListFiles, GetFileContent, rate limit tracking
 │   └── errors.go           # ErrNotFound, ErrForbidden, ErrRateLimited
 └── common/
-    ├── dto/problem.go      # RFC 7807 error responses
-    └── middleware/         # CORS, Logger, Compress
+    ├── config/             # Environment configuration
+    ├── health/             # Health check endpoint
+    ├── middleware/         # CORS, Logger, Compress
+    └── server/             # Server setup utilities
 ```
 
 **Type Generation**: OpenAPI spec → Go types (compile-time verified) + TS types
+
+**Domain Layer Pattern**: Service returns domain types + domain errors → Handler maps to HTTP status
 
 ### Frontend (Next.js 16 App Router)
 
@@ -130,8 +140,7 @@ src/frontend/
 │   ├── ui/                             # shadcn/ui primitives
 │   ├── layout/                         # header
 │   ├── theme/                          # theme-provider, toggle, language-selector
-│   ├── feedback/                       # rate-limit-warning
-│   └── skeletons/                      # Loading skeletons
+│   └── feedback/                       # error-fallback, loading-fallback
 │
 ├── lib/                                # Shared utilities
 │   ├── api/                            # API client
