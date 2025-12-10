@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/specvital/web/src/backend/internal/api"
+	"github.com/specvital/web/src/backend/modules/analyzer/domain"
 )
 
 // mockRepository is a test double for Repository.
@@ -32,7 +33,7 @@ func (m *mockRepository) GetAnalysisStatus(ctx context.Context, owner, repo stri
 		return nil, m.err
 	}
 	if m.analysisStatus == nil {
-		return nil, ErrNotFound
+		return nil, domain.ErrNotFound
 	}
 	return m.analysisStatus, nil
 }
@@ -42,7 +43,7 @@ func (m *mockRepository) GetLatestCompletedAnalysis(ctx context.Context, owner, 
 		return nil, m.err
 	}
 	if m.completedAnalysis == nil {
-		return nil, ErrNotFound
+		return nil, domain.ErrNotFound
 	}
 	return m.completedAnalysis, nil
 }

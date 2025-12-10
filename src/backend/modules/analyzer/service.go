@@ -2,14 +2,15 @@ package analyzer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"sort"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/specvital/web/src/backend/internal/api"
+	"github.com/specvital/web/src/backend/modules/analyzer/domain"
 )
 
 const dbTimeout = 5 * time.Second
@@ -45,7 +46,7 @@ func (s *analyzerService) AnalyzeRepository(ctx context.Context, owner, repo str
 		return response, http.StatusOK, nil
 	}
 
-	if !errors.Is(err, ErrNotFound) {
+	if !errors.Is(err, domain.ErrNotFound) {
 		slog.Error("failed to get analysis", "owner", owner, "repo", repo, "error", err)
 		return api.AnalysisResponse{}, http.StatusInternalServerError, fmt.Errorf("failed to get analysis: %w", err)
 	}
@@ -60,7 +61,7 @@ func (s *analyzerService) AnalyzeRepository(ctx context.Context, owner, repo str
 		return response, http.StatusAccepted, nil
 	}
 
-	if !errors.Is(err, ErrNotFound) {
+	if !errors.Is(err, domain.ErrNotFound) {
 		slog.Error("failed to get status", "owner", owner, "repo", repo, "error", err)
 		return api.AnalysisResponse{}, http.StatusInternalServerError, fmt.Errorf("failed to get status: %w", err)
 	}
@@ -101,7 +102,7 @@ func (s *analyzerService) GetAnalysisStatus(ctx context.Context, owner, repo str
 		return response, http.StatusOK, nil
 	}
 
-	if !errors.Is(err, ErrNotFound) {
+	if !errors.Is(err, domain.ErrNotFound) {
 		slog.Error("failed to get analysis", "owner", owner, "repo", repo, "error", err)
 		return api.AnalysisResponse{}, http.StatusInternalServerError, fmt.Errorf("failed to get analysis: %w", err)
 	}
@@ -120,8 +121,8 @@ func (s *analyzerService) GetAnalysisStatus(ctx context.Context, owner, repo str
 		return response, httpStatus, nil
 	}
 
-	if errors.Is(err, ErrNotFound) {
-		return api.AnalysisResponse{}, http.StatusNotFound, ErrNotFound
+	if errors.Is(err, domain.ErrNotFound) {
+		return api.AnalysisResponse{}, http.StatusNotFound, domain.ErrNotFound
 	}
 
 	slog.Error("failed to get status", "owner", owner, "repo", repo, "error", err)

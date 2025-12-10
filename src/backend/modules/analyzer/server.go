@@ -3,12 +3,13 @@ package analyzer
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"regexp"
 
+	"github.com/cockroachdb/errors"
 	"github.com/specvital/web/src/backend/internal/api"
+	"github.com/specvital/web/src/backend/modules/analyzer/domain"
 )
 
 var validNamePattern = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
@@ -72,7 +73,7 @@ func (s *AnalyzerServer) GetAnalysisStatus(ctx context.Context, request api.GetA
 
 	response, statusCode, err := s.service.GetAnalysisStatus(ctx, owner, repo)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			return api.GetAnalysisStatus404ApplicationProblemPlusJSONResponse{
 				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("analysis not found"),
 			}, nil

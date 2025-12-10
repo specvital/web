@@ -2,21 +2,18 @@ package analyzer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/specvital/web/src/backend/internal/db"
+	"github.com/specvital/web/src/backend/modules/analyzer/domain"
 )
 
 const (
 	HostGitHub = "github.com"
-)
-
-var (
-	ErrNotFound = errors.New("analysis not found")
 )
 
 type Repository interface {
@@ -92,7 +89,7 @@ func (r *repositoryImpl) GetLatestCompletedAnalysis(ctx context.Context, owner, 
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, domain.WrapNotFound(owner, repo)
 		}
 		return nil, fmt.Errorf("get latest completed analysis for %s/%s: %w", owner, repo, err)
 	}
@@ -116,7 +113,7 @@ func (r *repositoryImpl) GetAnalysisStatus(ctx context.Context, owner, repo stri
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, domain.WrapNotFound(owner, repo)
 		}
 		return nil, fmt.Errorf("get analysis status for %s/%s: %w", owner, repo, err)
 	}
