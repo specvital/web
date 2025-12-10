@@ -2,7 +2,7 @@ set dotenv-load := true
 
 root_dir := justfile_directory()
 
-bootstrap: install-psql install-sqlc install-playwright
+bootstrap: install-psql install-sqlc install-playwright install-oapi-codegen
 
 deps: deps-root deps-frontend
 
@@ -39,6 +39,9 @@ install-psql:
 
 install-sqlc:
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.28.0
+
+install-oapi-codegen:
+    go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 lint target="all":
     #!/usr/bin/env bash
