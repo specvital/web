@@ -10,21 +10,22 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/analyzer/domain"
+	"github.com/specvital/web/src/backend/modules/analyzer/mapper"
 )
 
 var validNamePattern = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
-type AnalyzerServer struct {
+type AnalyzerHandler struct {
 	service AnalyzerService
 }
 
-var _ api.StrictServerInterface = (*AnalyzerServer)(nil)
+var _ api.StrictServerInterface = (*AnalyzerHandler)(nil)
 
-func NewAnalyzerServer(service AnalyzerService) *AnalyzerServer {
-	return &AnalyzerServer{service: service}
+func NewAnalyzerHandler(service AnalyzerService) *AnalyzerHandler {
+	return &AnalyzerHandler{service: service}
 }
 
-func (s *AnalyzerServer) AnalyzeRepository(ctx context.Context, request api.AnalyzeRepositoryRequestObject) (api.AnalyzeRepositoryResponseObject, error) {
+func (h *AnalyzerHandler) AnalyzeRepository(ctx context.Context, request api.AnalyzeRepositoryRequestObject) (api.AnalyzeRepositoryResponseObject, error) {
 	owner, repo := request.Owner, request.Repo
 
 	if err := validateOwnerRepo(owner, repo); err != nil {
@@ -33,7 +34,7 @@ func (s *AnalyzerServer) AnalyzeRepository(ctx context.Context, request api.Anal
 		}, nil
 	}
 
-	response, statusCode, err := s.service.AnalyzeRepository(ctx, owner, repo)
+	result, err := h.service.AnalyzeRepository(ctx, owner, repo)
 	if err != nil {
 		slog.Error("service error in AnalyzeRepository", "owner", owner, "repo", repo, "error", err)
 		return api.AnalyzeRepository500ApplicationProblemPlusJSONResponse{
@@ -41,8 +42,21 @@ func (s *AnalyzerServer) AnalyzeRepository(ctx context.Context, request api.Anal
 		}, nil
 	}
 
-	switch statusCode {
-	case http.StatusOK:
+	if result.Analysis == nil && result.Progress == nil {
+		slog.Error("invalid result: neither analysis nor progress is set", "owner", owner, "repo", repo)
+		return api.AnalyzeRepository500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("internal error"),
+		}, nil
+	}
+
+	if result.Analysis != nil {
+		response, mapErr := mapper.ToCompletedResponse(result.Analysis)
+		if mapErr != nil {
+			slog.Error("failed to map completed response", "owner", owner, "repo", repo, "error", mapErr)
+			return api.AnalyzeRepository500ApplicationProblemPlusJSONResponse{
+				InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to process response"),
+			}, nil
+		}
 		completed, err := response.AsCompletedResponse()
 		if err != nil {
 			slog.Error("failed to unmarshal completed response", "owner", owner, "repo", repo, "error", err)
@@ -51,18 +65,19 @@ func (s *AnalyzerServer) AnalyzeRepository(ctx context.Context, request api.Anal
 			}, nil
 		}
 		return api.AnalyzeRepository200JSONResponse(completed), nil
+	}
 
-	case http.StatusAccepted:
-		return newAnalyze202Response(response)
-
-	default:
+	response, mapErr := mapper.ToStatusResponse(result.Progress)
+	if mapErr != nil {
+		slog.Error("failed to map status response", "owner", owner, "repo", repo, "error", mapErr)
 		return api.AnalyzeRepository500ApplicationProblemPlusJSONResponse{
-			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("unexpected status code from service"),
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to process response"),
 		}, nil
 	}
+	return newAnalyze202Response(response)
 }
 
-func (s *AnalyzerServer) GetAnalysisStatus(ctx context.Context, request api.GetAnalysisStatusRequestObject) (api.GetAnalysisStatusResponseObject, error) {
+func (h *AnalyzerHandler) GetAnalysisStatus(ctx context.Context, request api.GetAnalysisStatusRequestObject) (api.GetAnalysisStatusResponseObject, error) {
 	owner, repo := request.Owner, request.Repo
 
 	if err := validateOwnerRepo(owner, repo); err != nil {
@@ -71,7 +86,7 @@ func (s *AnalyzerServer) GetAnalysisStatus(ctx context.Context, request api.GetA
 		}, nil
 	}
 
-	response, statusCode, err := s.service.GetAnalysisStatus(ctx, owner, repo)
+	result, err := h.service.GetAnalysisStatus(ctx, owner, repo)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return api.GetAnalysisStatus404ApplicationProblemPlusJSONResponse{
@@ -84,15 +99,32 @@ func (s *AnalyzerServer) GetAnalysisStatus(ctx context.Context, request api.GetA
 		}, nil
 	}
 
-	switch statusCode {
-	case http.StatusOK, http.StatusAccepted:
-		return newStatus200Response(response)
-
-	default:
+	if result.Analysis == nil && result.Progress == nil {
+		slog.Error("invalid result: neither analysis nor progress is set", "owner", owner, "repo", repo)
 		return api.GetAnalysisStatus500ApplicationProblemPlusJSONResponse{
-			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("unexpected status code from service"),
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("internal error"),
 		}, nil
 	}
+
+	if result.Analysis != nil {
+		response, mapErr := mapper.ToCompletedResponse(result.Analysis)
+		if mapErr != nil {
+			slog.Error("failed to map completed response", "owner", owner, "repo", repo, "error", mapErr)
+			return api.GetAnalysisStatus500ApplicationProblemPlusJSONResponse{
+				InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to process response"),
+			}, nil
+		}
+		return newStatus200Response(response)
+	}
+
+	response, mapErr := mapper.ToStatusResponse(result.Progress)
+	if mapErr != nil {
+		slog.Error("failed to map status response", "owner", owner, "repo", repo, "error", mapErr)
+		return api.GetAnalysisStatus500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to process response"),
+		}, nil
+	}
+	return newStatus200Response(response)
 }
 
 func validateOwnerRepo(owner, repo string) error {

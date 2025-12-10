@@ -12,7 +12,7 @@ import (
 
 func TestAnalyzeRepository(t *testing.T) {
 	t.Run("returns 400 when owner is missing", func(t *testing.T) {
-		_, r := setupTestServer()
+		_, r := setupTestHandler()
 
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze//repo", nil)
 		rec := httptest.NewRecorder()
@@ -27,7 +27,7 @@ func TestAnalyzeRepository(t *testing.T) {
 	})
 
 	t.Run("returns 404 when repo path is incomplete", func(t *testing.T) {
-		_, r := setupTestServer()
+		_, r := setupTestHandler()
 
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze/owner/", nil)
 		rec := httptest.NewRecorder()
@@ -43,7 +43,7 @@ func TestAnalyzeRepository(t *testing.T) {
 	t.Run("returns 202 and queues analysis when no record exists", func(t *testing.T) {
 		queue := &mockQueueService{}
 		repo := &mockRepository{}
-		_, r := setupTestServerWithMocks(repo, queue)
+		_, r := setupTestHandlerWithMocks(repo, queue)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze/owner/repo", nil)
 		rec := httptest.NewRecorder()
@@ -81,7 +81,7 @@ func TestAnalyzeRepository(t *testing.T) {
 				TotalTests:  10,
 			},
 		}
-		_, r := setupTestServerWithMocks(repo, queue)
+		_, r := setupTestHandlerWithMocks(repo, queue)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze/owner/repo", nil)
 		rec := httptest.NewRecorder()
@@ -111,7 +111,7 @@ func TestGetAnalysisStatus(t *testing.T) {
 	t.Run("returns 404 when no record exists", func(t *testing.T) {
 		queue := &mockQueueService{}
 		repo := &mockRepository{}
-		_, r := setupTestServerWithMocks(repo, queue)
+		_, r := setupTestHandlerWithMocks(repo, queue)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze/owner/repo/status", nil)
 		rec := httptest.NewRecorder()
@@ -132,7 +132,7 @@ func TestGetAnalysisStatus(t *testing.T) {
 				CreatedAt: time.Now(),
 			},
 		}
-		_, r := setupTestServerWithMocks(repo, queue)
+		_, r := setupTestHandlerWithMocks(repo, queue)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/analyze/owner/repo/status", nil)
 		rec := httptest.NewRecorder()

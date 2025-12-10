@@ -80,21 +80,21 @@ func (m *mockQueueService) Close() error {
 	return nil
 }
 
-// setupTestServer creates a new AnalyzerServer with mock dependencies and chi router.
-func setupTestServer() (*AnalyzerServer, *chi.Mux) {
+// setupTestHandler creates a new AnalyzerHandler with mock dependencies and chi router.
+func setupTestHandler() (*AnalyzerHandler, *chi.Mux) {
 	repo := &mockRepository{}
 	queue := &mockQueueService{}
-	return setupTestServerWithMocks(repo, queue)
+	return setupTestHandlerWithMocks(repo, queue)
 }
 
-// setupTestServerWithMocks creates an AnalyzerServer with provided mocks for more control in tests.
-func setupTestServerWithMocks(repo *mockRepository, queue *mockQueueService) (*AnalyzerServer, *chi.Mux) {
+// setupTestHandlerWithMocks creates an AnalyzerHandler with provided mocks for more control in tests.
+func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService) (*AnalyzerHandler, *chi.Mux) {
 	service := NewAnalyzerService(repo, queue)
-	server := NewAnalyzerServer(service)
+	handler := NewAnalyzerHandler(service)
 
 	r := chi.NewRouter()
-	strictHandler := api.NewStrictHandler(server, nil)
+	strictHandler := api.NewStrictHandler(handler, nil)
 	api.HandlerFromMux(strictHandler, r)
 
-	return server, r
+	return handler, r
 }

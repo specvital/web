@@ -42,10 +42,10 @@ func initHandlers(infra *infra.Container) *Handlers {
 	queueSvc := analyzer.NewQueueService(infra.Queue)
 
 	analyzerService := analyzer.NewAnalyzerService(repo, queueSvc)
-	analyzerServer := analyzer.NewAnalyzerServer(analyzerService)
+	analyzerHandler := analyzer.NewAnalyzerHandler(analyzerService)
 
 	return &Handlers{
-		API:    analyzerServer,
+		API:    analyzerHandler,
 		Health: health.NewHandler(),
 	}
 }
