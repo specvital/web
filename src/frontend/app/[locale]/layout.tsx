@@ -5,6 +5,7 @@ import { getMessages, getTranslations, setRequestLocale } from "next-intl/server
 import { notFound } from "next/navigation";
 import { Header } from "@/components/layout";
 import { ThemeProvider } from "@/components/theme";
+import { Toaster } from "@/components/ui/sonner";
 import { isValidLocale, locales } from "@/i18n/config";
 import { QueryProvider } from "@/lib/query";
 import "../globals.css";
@@ -45,6 +46,7 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
             <ThemeProvider>
               <Header />
               {children}
+              <Toaster richColors />
             </ThemeProvider>
           </NextIntlClientProvider>
         </QueryProvider>

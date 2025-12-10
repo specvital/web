@@ -67,5 +67,13 @@
     "defaultDescription": "GitHub 저장소의 테스트 사양 분석",
     "analyzeTitle": "{owner}/{repo} - 테스트 분석 | SpecVital",
     "analyzeDescription": "{owner}/{repo} 저장소의 테스트 사양 분석"
+  },
+  "share": {
+    "ariaLabel": "분석 링크 공유",
+    "button": "공유",
+    "copyFailed": "링크 복사 실패",
+    "copyFailedDescription": "주소창에서 URL을 직접 복사해주세요",
+    "linkCopied": "링크 복사됨!",
+    "linkCopiedDescription": "팀원들과 이 분석을 공유하세요"
   }
 }

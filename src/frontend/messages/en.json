@@ -67,5 +67,13 @@
     "defaultDescription": "Analyze test specifications from GitHub repositories",
     "analyzeTitle": "{owner}/{repo} - Test Analysis | SpecVital",
     "analyzeDescription": "Test specification analysis for {owner}/{repo} repository"
+  },
+  "share": {
+    "ariaLabel": "Share analysis link",
+    "button": "Share",
+    "copyFailed": "Failed to copy link",
+    "copyFailedDescription": "Please copy the URL manually from the address bar",
+    "linkCopied": "Link copied!",
+    "linkCopiedDescription": "Share this analysis with your team"
   }
 }
