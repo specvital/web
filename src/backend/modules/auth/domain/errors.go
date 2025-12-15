@@ -8,4 +8,5 @@ var (
 	ErrTokenExpired     = errors.New("token expired")
 	ErrInvalidOAuthCode = errors.New("invalid oauth code")
 	ErrInvalidState     = errors.New("invalid oauth state")
+	ErrNoGitHubToken    = errors.New("user has no github access token")
 )
