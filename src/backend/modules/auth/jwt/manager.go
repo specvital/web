@@ -33,6 +33,13 @@ func NewManager(secret string) (*Manager, error) {
 }
 
 func (m *Manager) Generate(userID, login string) (string, error) {
+	if userID == "" {
+		return "", errors.New("user ID is required")
+	}
+	if login == "" {
+		return "", errors.New("login is required")
+	}
+
 	now := time.Now()
 	claims := domain.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -59,12 +66,17 @@ func (m *Manager) Validate(tokenString string) (*domain.Claims, error) {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, domain.ErrTokenExpired
 		}
-		return nil, errors.Wrap(domain.ErrInvalidToken, err.Error())
+		return nil, errors.Wrapf(domain.ErrInvalidToken, "token validation failed: %v", err)
 	}
 
 	claims, ok := token.Claims.(*domain.Claims)
 	if !ok || !token.Valid {
 		return nil, domain.ErrInvalidToken
+	}
+
+	// Validate issuer to prevent token confusion attacks
+	if claims.Issuer != Issuer {
+		return nil, errors.Wrapf(domain.ErrInvalidToken, "invalid issuer: expected %s", Issuer)
 	}
 
 	return claims, nil

@@ -78,6 +78,29 @@ func TestManager_GenerateAndValidate(t *testing.T) {
 	}
 }
 
+func TestManager_GenerateEmptyInputs(t *testing.T) {
+	m, _ := NewManager(testSecret)
+
+	tests := []struct {
+		name   string
+		userID string
+		login  string
+	}{
+		{name: "empty userID", userID: "", login: "testuser"},
+		{name: "empty login", userID: "user-123", login: ""},
+		{name: "both empty", userID: "", login: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := m.Generate(tt.userID, tt.login)
+			if err == nil {
+				t.Errorf("Generate() should return error for %s", tt.name)
+			}
+		})
+	}
+}
+
 func TestManager_ValidateInvalidToken(t *testing.T) {
 	m, _ := NewManager(testSecret)
 
@@ -116,7 +139,6 @@ func TestManager_ValidateInvalidToken(t *testing.T) {
 func TestManager_ValidateExpiredToken(t *testing.T) {
 	m, _ := NewManager(testSecret)
 
-	// Create expired token
 	claims := domain.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    Issuer,
@@ -133,6 +155,28 @@ func TestManager_ValidateExpiredToken(t *testing.T) {
 	_, err := m.Validate(tokenString)
 	if err != domain.ErrTokenExpired {
 		t.Errorf("Validate() error = %v, want %v", err, domain.ErrTokenExpired)
+	}
+}
+
+func TestManager_ValidateInvalidIssuer(t *testing.T) {
+	m, _ := NewManager(testSecret)
+
+	claims := domain.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "other-issuer",
+			Subject:   "user-123",
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+		Login: "testuser",
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, _ := token.SignedString([]byte(testSecret))
+
+	_, err := m.Validate(tokenString)
+	if err == nil {
+		t.Error("Validate() should reject token with invalid issuer")
 	}
 }
 
