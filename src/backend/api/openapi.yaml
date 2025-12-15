@@ -97,17 +97,17 @@ paths:
             type: string
           description: OAuth state for CSRF protection
       responses:
-        "200":
-          description: Authentication successful
+        "302":
+          description: Redirect to frontend after successful authentication
           headers:
+            Location:
+              schema:
+                type: string
+              description: Frontend URL to redirect to
             Set-Cookie:
               schema:
                 type: string
               description: HTTP-only authentication cookie
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserInfo"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":

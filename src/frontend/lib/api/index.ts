@@ -1,4 +1,4 @@
-export { fetchAnalysis } from "./client";
+export { apiFetch, parseJsonResponse } from "./client";
 export type {
   AnalysisResponse,
   AnalysisResult,

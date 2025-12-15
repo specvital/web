@@ -10,6 +10,11 @@
     "analyzeAnother": "Analyze Another",
     "selectLanguage": "Select language"
   },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "openUserMenu": "Open user menu"
+  },
   "home": {
     "title": "SpecVital",
     "subtitle": "Analyze test specifications from public GitHub repositories",

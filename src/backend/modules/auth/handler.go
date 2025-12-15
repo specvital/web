@@ -24,33 +24,39 @@ const (
 
 type Handler struct {
 	cookieSecure bool
+	frontendURL  string
 	logger       *logger.Logger
 	service      Service
 }
 
 type HandlerConfig struct {
 	CookieSecure bool
+	FrontendURL  string
 	Logger       *logger.Logger
 	Service      Service
 }
 
 var _ api.AuthHandlers = (*Handler)(nil)
 
-func NewHandler(cfg *HandlerConfig) *Handler {
+func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	if cfg == nil {
-		panic("auth: HandlerConfig is required")
+		return nil, errors.New("handler config is required")
+	}
+	if cfg.FrontendURL == "" {
+		return nil, errors.New("frontend URL is required")
 	}
 	if cfg.Logger == nil {
-		panic("auth: Logger is required")
+		return nil, errors.New("logger is required")
 	}
 	if cfg.Service == nil {
-		panic("auth: Service is required")
+		return nil, errors.New("service is required")
 	}
 	return &Handler{
 		cookieSecure: cfg.CookieSecure,
+		frontendURL:  cfg.FrontendURL,
 		logger:       cfg.Logger,
 		service:      cfg.Service,
-	}
+	}, nil
 }
 
 func (h *Handler) AuthLogin(ctx context.Context, _ api.AuthLoginRequestObject) (api.AuthLoginResponseObject, error) {
@@ -96,9 +102,11 @@ func (h *Handler) AuthCallback(ctx context.Context, request api.AuthCallbackRequ
 
 	cookie := h.buildAuthCookie(result.Token)
 
-	return api.AuthCallback200JSONResponse{
-		Body:    mapper.ToUserInfo(result.User),
-		Headers: api.AuthCallback200ResponseHeaders{SetCookie: cookie},
+	return api.AuthCallback302Response{
+		Headers: api.AuthCallback302ResponseHeaders{
+			Location:  h.frontendURL,
+			SetCookie: cookie,
+		},
 	}, nil
 }
 

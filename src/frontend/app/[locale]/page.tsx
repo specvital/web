@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { OAuthErrorHandler } from "@/features/auth";
 import { UrlInputForm } from "@/features/home";
 
 export const dynamic = "force-static";
@@ -17,6 +19,10 @@ export const HomePage = async ({ params }: HomePageProps) => {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
+      <Suspense fallback={null}>
+        <OAuthErrorHandler />
+      </Suspense>
+
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t("title")}</h1>

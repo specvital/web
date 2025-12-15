@@ -492,16 +492,16 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Authentication successful */
-            200: {
+            /** @description Redirect to frontend after successful authentication */
+            302: {
                 headers: {
+                    /** @description Frontend URL to redirect to */
+                    Location?: string;
                     /** @description HTTP-only authentication cookie */
                     "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["UserInfo"];
-                };
+                content?: never;
             };
             400: components["responses"]["BadRequest"];
             500: components["responses"]["InternalError"];

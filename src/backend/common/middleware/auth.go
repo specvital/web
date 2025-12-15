@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/domain"
@@ -58,6 +59,12 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 
 func (m *AuthMiddleware) OptionalAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip auth parsing for non-API routes (health, docs, etc.)
+		if !isAPIRoute(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		claims, err := m.extractClaims(r)
 		if err == nil && claims != nil {
 			r = r.WithContext(WithClaims(r.Context(), claims))
@@ -65,6 +72,13 @@ func (m *AuthMiddleware) OptionalAuth(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// isAPIRoute checks if the path should have authentication parsing.
+// Currently uses simple prefix matching. If routing becomes more complex,
+// consider using a route matcher or configuration-based approach.
+func isAPIRoute(path string) bool {
+	return strings.HasPrefix(path, "/api")
 }
 
 func (m *AuthMiddleware) extractClaims(r *http.Request) (*domain.Claims, error) {

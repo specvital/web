@@ -3,7 +3,9 @@
 import { Home } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { AuthErrorBoundary } from "@/components/feedback";
 import { LanguageSelector, ThemeToggle } from "@/components/theme";
+import { AuthStatus, LoginButton } from "@/features/auth";
 import { Link, usePathname } from "@/i18n/navigation";
 
 export const Header = () => {
@@ -35,6 +37,9 @@ export const Header = () => {
           )}
           <LanguageSelector />
           <ThemeToggle />
+          <AuthErrorBoundary fallback={<LoginButton />}>
+            <AuthStatus />
+          </AuthErrorBoundary>
         </div>
       </div>
     </header>

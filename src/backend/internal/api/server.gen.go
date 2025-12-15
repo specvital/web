@@ -885,21 +885,20 @@ type AuthCallbackResponseObject interface {
 	VisitAuthCallbackResponse(w http.ResponseWriter) error
 }
 
-type AuthCallback200ResponseHeaders struct {
+type AuthCallback302ResponseHeaders struct {
+	Location  string
 	SetCookie string
 }
 
-type AuthCallback200JSONResponse struct {
-	Body    UserInfo
-	Headers AuthCallback200ResponseHeaders
+type AuthCallback302Response struct {
+	Headers AuthCallback302ResponseHeaders
 }
 
-func (response AuthCallback200JSONResponse) VisitAuthCallbackResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
+func (response AuthCallback302Response) VisitAuthCallbackResponse(w http.ResponseWriter) error {
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
 	w.Header().Set("Set-Cookie", fmt.Sprint(response.Headers.SetCookie))
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	w.WriteHeader(302)
+	return nil
 }
 
 type AuthCallback400ApplicationProblemPlusJSONResponse struct {

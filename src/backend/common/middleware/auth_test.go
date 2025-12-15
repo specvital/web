@@ -94,7 +94,7 @@ func TestOptionalAuth_ValidToken(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/test", nil)
 	req.AddCookie(&http.Cookie{Name: "auth_token", Value: token})
 	rec := httptest.NewRecorder()
 
@@ -118,7 +118,7 @@ func TestOptionalAuth_MissingCookie(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/test", nil)
 	rec := httptest.NewRecorder()
 
 	handler.ServeHTTP(rec, req)
@@ -141,7 +141,7 @@ func TestOptionalAuth_InvalidToken(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/test", nil)
 	req.AddCookie(&http.Cookie{Name: "auth_token", Value: "invalid-token"})
 	rec := httptest.NewRecorder()
 
@@ -152,6 +152,34 @@ func TestOptionalAuth_InvalidToken(t *testing.T) {
 	}
 	if capturedUserID != "" {
 		t.Errorf("expected empty userID, got %s", capturedUserID)
+	}
+}
+
+func TestOptionalAuth_NonAPIRoute_SkipsAuth(t *testing.T) {
+	jwtManager, _ := authjwt.NewManager(testSecret)
+	token, _ := jwtManager.Generate("user-123", "testuser")
+
+	m := NewAuthMiddleware(jwtManager, "auth_token")
+
+	var capturedUserID string
+	handler := m.OptionalAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedUserID = GetUserID(r.Context())
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	// Non-API route should skip auth parsing entirely
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.AddCookie(&http.Cookie{Name: "auth_token", Value: token})
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+	// Claims should NOT be set for non-API routes
+	if capturedUserID != "" {
+		t.Errorf("expected empty userID for non-API route, got %s", capturedUserID)
 	}
 }
 

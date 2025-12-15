@@ -10,6 +10,11 @@
     "analyzeAnother": "다른 분석",
     "selectLanguage": "언어 선택"
   },
+  "auth": {
+    "login": "로그인",
+    "logout": "로그아웃",
+    "openUserMenu": "사용자 메뉴 열기"
+  },
   "home": {
     "title": "SpecVital",
     "subtitle": "공개 GitHub 저장소의 테스트 사양 분석",

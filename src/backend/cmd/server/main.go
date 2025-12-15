@@ -59,12 +59,12 @@ func run() error {
 		}
 	}()
 
-	router := newRouter(origins, app.RouteRegistrars(), app.APIHandler())
+	router := newRouter(origins, app.RouteRegistrars(), app.APIHandler(), app.AuthMiddleware)
 
 	return startServer(router)
 }
 
-func newRouter(origins []string, registrars []server.RouteRegistrar, apiHandler api.StrictServerInterface) *chi.Mux {
+func newRouter(origins []string, registrars []server.RouteRegistrar, apiHandler api.StrictServerInterface, authMiddleware *middleware.AuthMiddleware) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(chimiddleware.RequestID)
@@ -74,6 +74,7 @@ func newRouter(origins []string, registrars []server.RouteRegistrar, apiHandler 
 	r.Use(middleware.CORS(origins))
 	r.Use(chimiddleware.Timeout(apiTimeout))
 	r.Use(middleware.Compress())
+	r.Use(authMiddleware.OptionalAuth)
 
 	for _, reg := range registrars {
 		reg.RegisterRoutes(r)

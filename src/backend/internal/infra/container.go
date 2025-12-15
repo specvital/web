@@ -17,6 +17,7 @@ import (
 type Container struct {
 	DB           *pgxpool.Pool
 	Encryptor    crypto.Encryptor
+	FrontendURL  string
 	GitClient    client.GitClient
 	GitHubOAuth  github.Client
 	JWTManager   *jwt.Manager
@@ -28,6 +29,7 @@ type Config struct {
 	DatabaseURL        string
 	EncryptionKey      string
 	Environment        string
+	FrontendURL        string
 	GitHubClientID     string
 	GitHubClientSecret string
 	GitHubRedirectURL  string
@@ -37,10 +39,15 @@ type Config struct {
 }
 
 func ConfigFromEnv() Config {
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173"
+	}
 	return Config{
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		EncryptionKey:      os.Getenv("ENCRYPTION_KEY"),
 		Environment:        os.Getenv("ENV"),
+		FrontendURL:        frontendURL,
 		GitHubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		GitHubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
 		GitHubRedirectURL:  os.Getenv("GITHUB_REDIRECT_URL"),
@@ -104,6 +111,7 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 	return &Container{
 		DB:           pool,
 		Encryptor:    encryptor,
+		FrontendURL:  cfg.FrontendURL,
 		GitClient:    gitClient,
 		GitHubOAuth:  githubClient,
 		JWTManager:   jwtManager,

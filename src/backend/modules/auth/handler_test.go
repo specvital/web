@@ -75,11 +75,15 @@ func TestAuthLogin_Success(t *testing.T) {
 	svc := &mockService{
 		initiateAuthURL: "https://github.com/login/oauth/authorize?client_id=test",
 	}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
@@ -98,11 +102,15 @@ func TestAuthLogin_ServiceError(t *testing.T) {
 	svc := &mockService{
 		err: domain.ErrInvalidState,
 	}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
@@ -125,24 +133,33 @@ func TestAuthCallback_Success(t *testing.T) {
 			},
 		},
 	}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/callback?code=test-code&state=test-state", nil)
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Errorf("expected status 200, got %d", rec.Code)
+	if rec.Code != http.StatusFound {
+		t.Errorf("expected status 302, got %d", rec.Code)
 	}
 
 	cookie := rec.Header().Get("Set-Cookie")
 	if cookie == "" {
 		t.Error("expected Set-Cookie header to be set")
+	}
+
+	location := rec.Header().Get("Location")
+	if location != "http://localhost:5173" {
+		t.Errorf("expected Location header to be http://localhost:5173, got %s", location)
 	}
 }
 
@@ -150,11 +167,15 @@ func TestAuthCallback_InvalidState(t *testing.T) {
 	svc := &mockService{
 		err: domain.ErrInvalidState,
 	}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/callback?code=test-code&state=invalid-state", nil)
@@ -170,11 +191,15 @@ func TestAuthCallback_InvalidCode(t *testing.T) {
 	svc := &mockService{
 		err: domain.ErrInvalidOAuthCode,
 	}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/callback?code=invalid-code&state=test-state", nil)
@@ -198,11 +223,15 @@ func TestAuthCallback_MissingParameters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(&HandlerConfig{
+			handler, err := NewHandler(&HandlerConfig{
 				CookieSecure: false,
+				FrontendURL:  "http://localhost:5173",
 				Logger:       logger.New(),
 				Service:      &mockService{},
 			})
+			if err != nil {
+				t.Fatalf("failed to create handler: %v", err)
+			}
 			router := setupTestRouter(handler)
 
 			req := httptest.NewRequest(http.MethodGet, tt.url, nil)
@@ -218,11 +247,15 @@ func TestAuthCallback_MissingParameters(t *testing.T) {
 
 func TestAuthLogout_Success(t *testing.T) {
 	svc := &mockService{}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
@@ -244,11 +277,15 @@ func TestAuthLogout_Success(t *testing.T) {
 
 func TestAuthMe_Unauthenticated(t *testing.T) {
 	svc := &mockService{}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
@@ -264,11 +301,15 @@ func TestAuthMe_UserNotFound(t *testing.T) {
 	svc := &mockService{
 		err: domain.ErrUserNotFound,
 	}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 
 	// Use direct handler call with claims in context
 	claims := &domain.Claims{}
@@ -290,11 +331,15 @@ func TestAuthMe_Success(t *testing.T) {
 			Username:  "testuser",
 		},
 	}
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      svc,
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 
 	// Use direct handler call with claims in context
 	claims := &domain.Claims{}
@@ -309,11 +354,15 @@ func TestAuthMe_Success(t *testing.T) {
 }
 
 func TestBuildAuthCookie(t *testing.T) {
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: true,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      &mockService{},
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 
 	cookie := handler.buildAuthCookie("test-token")
 	if cookie == "" {
@@ -339,11 +388,15 @@ func TestBuildAuthCookie(t *testing.T) {
 }
 
 func TestBuildLogoutCookie(t *testing.T) {
-	handler := NewHandler(&HandlerConfig{
+	handler, err := NewHandler(&HandlerConfig{
 		CookieSecure: false,
+		FrontendURL:  "http://localhost:5173",
 		Logger:       logger.New(),
 		Service:      &mockService{},
 	})
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
 
 	cookie := handler.BuildLogoutCookie()
 	if cookie == "" {

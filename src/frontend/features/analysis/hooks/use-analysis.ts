@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { fetchAnalysis } from "@/lib/api/client";
+import { fetchAnalysis } from "../api";
 import type { AnalysisResponse, AnalysisResult } from "@/lib/api/types";
 
 class AnalysisTimeoutError extends Error {

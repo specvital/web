@@ -34,7 +34,10 @@ func NewApp(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("init infra: %w", err)
 	}
 
-	handlers := initHandlers(container)
+	handlers, err := initHandlers(container)
+	if err != nil {
+		return nil, fmt.Errorf("init handlers: %w", err)
+	}
 	authMiddleware := middleware.NewAuthMiddleware(container.JWTManager, auth.CookieName)
 
 	return &App{
@@ -44,7 +47,7 @@ func NewApp(ctx context.Context) (*App, error) {
 	}, nil
 }
 
-func initHandlers(container *infra.Container) *Handlers {
+func initHandlers(container *infra.Container) (*Handlers, error) {
 	log := logger.New()
 
 	queries := db.New(container.DB)
@@ -63,11 +66,15 @@ func initHandlers(container *infra.Container) *Handlers {
 		Repository:   authRepo,
 		StateStore:   stateStore,
 	})
-	authHandler := auth.NewHandler(&auth.HandlerConfig{
+	authHandler, err := auth.NewHandler(&auth.HandlerConfig{
 		CookieSecure: container.SecureCookie,
+		FrontendURL:  container.FrontendURL,
 		Logger:       log,
 		Service:      authService,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("create auth handler: %w", err)
+	}
 
 	apiHandlers := api.NewAPIHandlers(analyzerHandler, authHandler)
 
@@ -75,7 +82,7 @@ func initHandlers(container *infra.Container) *Handlers {
 		API:    apiHandlers,
 		Docs:   docs.NewHandler(),
 		Health: health.NewHandler(log),
-	}
+	}, nil
 }
 
 func (a *App) APIHandler() api.StrictServerInterface {
