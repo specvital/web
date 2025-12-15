@@ -118,7 +118,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 	handler := NewAnalyzerHandler(log, service)
 
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(handler, auth.NewStubHandler())
+	apiHandlers := api.NewAPIHandlers(handler, auth.NewMockHandler())
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 
