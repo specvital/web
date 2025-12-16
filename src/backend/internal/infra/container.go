@@ -99,6 +99,7 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 		ClientID:     cfg.GitHubClientID,
 		ClientSecret: cfg.GitHubClientSecret,
 		RedirectURL:  cfg.GitHubRedirectURL,
+		Scopes:       []string{"user:email", "repo"},
 	})
 	if err != nil {
 		cleanup()
