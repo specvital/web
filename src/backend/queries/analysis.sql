@@ -62,3 +62,8 @@ SELECT
 FROM test_cases tc
 WHERE tc.suite_id = ANY($1::uuid[])
 ORDER BY tc.suite_id, tc.line_number;
+
+-- name: UpdateCodebaseLastViewed :exec
+UPDATE codebases
+SET last_viewed_at = now()
+WHERE host = $1 AND owner = $2 AND name = $3;

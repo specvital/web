@@ -108,6 +108,13 @@ func TestAnalyzeRepository(t *testing.T) {
 		if resp.Data.CommitSHA != "abc123" {
 			t.Errorf("expected commitSha %q, got %q", "abc123", resp.Data.CommitSHA)
 		}
+
+		if !repo.lastViewedCalled {
+			t.Error("expected UpdateLastViewed to be called")
+		}
+		if repo.lastViewedOwner != "owner" || repo.lastViewedRepo != "repo" {
+			t.Errorf("expected UpdateLastViewed(owner, repo), got (%s, %s)", repo.lastViewedOwner, repo.lastViewedRepo)
+		}
 	})
 }
 
@@ -159,6 +166,45 @@ func TestGetAnalysisStatus(t *testing.T) {
 
 		if resp.Status != "analyzing" {
 			t.Errorf("expected status %q, got %q", "analyzing", resp.Status)
+		}
+
+		// UpdateLastViewed should NOT be called for in-progress analysis
+		if repo.lastViewedCalled {
+			t.Error("UpdateLastViewed should not be called for in-progress analysis")
+		}
+	})
+
+	t.Run("updates last_viewed_at when returning completed analysis", func(t *testing.T) {
+		queue := &mockQueueService{}
+		repo := &mockRepository{
+			completedAnalysis: &CompletedAnalysis{
+				ID:          "test-id",
+				Owner:       "testowner",
+				Repo:        "testrepo",
+				CommitSHA:   "def456",
+				CompletedAt: time.Now(),
+				TotalSuites: 3,
+				TotalTests:  15,
+			},
+		}
+		gitClient := &mockGitClient{}
+		tokenProvider := &mockTokenProvider{}
+		_, r := setupTestHandlerWithMocks(repo, queue, gitClient, tokenProvider)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/analyze/testowner/testrepo/status", nil)
+		rec := httptest.NewRecorder()
+
+		r.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+		}
+
+		if !repo.lastViewedCalled {
+			t.Error("expected UpdateLastViewed to be called")
+		}
+		if repo.lastViewedOwner != "testowner" || repo.lastViewedRepo != "testrepo" {
+			t.Errorf("expected UpdateLastViewed(testowner, testrepo), got (%s, %s)", repo.lastViewedOwner, repo.lastViewedRepo)
 		}
 	})
 }

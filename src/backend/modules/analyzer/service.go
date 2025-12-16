@@ -68,6 +68,9 @@ func (s *analyzerService) AnalyzeRepository(ctx context.Context, owner, repo str
 				log.Error(ctx, "failed to build analysis", "error", buildErr)
 				return nil, fmt.Errorf("build analysis: %w", buildErr)
 			}
+			if err := s.repo.UpdateLastViewed(ctx, owner, repo); err != nil {
+				log.Warn(ctx, "failed to update last_viewed_at", "error", err)
+			}
 			log.Info(ctx, "cache hit", "commitSHA", latestSHA)
 			return &AnalyzeResult{Analysis: analysis}, nil
 		}
@@ -133,6 +136,9 @@ func (s *analyzerService) GetAnalysisStatus(ctx context.Context, owner, repo str
 		if buildErr != nil {
 			log.Error(ctx, "failed to build analysis", "error", buildErr)
 			return nil, fmt.Errorf("build analysis: %w", buildErr)
+		}
+		if err := s.repo.UpdateLastViewed(ctx, owner, repo); err != nil {
+			log.Warn(ctx, "failed to update last_viewed_at", "error", err)
 		}
 		return &AnalyzeResult{Analysis: analysis}, nil
 	}

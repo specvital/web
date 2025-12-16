@@ -22,6 +22,7 @@ type Repository interface {
 	GetLatestCompletedAnalysis(ctx context.Context, owner, repo string) (*CompletedAnalysis, error)
 	GetTestSuitesWithCases(ctx context.Context, analysisID string) ([]TestSuiteWithCases, error)
 	MarkAnalysisFailed(ctx context.Context, analysisID, errorMsg string) error
+	UpdateLastViewed(ctx context.Context, owner, repo string) error
 }
 
 type CompletedAnalysis struct {
@@ -208,6 +209,14 @@ func (r *repositoryImpl) GetTestSuitesWithCases(ctx context.Context, analysisID 
 	}
 
 	return suites, nil
+}
+
+func (r *repositoryImpl) UpdateLastViewed(ctx context.Context, owner, repo string) error {
+	return r.queries.UpdateCodebaseLastViewed(ctx, db.UpdateCodebaseLastViewedParams{
+		Host:  HostGitHub,
+		Owner: owner,
+		Name:  repo,
+	})
 }
 
 func uuidToString(u pgtype.UUID) string {

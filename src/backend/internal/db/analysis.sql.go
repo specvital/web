@@ -216,6 +216,23 @@ func (q *Queries) MarkAnalysisFailed(ctx context.Context, arg MarkAnalysisFailed
 	return err
 }
 
+const updateCodebaseLastViewed = `-- name: UpdateCodebaseLastViewed :exec
+UPDATE codebases
+SET last_viewed_at = now()
+WHERE host = $1 AND owner = $2 AND name = $3
+`
+
+type UpdateCodebaseLastViewedParams struct {
+	Host  string `json:"host"`
+	Owner string `json:"owner"`
+	Name  string `json:"name"`
+}
+
+func (q *Queries) UpdateCodebaseLastViewed(ctx context.Context, arg UpdateCodebaseLastViewedParams) error {
+	_, err := q.db.Exec(ctx, updateCodebaseLastViewed, arg.Host, arg.Owner, arg.Name)
+	return err
+}
+
 const upsertCodebase = `-- name: UpsertCodebase :one
 INSERT INTO codebases (host, owner, name)
 VALUES ($1, $2, $3)

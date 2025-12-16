@@ -19,6 +19,9 @@ type mockRepository struct {
 	createErr         error
 	createdAnalysisID string
 	err               error
+	lastViewedCalled  bool
+	lastViewedOwner   string
+	lastViewedRepo    string
 	suitesWithCases   []TestSuiteWithCases
 }
 
@@ -60,6 +63,13 @@ func (m *mockRepository) GetTestSuitesWithCases(ctx context.Context, analysisID 
 }
 
 func (m *mockRepository) MarkAnalysisFailed(ctx context.Context, analysisID, errorMsg string) error {
+	return nil
+}
+
+func (m *mockRepository) UpdateLastViewed(ctx context.Context, owner, repo string) error {
+	m.lastViewedCalled = true
+	m.lastViewedOwner = owner
+	m.lastViewedRepo = repo
 	return nil
 }
 
