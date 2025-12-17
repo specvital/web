@@ -104,6 +104,9 @@ run target *args:
         ;;
     esac
 
+sync-docs:
+    baedal specvital/specvital.github.io/docs docs --exclude ".vitepress/**"
+
 build target="all":
     #!/usr/bin/env bash
     set -euox pipefail

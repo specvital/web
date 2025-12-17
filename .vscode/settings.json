@@ -124,6 +124,14 @@
           "shortcut": "u",
           "terminalName": "update-core",
           "useVsCodeApi": false
+        },
+        {
+          "color": "",
+          "command": "just sync-docs",
+          "name": "sync-docs",
+          "shortcut": "y",
+          "terminalName": "sync-docs",
+          "useVsCodeApi": false
         }
       ]
     },
