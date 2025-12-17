@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/specvital/web/src/backend/common/crypto"
+	"github.com/specvital/core/pkg/crypto"
 	"github.com/specvital/web/src/backend/internal/client"
 	"github.com/specvital/web/src/backend/modules/auth/github"
 	"github.com/specvital/web/src/backend/modules/auth/jwt"

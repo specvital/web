@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/specvital/web/src/backend/common/crypto"
+	"github.com/specvital/core/pkg/crypto"
 	"github.com/specvital/web/src/backend/modules/auth/domain"
 	"github.com/specvital/web/src/backend/modules/auth/github"
 	"github.com/specvital/web/src/backend/modules/auth/jwt"
