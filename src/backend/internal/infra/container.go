@@ -25,16 +25,16 @@ type Container struct {
 }
 
 type Config struct {
-	DatabaseURL        string
-	EncryptionKey      string
-	Environment        string
-	FrontendURL        string
-	GitHubClientID     string
-	GitHubClientSecret string
-	GitHubRedirectURL  string
-	JWTSecret          string
-	RedisURL           string
-	SecureCookie       bool
+	DatabaseURL             string
+	EncryptionKey           string
+	Environment             string
+	FrontendURL             string
+	GitHubOAuthClientID     string
+	GitHubOAuthClientSecret string
+	GitHubOAuthRedirectURL  string
+	JWTSecret               string
+	RedisURL                string
+	SecureCookie            bool
 }
 
 func ConfigFromEnv() Config {
@@ -43,16 +43,16 @@ func ConfigFromEnv() Config {
 		frontendURL = "http://localhost:5173"
 	}
 	return Config{
-		DatabaseURL:        os.Getenv("DATABASE_URL"),
-		EncryptionKey:      os.Getenv("ENCRYPTION_KEY"),
-		Environment:        os.Getenv("ENV"),
-		FrontendURL:        frontendURL,
-		GitHubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
-		GitHubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
-		GitHubRedirectURL:  os.Getenv("GITHUB_REDIRECT_URL"),
-		JWTSecret:          os.Getenv("JWT_SECRET"),
-		RedisURL:           os.Getenv("REDIS_URL"),
-		SecureCookie:       os.Getenv("SECURE_COOKIE") == "true",
+		DatabaseURL:             os.Getenv("DATABASE_URL"),
+		EncryptionKey:           os.Getenv("ENCRYPTION_KEY"),
+		Environment:             os.Getenv("ENV"),
+		FrontendURL:             frontendURL,
+		GitHubOAuthClientID:     os.Getenv("GITHUB_OAUTH_CLIENT_ID"),
+		GitHubOAuthClientSecret: os.Getenv("GITHUB_OAUTH_CLIENT_SECRET"),
+		GitHubOAuthRedirectURL:  os.Getenv("GITHUB_OAUTH_REDIRECT_URL"),
+		JWTSecret:               os.Getenv("JWT_SECRET"),
+		RedisURL:                os.Getenv("REDIS_URL"),
+		SecureCookie:            os.Getenv("SECURE_COOKIE") == "true",
 	}
 }
 
@@ -96,9 +96,9 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 	}
 
 	githubClient, err := github.NewClient(&github.Config{
-		ClientID:     cfg.GitHubClientID,
-		ClientSecret: cfg.GitHubClientSecret,
-		RedirectURL:  cfg.GitHubRedirectURL,
+		ClientID:     cfg.GitHubOAuthClientID,
+		ClientSecret: cfg.GitHubOAuthClientSecret,
+		RedirectURL:  cfg.GitHubOAuthRedirectURL,
 		Scopes:       []string{"user:email", "repo"},
 	})
 	if err != nil {
@@ -127,14 +127,14 @@ func validateConfig(cfg Config) error {
 	if cfg.EncryptionKey == "" {
 		return fmt.Errorf("ENCRYPTION_KEY is required")
 	}
-	if cfg.GitHubClientID == "" {
-		return fmt.Errorf("GITHUB_CLIENT_ID is required")
+	if cfg.GitHubOAuthClientID == "" {
+		return fmt.Errorf("GITHUB_OAUTH_CLIENT_ID is required")
 	}
-	if cfg.GitHubClientSecret == "" {
-		return fmt.Errorf("GITHUB_CLIENT_SECRET is required")
+	if cfg.GitHubOAuthClientSecret == "" {
+		return fmt.Errorf("GITHUB_OAUTH_CLIENT_SECRET is required")
 	}
-	if cfg.GitHubRedirectURL == "" {
-		return fmt.Errorf("GITHUB_REDIRECT_URL is required")
+	if cfg.GitHubOAuthRedirectURL == "" {
+		return fmt.Errorf("GITHUB_OAUTH_REDIRECT_URL is required")
 	}
 	if cfg.JWTSecret == "" {
 		return fmt.Errorf("JWT_SECRET is required")
