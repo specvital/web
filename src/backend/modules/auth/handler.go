@@ -23,6 +23,7 @@ const (
 )
 
 type Handler struct {
+	cookieDomain string
 	cookieSecure bool
 	frontendURL  string
 	logger       *logger.Logger
@@ -30,6 +31,7 @@ type Handler struct {
 }
 
 type HandlerConfig struct {
+	CookieDomain string
 	CookieSecure bool
 	FrontendURL  string
 	Logger       *logger.Logger
@@ -52,6 +54,7 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 		return nil, errors.New("service is required")
 	}
 	return &Handler{
+		cookieDomain: cfg.CookieDomain,
 		cookieSecure: cfg.CookieSecure,
 		frontendURL:  cfg.FrontendURL,
 		logger:       cfg.Logger,
@@ -145,6 +148,7 @@ func (h *Handler) AuthMe(ctx context.Context, _ api.AuthMeRequestObject) (api.Au
 
 func (h *Handler) buildAuthCookie(token string) string {
 	cookie := &http.Cookie{
+		Domain:   h.cookieDomain,
 		HttpOnly: true,
 		MaxAge:   CookieMaxAge,
 		Name:     CookieName,
@@ -158,6 +162,7 @@ func (h *Handler) buildAuthCookie(token string) string {
 
 func (h *Handler) BuildLogoutCookie() string {
 	cookie := &http.Cookie{
+		Domain:   h.cookieDomain,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		MaxAge:   -1,

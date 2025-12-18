@@ -15,6 +15,7 @@ import (
 
 type Container struct {
 	Asynq        *AsynqComponents
+	CookieDomain string
 	DB           *pgxpool.Pool
 	Encryptor    crypto.Encryptor
 	FrontendURL  string
@@ -25,6 +26,7 @@ type Container struct {
 }
 
 type Config struct {
+	CookieDomain            string
 	DatabaseURL             string
 	EncryptionKey           string
 	Environment             string
@@ -43,6 +45,7 @@ func ConfigFromEnv() Config {
 		frontendURL = "http://localhost:5173"
 	}
 	return Config{
+		CookieDomain:            os.Getenv("COOKIE_DOMAIN"),
 		DatabaseURL:             os.Getenv("DATABASE_URL"),
 		EncryptionKey:           os.Getenv("ENCRYPTION_KEY"),
 		Environment:             os.Getenv("ENV"),
@@ -110,6 +113,7 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 
 	return &Container{
 		Asynq:        asynqComponents,
+		CookieDomain: cfg.CookieDomain,
 		DB:           pool,
 		Encryptor:    encryptor,
 		FrontendURL:  cfg.FrontendURL,

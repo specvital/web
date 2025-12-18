@@ -62,6 +62,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		StateStore:   stateStore,
 	})
 	authHandler, err := auth.NewHandler(&auth.HandlerConfig{
+		CookieDomain: container.CookieDomain,
 		CookieSecure: container.SecureCookie,
 		FrontendURL:  container.FrontendURL,
 		Logger:       log,
