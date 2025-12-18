@@ -1,10 +1,10 @@
 {
-  "name": "template-repository",
+  "name": "specvital-web",
   "version": "0.0.0",
-  "description": "TODO: Add description",
+  "description": "specvital web service",
   "repository": {
     "type": "git",
-    "url": "https://github.com/KubrickCode/template-repository.git"
+    "url": "https://github.com/KubrickCode/specvital-web.git"
   },
   "license": "MIT",
   "scripts": {
