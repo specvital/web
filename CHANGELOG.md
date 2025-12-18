@@ -2,6 +2,12 @@
 
 ### 🐛 Bug Fixes
 
+- "failed to get latest commit" error during repository analysis ([0de5c39](https://github.com/specvital/web/commit/0de5c399abe3d02435c81640c50d43d1a5bfa37f))
+
+## 🎯 Highlights
+
+### 🐛 Bug Fixes
+
 - page not working in production environment ([21a60f7](https://github.com/specvital/web/commit/21a60f7700180cbe01faef41458cc5b73be645d0))
 
 ## 🎯 Highlights
