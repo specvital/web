@@ -46,39 +46,28 @@ func (m *mockRepository) UpdateLastViewed(ctx context.Context, owner, repo strin
 	return nil
 }
 
-func (m *mockRepository) GetRiverJobByAnalysisID(ctx context.Context, kind, analysisID string) (*RiverJobInfo, error) {
-	return nil, nil
-}
-
 func (m *mockRepository) FindActiveRiverJobByRepo(ctx context.Context, kind, owner, repo string) (*RiverJobInfo, error) {
 	return nil, nil
 }
 
 // mockQueueService is a test double for QueueService.
 type mockQueueService struct {
-	enqueueCalled      bool
-	enqueuedAnalysisID string
-	enqueuedOwner      string
-	enqueuedRepo       string
-	enqueuedCommitSHA  string
-	enqueuedUserID     *string
-	err                error
-	taskInfo           *TaskInfo
-	findTaskInfo       *TaskInfo
+	enqueueCalled     bool
+	enqueuedOwner     string
+	enqueuedRepo      string
+	enqueuedCommitSHA string
+	enqueuedUserID    *string
+	err               error
+	findTaskInfo      *TaskInfo
 }
 
-func (m *mockQueueService) Enqueue(ctx context.Context, analysisID, owner, repo, commitSHA string, userID *string) error {
+func (m *mockQueueService) Enqueue(ctx context.Context, owner, repo, commitSHA string, userID *string) error {
 	m.enqueueCalled = true
-	m.enqueuedAnalysisID = analysisID
 	m.enqueuedOwner = owner
 	m.enqueuedRepo = repo
 	m.enqueuedCommitSHA = commitSHA
 	m.enqueuedUserID = userID
 	return m.err
-}
-
-func (m *mockQueueService) GetTaskInfo(ctx context.Context, analysisID string) (*TaskInfo, error) {
-	return m.taskInfo, nil
 }
 
 func (m *mockQueueService) FindTaskByRepo(ctx context.Context, owner, repo string) (*TaskInfo, error) {

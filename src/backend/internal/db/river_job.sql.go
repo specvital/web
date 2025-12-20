@@ -11,7 +11,7 @@ import (
 
 const findActiveRiverJobByRepo = `-- name: FindActiveRiverJobByRepo :one
 SELECT
-    args->>'analysis_id' as analysis_id,
+    (args->>'commit_sha')::text as commit_sha,
     state::text as state
 FROM river_job
 WHERE
@@ -30,42 +30,13 @@ type FindActiveRiverJobByRepoParams struct {
 }
 
 type FindActiveRiverJobByRepoRow struct {
-	AnalysisID interface{} `json:"analysis_id"`
-	State      string      `json:"state"`
+	CommitSha string `json:"commit_sha"`
+	State     string `json:"state"`
 }
 
 func (q *Queries) FindActiveRiverJobByRepo(ctx context.Context, arg FindActiveRiverJobByRepoParams) (FindActiveRiverJobByRepoRow, error) {
 	row := q.db.QueryRow(ctx, findActiveRiverJobByRepo, arg.Kind, arg.Owner, arg.Repo)
 	var i FindActiveRiverJobByRepoRow
-	err := row.Scan(&i.AnalysisID, &i.State)
-	return i, err
-}
-
-const getRiverJobByAnalysisID = `-- name: GetRiverJobByAnalysisID :one
-SELECT
-    args->>'analysis_id' as analysis_id,
-    state::text as state
-FROM river_job
-WHERE
-    kind = $1::text
-    AND args->>'analysis_id' = $2::text
-ORDER BY created_at DESC
-LIMIT 1
-`
-
-type GetRiverJobByAnalysisIDParams struct {
-	Kind       string `json:"kind"`
-	AnalysisID string `json:"analysis_id"`
-}
-
-type GetRiverJobByAnalysisIDRow struct {
-	AnalysisID interface{} `json:"analysis_id"`
-	State      string      `json:"state"`
-}
-
-func (q *Queries) GetRiverJobByAnalysisID(ctx context.Context, arg GetRiverJobByAnalysisIDParams) (GetRiverJobByAnalysisIDRow, error) {
-	row := q.db.QueryRow(ctx, getRiverJobByAnalysisID, arg.Kind, arg.AnalysisID)
-	var i GetRiverJobByAnalysisIDRow
-	err := row.Scan(&i.AnalysisID, &i.State)
+	err := row.Scan(&i.CommitSha, &i.State)
 	return i, err
 }

@@ -19,25 +19,23 @@ const (
 )
 
 type AnalyzeArgs struct {
-	AnalysisID string  `json:"analysis_id"`
-	Owner      string  `json:"owner"`
-	Repo       string  `json:"repo"`
-	CommitSHA  string  `json:"commit_sha"`
-	UserID     *string `json:"user_id,omitempty"`
+	CommitSHA string  `json:"commit_sha" river:"unique"`
+	Owner     string  `json:"owner" river:"unique"`
+	Repo      string  `json:"repo" river:"unique"`
+	UserID    *string `json:"user_id,omitempty"`
 }
 
 func (AnalyzeArgs) Kind() string { return TypeAnalyze }
 
 type QueueService interface {
-	Enqueue(ctx context.Context, analysisID, owner, repo, commitSHA string, userID *string) error
-	GetTaskInfo(ctx context.Context, analysisID string) (*TaskInfo, error)
+	Enqueue(ctx context.Context, owner, repo, commitSHA string, userID *string) error
 	FindTaskByRepo(ctx context.Context, owner, repo string) (*TaskInfo, error)
 	Close() error
 }
 
 type TaskInfo struct {
-	AnalysisID string
-	State      string
+	CommitSHA string
+	State     string
 }
 
 type riverQueueService struct {
@@ -49,16 +47,15 @@ func NewQueueService(client *river.Client[pgx.Tx], repo Repository) QueueService
 	return &riverQueueService{client: client, repo: repo}
 }
 
-func (s *riverQueueService) Enqueue(ctx context.Context, analysisID, owner, repo, commitSHA string, userID *string) error {
+func (s *riverQueueService) Enqueue(ctx context.Context, owner, repo, commitSHA string, userID *string) error {
 	ctx, cancel := context.WithTimeout(ctx, enqueueTimeout)
 	defer cancel()
 
 	args := AnalyzeArgs{
-		AnalysisID: analysisID,
-		Owner:      owner,
-		Repo:       repo,
-		CommitSHA:  commitSHA,
-		UserID:     userID,
+		CommitSHA: commitSHA,
+		Owner:     owner,
+		Repo:      repo,
+		UserID:    userID,
 	}
 
 	_, err := s.client.Insert(ctx, args, &river.InsertOpts{
@@ -82,21 +79,6 @@ func (s *riverQueueService) Enqueue(ctx context.Context, analysisID, owner, repo
 	return nil
 }
 
-func (s *riverQueueService) GetTaskInfo(ctx context.Context, analysisID string) (*TaskInfo, error) {
-	info, err := s.repo.GetRiverJobByAnalysisID(ctx, TypeAnalyze, analysisID)
-	if err != nil {
-		return nil, err
-	}
-	if info == nil {
-		return nil, nil
-	}
-
-	return &TaskInfo{
-		AnalysisID: info.AnalysisID,
-		State:      info.State,
-	}, nil
-}
-
 func (s *riverQueueService) FindTaskByRepo(ctx context.Context, owner, repo string) (*TaskInfo, error) {
 	info, err := s.repo.FindActiveRiverJobByRepo(ctx, TypeAnalyze, owner, repo)
 	if err != nil {
@@ -107,8 +89,8 @@ func (s *riverQueueService) FindTaskByRepo(ctx context.Context, owner, repo stri
 	}
 
 	return &TaskInfo{
-		AnalysisID: info.AnalysisID,
-		State:      info.State,
+		CommitSHA: info.CommitSHA,
+		State:     info.State,
 	}, nil
 }
 

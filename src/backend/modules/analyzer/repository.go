@@ -20,7 +20,6 @@ type Repository interface {
 	GetLatestCompletedAnalysis(ctx context.Context, owner, repo string) (*CompletedAnalysis, error)
 	GetTestSuitesWithCases(ctx context.Context, analysisID string) ([]TestSuiteWithCases, error)
 	UpdateLastViewed(ctx context.Context, owner, repo string) error
-	GetRiverJobByAnalysisID(ctx context.Context, kind, analysisID string) (*RiverJobInfo, error)
 	FindActiveRiverJobByRepo(ctx context.Context, kind, owner, repo string) (*RiverJobInfo, error)
 }
 
@@ -48,8 +47,8 @@ type TestCaseRow struct {
 }
 
 type RiverJobInfo struct {
-	AnalysisID string
-	State      string
+	CommitSHA string
+	State     string
 }
 
 type repositoryImpl struct {
@@ -149,28 +148,6 @@ func (r *repositoryImpl) UpdateLastViewed(ctx context.Context, owner, repo strin
 	})
 }
 
-func (r *repositoryImpl) GetRiverJobByAnalysisID(ctx context.Context, kind, analysisID string) (*RiverJobInfo, error) {
-	row, err := r.queries.GetRiverJobByAnalysisID(ctx, db.GetRiverJobByAnalysisIDParams{
-		Kind:       kind,
-		AnalysisID: analysisID,
-	})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("get river job by analysis ID: %w", err)
-	}
-
-	analysisIDStr, ok := row.AnalysisID.(string)
-	if !ok {
-		return nil, fmt.Errorf("analysis_id is not a string: %T", row.AnalysisID)
-	}
-	return &RiverJobInfo{
-		AnalysisID: analysisIDStr,
-		State:      row.State,
-	}, nil
-}
-
 func (r *repositoryImpl) FindActiveRiverJobByRepo(ctx context.Context, kind, owner, repo string) (*RiverJobInfo, error) {
 	row, err := r.queries.FindActiveRiverJobByRepo(ctx, db.FindActiveRiverJobByRepoParams{
 		Kind:  kind,
@@ -184,13 +161,9 @@ func (r *repositoryImpl) FindActiveRiverJobByRepo(ctx context.Context, kind, own
 		return nil, fmt.Errorf("find active river job by repo: %w", err)
 	}
 
-	analysisIDStr, ok := row.AnalysisID.(string)
-	if !ok {
-		return nil, fmt.Errorf("analysis_id is not a string: %T", row.AnalysisID)
-	}
 	return &RiverJobInfo{
-		AnalysisID: analysisIDStr,
-		State:      row.State,
+		CommitSHA: row.CommitSha,
+		State:     row.State,
 	}, nil
 }
 

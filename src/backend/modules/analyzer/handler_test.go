@@ -139,8 +139,8 @@ func TestGetAnalysisStatus(t *testing.T) {
 	t.Run("returns 200 with analyzing status when in progress", func(t *testing.T) {
 		queue := &mockQueueService{
 			findTaskInfo: &TaskInfo{
-				AnalysisID: "test-id",
-				State:      "running",
+				CommitSHA: "test-commit-sha",
+				State:     "running",
 			},
 		}
 		repo := &mockRepository{}

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-	"github.com/google/uuid"
 	"github.com/riverqueue/river/rivertype"
 
 	"github.com/specvital/web/src/backend/common/logger"
@@ -90,17 +89,20 @@ func (s *analyzerService) AnalyzeRepository(ctx context.Context, owner, repo str
 	if err != nil {
 		log.Warn(ctx, "failed to search queue", "error", err)
 	}
-	if taskInfo != nil {
+	if taskInfo != nil && taskInfo.CommitSHA == latestSHA {
 		now := time.Now()
 		progress := &domain.AnalysisProgress{
+			CommitSHA: taskInfo.CommitSHA,
 			CreatedAt: now,
-			ID:        taskInfo.AnalysisID,
 			Status:    s.mapQueueState(taskInfo.State),
 		}
 		return &AnalyzeResult{Progress: progress}, nil
 	}
-
-	analysisID := uuid.New().String()
+	if taskInfo != nil {
+		log.Info(ctx, "active job exists for different commit",
+			"activeCommit", taskInfo.CommitSHA,
+			"requestedCommit", latestSHA)
+	}
 
 	userID := middleware.GetUserID(ctx)
 	var userIDPtr *string
@@ -108,15 +110,15 @@ func (s *analyzerService) AnalyzeRepository(ctx context.Context, owner, repo str
 		userIDPtr = &userID
 	}
 
-	if err := s.queue.Enqueue(ctx, analysisID, owner, repo, latestSHA, userIDPtr); err != nil {
-		log.Error(ctx, "failed to enqueue", "analysisId", analysisID, "error", err)
+	if err := s.queue.Enqueue(ctx, owner, repo, latestSHA, userIDPtr); err != nil {
+		log.Error(ctx, "failed to enqueue", "commitSHA", latestSHA, "error", err)
 		return nil, fmt.Errorf("queue analysis: %w", err)
 	}
 
 	now := time.Now()
 	progress := &domain.AnalysisProgress{
+		CommitSHA: latestSHA,
 		CreatedAt: now,
-		ID:        analysisID,
 		Status:    domain.StatusPending,
 	}
 	return &AnalyzeResult{Progress: progress}, nil
@@ -153,8 +155,8 @@ func (s *analyzerService) GetAnalysisStatus(ctx context.Context, owner, repo str
 	if taskInfo != nil {
 		now := time.Now()
 		progress := &domain.AnalysisProgress{
+			CommitSHA: taskInfo.CommitSHA,
 			CreatedAt: now,
-			ID:        taskInfo.AnalysisID,
 			Status:    s.mapQueueState(taskInfo.State),
 		}
 		return &AnalyzeResult{Progress: progress}, nil
@@ -172,6 +174,11 @@ func (s *analyzerService) mapQueueState(state string) domain.Status {
 		return domain.StatusPending
 	case rivertype.JobStateRunning:
 		return domain.StatusRunning
+	case rivertype.JobStateCancelled,
+		rivertype.JobStateDiscarded:
+		return domain.StatusFailed
+	case rivertype.JobStateCompleted:
+		return domain.StatusCompleted
 	default:
 		return domain.StatusPending
 	}

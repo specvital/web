@@ -126,6 +126,7 @@ type NullRiverJobState struct {
 	Valid         bool          `json:"valid"` // Valid is true if RiverJobState is not NULL
 }
 
+// Scan implements the Scanner interface.
 func (ns *NullRiverJobState) Scan(value interface{}) error {
 	if value == nil {
 		ns.RiverJobState, ns.Valid = "", false
@@ -135,6 +136,7 @@ func (ns *NullRiverJobState) Scan(value interface{}) error {
 	return ns.RiverJobState.Scan(value)
 }
 
+// Value implements the driver Valuer interface.
 func (ns NullRiverJobState) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil

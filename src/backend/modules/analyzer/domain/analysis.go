@@ -41,9 +41,9 @@ func (s TestStatus) String() string {
 }
 
 type AnalysisProgress struct {
+	CommitSHA    string
 	CompletedAt  *time.Time
 	CreatedAt    time.Time
 	ErrorMessage *string
-	ID           string
 	Status       Status
 }
