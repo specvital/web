@@ -17,6 +17,7 @@
   },
   "home": {
     "title": "SpecVital",
+    "tagline": "테스트 커버리지를 한눈에 파악하세요",
     "subtitle": "공개 GitHub 저장소의 테스트 사양 분석",
     "inputPlaceholder": "https://github.com/owner/repo",
     "analyzeButton": "분석",

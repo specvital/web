@@ -26,7 +26,8 @@ export const HomePage = async ({ params }: HomePageProps) => {
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t("title")}</h1>
-          <p className="text-lg text-muted-foreground">{t("subtitle")}</p>
+          <p className="text-xl font-medium">{t("tagline")}</p>
+          <p className="mx-auto max-w-xl text-base text-muted-foreground">{t("subtitle")}</p>
         </div>
 
         <UrlInputForm />

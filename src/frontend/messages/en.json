@@ -17,6 +17,7 @@
   },
   "home": {
     "title": "SpecVital",
+    "tagline": "Understand your test coverage at a glance",
     "subtitle": "Analyze test specifications from public GitHub repositories",
     "inputPlaceholder": "https://github.com/owner/repo",
     "analyzeButton": "Analyze",
