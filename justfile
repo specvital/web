@@ -78,8 +78,16 @@ lint target="all":
         ;;
     esac
 
+# Local db migration always initializes the database
 migrate-local:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Resetting local database..."
+    PGPASSWORD=postgres psql -h local-postgres -U postgres -c "DROP DATABASE IF EXISTS specvital;"
+    PGPASSWORD=postgres psql -h local-postgres -U postgres -c "CREATE DATABASE specvital;"
+    echo "Applying schema..."
     PGPASSWORD=postgres psql -h local-postgres -U postgres -d specvital -f src/backend/internal/db/schema.sql
+    echo "✅ Migration complete!"
 
 run target *args:
     #!/usr/bin/env bash
