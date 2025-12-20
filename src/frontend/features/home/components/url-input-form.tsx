@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Github, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,19 +46,31 @@ export const UrlInputForm = () => {
         {t("inputLabel")}
       </label>
       <div className="flex gap-2">
-        <Input
-          id="github-url"
-          type="url"
-          placeholder={t("inputPlaceholder")}
-          value={url}
-          onChange={handleChange}
+        <div className="relative flex-1">
+          <Github
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            id="github-url"
+            type="url"
+            placeholder={t("inputPlaceholder")}
+            value={url}
+            onChange={handleChange}
+            disabled={isPending}
+            aria-invalid={!!error}
+            aria-describedby={error ? "url-error" : undefined}
+            aria-label={t("inputLabel")}
+            className="pl-10 h-11 sm:h-10"
+          />
+        </div>
+        <Button
+          type="submit"
+          size="lg"
           disabled={isPending}
-          aria-invalid={!!error}
-          aria-describedby={error ? "url-error" : undefined}
-          aria-label={t("inputLabel")}
-          className="flex-1"
-        />
-        <Button type="submit" size="lg" disabled={isPending} aria-label={t("analyzeButton")}>
+          aria-label={t("analyzeButton")}
+          className="min-w-[120px]"
+        >
           {isPending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
