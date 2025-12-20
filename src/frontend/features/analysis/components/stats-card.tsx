@@ -20,19 +20,19 @@ export const StatsCard = ({ summary }: StatsCardProps) => {
       <h3 className="text-lg font-semibold mb-4">{t("label")}</h3>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="flex flex-col">
-          <span className="text-3xl font-bold text-foreground">{total}</span>
+          <span className="text-4xl font-extrabold text-foreground">{total}</span>
           <span className="text-sm text-muted-foreground">{t("total")}</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-3xl font-bold text-green-600">{active}</span>
+          <span className="text-3xl font-bold text-status-active">{active}</span>
           <span className="text-sm text-muted-foreground">{t("active")}</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-3xl font-bold text-amber-600">{skipped}</span>
+          <span className="text-3xl font-bold text-status-skipped">{skipped}</span>
           <span className="text-sm text-muted-foreground">{t("skipped")}</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-3xl font-bold text-blue-600">{todo}</span>
+          <span className="text-3xl font-bold text-status-todo">{todo}</span>
           <span className="text-sm text-muted-foreground">{t("todo")}</span>
         </div>
       </div>
@@ -44,7 +44,7 @@ export const StatsCard = ({ summary }: StatsCardProps) => {
             {frameworks.map((fw, index) => {
               const percentage = total > 0 ? Math.round((fw.total / total) * 100) : 0;
               return (
-                <div key={fw.framework} className="space-y-1">
+                <div key={fw.framework} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 font-medium">
                       <span
@@ -58,12 +58,27 @@ export const StatsCard = ({ summary }: StatsCardProps) => {
                       {fw.total} {t("tests")}
                     </span>
                   </div>
+                  <div
+                    className="h-2 w-full rounded-full bg-muted overflow-hidden"
+                    role="progressbar"
+                    aria-valuenow={percentage}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${percentage}%`,
+                        backgroundColor: getFrameworkColor(index, fw.framework),
+                      }}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">
-                    <span className="text-green-600">{fw.active}</span> {t("active")}
+                    <span className="text-status-active">{fw.active}</span> {t("active")}
                     {" · "}
-                    <span className="text-amber-600">{fw.skipped}</span> {t("skipped")}
+                    <span className="text-status-skipped">{fw.skipped}</span> {t("skipped")}
                     {" · "}
-                    <span className="text-blue-600">{fw.todo}</span> {t("todo")}
+                    <span className="text-status-todo">{fw.todo}</span> {t("todo")}
                   </div>
                 </div>
               );
