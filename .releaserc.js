@@ -1,7 +1,9 @@
-const headerPartial = `## [{{version}}](https://github.com/specvital/web/compare/{{previousTag}}...{{currentTag}}) ({{date}})
+const headerPartial = `## {{#if linkCompare}}[{{version}}]({{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}){{else}}{{version}}{{/if}} ({{date}})
 `;
 
-const mainTemplate = `{{#if noteGroups}}
+const mainTemplate = `{{> header}}
+
+{{#if noteGroups}}
 {{#each noteGroups}}
 
 #### {{title}}

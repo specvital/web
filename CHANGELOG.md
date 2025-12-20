@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.1.1](https://github.com/specvital/web/compare/v1.1.0...v1.1.1) (2025-12-20)
+
 ### 🔧 Maintenance
 
 #### 🔧 Internal Fixes
