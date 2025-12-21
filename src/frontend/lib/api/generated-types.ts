@@ -4,555 +4,561 @@
  */
 
 export interface paths {
-    "/api/analyze/{owner}/{repo}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /**
-                 * @description GitHub repository owner (user or organization)
-                 * @example facebook
-                 */
-                owner: components["parameters"]["Owner"];
-                /**
-                 * @description GitHub repository name
-                 * @example react
-                 */
-                repo: components["parameters"]["Repo"];
-            };
-            cookie?: never;
-        };
-        /**
-         * Analyze repository test specifications
-         * @description Triggers or retrieves analysis for a GitHub repository.
-         *     - Returns completed analysis if available
-         *     - Queues new analysis if not found
-         *     - Returns current status if analysis is in progress
-         *
-         */
-        get: operations["analyzeRepository"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/analyze/{owner}/{repo}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /**
-                 * @description GitHub repository owner (user or organization)
-                 * @example facebook
-                 */
-                owner: components["parameters"]["Owner"];
-                /**
-                 * @description GitHub repository name
-                 * @example react
-                 */
-                repo: components["parameters"]["Repo"];
-            };
-            cookie?: never;
-        };
-        /**
-         * Get analysis status
-         * @description Check the current status of repository analysis
-         */
-        get: operations["getAnalysisStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Initiate GitHub OAuth login
-         * @description Redirects to GitHub OAuth authorization page
-         */
-        get: operations["authLogin"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/callback": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * GitHub OAuth callback
-         * @description Handles OAuth callback from GitHub and sets authentication cookie
-         */
-        get: operations["authCallback"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Logout and clear authentication
-         * @description Clears the authentication cookie
-         */
-        post: operations["authLogout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get current user info
-         * @description Returns the currently authenticated user's information
-         */
-        get: operations["authMe"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-}
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: {
-        AnalysisResponse: components["schemas"]["CompletedResponse"] | components["schemas"]["AnalyzingResponse"] | components["schemas"]["QueuedResponse"] | components["schemas"]["FailedResponse"];
-        CompletedResponse: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            status: "completed";
-            data: components["schemas"]["AnalysisResult"];
-        };
-        AnalyzingResponse: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            status: "analyzing";
-        };
-        QueuedResponse: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            status: "queued";
-        };
-        FailedResponse: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            status: "failed";
-            /** @description Error message describing the failure */
-            error: string;
-        };
-        AnalysisResult: {
-            /**
-             * Format: date-time
-             * @description ISO 8601 timestamp of analysis completion
-             * @example 2024-01-15T10:30:00Z
-             */
-            analyzedAt: string;
-            /**
-             * @description Git commit SHA that was analyzed
-             * @example abc123def456
-             */
-            commitSha: string;
-            /**
-             * @description Repository owner
-             * @example facebook
-             */
-            owner: string;
-            /**
-             * @description Repository name
-             * @example react
-             */
-            repo: string;
-            suites: components["schemas"]["TestSuite"][];
-            summary: components["schemas"]["Summary"];
-        };
-        TestSuite: {
-            /**
-             * @description Path to the test file relative to repository root
-             * @example src/__tests__/App.test.tsx
-             */
-            filePath: string;
-            framework: components["schemas"]["Framework"];
-            /**
-             * @description Name of the test suite (describe block name)
-             * @example UserService
-             */
-            suiteName: string;
-            tests: components["schemas"]["TestCase"][];
-        };
-        TestCase: {
-            /** @description Path to the test file */
-            filePath: string;
-            framework: components["schemas"]["Framework"];
-            /** @description Line number where the test is defined */
-            line: number;
-            /** @description Test modifier (e.g., only, skip) */
-            modifier?: string;
-            /** @description Test case name */
-            name: string;
-            status: components["schemas"]["TestStatus"];
-        };
-        /**
-         * @description Test status indicator:
-         *     - active: Normal test that will run
-         *     - focused: Test marked to run exclusively (e.g., it.only)
-         *     - skipped: Test marked to be skipped (e.g., it.skip)
-         *     - todo: Placeholder test to be implemented
-         *     - xfail: Expected to fail (pytest xfail)
-         *
-         * @enum {string}
-         */
-        TestStatus: "active" | "focused" | "skipped" | "todo" | "xfail";
-        /**
-         * @description Testing framework identifier
-         * @example vitest
-         */
-        Framework: string;
-        Summary: {
-            /** @description Number of active tests */
-            active: number;
-            /** @description Number of focused tests */
-            focused: number;
-            frameworks: components["schemas"]["FrameworkSummary"][];
-            /** @description Number of skipped tests */
-            skipped: number;
-            /** @description Number of todo tests */
-            todo: number;
-            /** @description Total number of tests */
-            total: number;
-            /** @description Number of xfail tests */
-            xfail: number;
-        };
-        FrameworkSummary: {
-            active: number;
-            focused: number;
-            framework: components["schemas"]["Framework"];
-            skipped: number;
-            todo: number;
-            total: number;
-            xfail: number;
-        };
-        ProblemDetail: {
-            /**
-             * Format: uri
-             * @description URI identifying the problem type
-             * @default about:blank
-             */
-            type: string;
-            /** @description Human-readable summary */
-            title: string;
-            /** @description HTTP status code */
-            status: number;
-            /** @description Human-readable explanation specific to this occurrence */
-            detail: string;
-            /** @description URI reference identifying the specific occurrence */
-            instance?: string;
-            rateLimit?: components["schemas"]["RateLimitInfo"];
-        };
-        RateLimitInfo: {
-            /** @description Maximum requests allowed per time window */
-            limit: number;
-            /** @description Remaining requests in current window */
-            remaining: number;
-            /**
-             * Format: int64
-             * @description Unix timestamp when the rate limit resets
-             */
-            resetAt: number;
-        };
-        LoginResponse: {
-            /**
-             * Format: uri
-             * @description GitHub OAuth authorization URL to redirect user
-             */
-            authUrl: string;
-        };
-        UserInfo: {
-            /** @description Internal user ID */
-            id: string;
-            /** @description GitHub username */
-            login: string;
-            /**
-             * Format: uri
-             * @description GitHub avatar URL
-             */
-            avatarUrl: string;
-            /** @description GitHub display name (optional) */
-            name?: string;
-        };
-        LogoutResponse: {
-            /** @description Logout operation result */
-            success: boolean;
-        };
-    };
-    responses: {
-        /** @description Invalid request parameters */
-        BadRequest: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-        /** @description Resource not found */
-        NotFound: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-        /** @description Internal server error */
-        InternalError: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-        /** @description Authentication required */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-    };
+  "/api/analyze/{owner}/{repo}": {
     parameters: {
+      query?: never;
+      header?: never;
+      path: {
         /**
          * @description GitHub repository owner (user or organization)
          * @example facebook
          */
-        Owner: string;
+        owner: components["parameters"]["Owner"];
         /**
          * @description GitHub repository name
          * @example react
          */
-        Repo: string;
+        repo: components["parameters"]["Repo"];
+      };
+      cookie?: never;
     };
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /**
+     * Analyze repository test specifications
+     * @description Triggers or retrieves analysis for a GitHub repository.
+     *     - Returns completed analysis if available
+     *     - Queues new analysis if not found
+     *     - Returns current status if analysis is in progress
+     *
+     */
+    get: operations["analyzeRepository"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/analyze/{owner}/{repo}/status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /**
+         * @description GitHub repository owner (user or organization)
+         * @example facebook
+         */
+        owner: components["parameters"]["Owner"];
+        /**
+         * @description GitHub repository name
+         * @example react
+         */
+        repo: components["parameters"]["Repo"];
+      };
+      cookie?: never;
+    };
+    /**
+     * Get analysis status
+     * @description Check the current status of repository analysis
+     */
+    get: operations["getAnalysisStatus"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/login": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Initiate GitHub OAuth login
+     * @description Redirects to GitHub OAuth authorization page
+     */
+    get: operations["authLogin"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/callback": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * GitHub OAuth callback
+     * @description Handles OAuth callback from GitHub and sets authentication cookie
+     */
+    get: operations["authCallback"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/logout": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Logout and clear authentication
+     * @description Clears the authentication cookie
+     */
+    post: operations["authLogout"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/me": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get current user info
+     * @description Returns the currently authenticated user's information
+     */
+    get: operations["authMe"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+}
+export type webhooks = Record<string, never>;
+export interface components {
+  schemas: {
+    AnalysisResponse:
+      | components["schemas"]["CompletedResponse"]
+      | components["schemas"]["AnalyzingResponse"]
+      | components["schemas"]["QueuedResponse"]
+      | components["schemas"]["FailedResponse"];
+    CompletedResponse: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      status: "completed";
+      data: components["schemas"]["AnalysisResult"];
+    };
+    AnalyzingResponse: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      status: "analyzing";
+    };
+    QueuedResponse: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      status: "queued";
+    };
+    FailedResponse: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      status: "failed";
+      /** @description Error message describing the failure */
+      error: string;
+    };
+    AnalysisResult: {
+      /**
+       * Format: date-time
+       * @description ISO 8601 timestamp of analysis completion
+       * @example 2024-01-15T10:30:00Z
+       */
+      analyzedAt: string;
+      /**
+       * @description Git commit SHA that was analyzed
+       * @example abc123def456
+       */
+      commitSha: string;
+      /**
+       * @description Repository owner
+       * @example facebook
+       */
+      owner: string;
+      /**
+       * @description Repository name
+       * @example react
+       */
+      repo: string;
+      suites: components["schemas"]["TestSuite"][];
+      summary: components["schemas"]["Summary"];
+    };
+    TestSuite: {
+      /**
+       * @description Path to the test file relative to repository root
+       * @example src/__tests__/App.test.tsx
+       */
+      filePath: string;
+      framework: components["schemas"]["Framework"];
+      /**
+       * @description Name of the test suite (describe block name)
+       * @example UserService
+       */
+      suiteName: string;
+      tests: components["schemas"]["TestCase"][];
+    };
+    TestCase: {
+      /** @description Path to the test file */
+      filePath: string;
+      framework: components["schemas"]["Framework"];
+      /** @description Line number where the test is defined */
+      line: number;
+      /** @description Test modifier (e.g., only, skip) */
+      modifier?: string;
+      /** @description Test case name */
+      name: string;
+      status: components["schemas"]["TestStatus"];
+    };
+    /**
+     * @description Test status indicator:
+     *     - active: Normal test that will run
+     *     - focused: Test marked to run exclusively (e.g., it.only)
+     *     - skipped: Test marked to be skipped (e.g., it.skip)
+     *     - todo: Placeholder test to be implemented
+     *     - xfail: Expected to fail (pytest xfail)
+     *
+     * @enum {string}
+     */
+    TestStatus: "active" | "focused" | "skipped" | "todo" | "xfail";
+    /**
+     * @description Testing framework identifier
+     * @example vitest
+     */
+    Framework: string;
+    Summary: {
+      /** @description Number of active tests */
+      active: number;
+      /** @description Number of focused tests */
+      focused: number;
+      frameworks: components["schemas"]["FrameworkSummary"][];
+      /** @description Number of skipped tests */
+      skipped: number;
+      /** @description Number of todo tests */
+      todo: number;
+      /** @description Total number of tests */
+      total: number;
+      /** @description Number of xfail tests */
+      xfail: number;
+    };
+    FrameworkSummary: {
+      active: number;
+      focused: number;
+      framework: components["schemas"]["Framework"];
+      skipped: number;
+      todo: number;
+      total: number;
+      xfail: number;
+    };
+    ProblemDetail: {
+      /**
+       * Format: uri
+       * @description URI identifying the problem type
+       * @default about:blank
+       */
+      type: string;
+      /** @description Human-readable summary */
+      title: string;
+      /** @description HTTP status code */
+      status: number;
+      /** @description Human-readable explanation specific to this occurrence */
+      detail: string;
+      /** @description URI reference identifying the specific occurrence */
+      instance?: string;
+      rateLimit?: components["schemas"]["RateLimitInfo"];
+    };
+    RateLimitInfo: {
+      /** @description Maximum requests allowed per time window */
+      limit: number;
+      /** @description Remaining requests in current window */
+      remaining: number;
+      /**
+       * Format: int64
+       * @description Unix timestamp when the rate limit resets
+       */
+      resetAt: number;
+    };
+    LoginResponse: {
+      /**
+       * Format: uri
+       * @description GitHub OAuth authorization URL to redirect user
+       */
+      authUrl: string;
+    };
+    UserInfo: {
+      /** @description Internal user ID */
+      id: string;
+      /** @description GitHub username */
+      login: string;
+      /**
+       * Format: uri
+       * @description GitHub avatar URL
+       */
+      avatarUrl: string;
+      /** @description GitHub display name (optional) */
+      name?: string;
+    };
+    LogoutResponse: {
+      /** @description Logout operation result */
+      success: boolean;
+    };
+  };
+  responses: {
+    /** @description Invalid request parameters */
+    BadRequest: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/problem+json": components["schemas"]["ProblemDetail"];
+      };
+    };
+    /** @description Resource not found */
+    NotFound: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/problem+json": components["schemas"]["ProblemDetail"];
+      };
+    };
+    /** @description Internal server error */
+    InternalError: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/problem+json": components["schemas"]["ProblemDetail"];
+      };
+    };
+    /** @description Authentication required */
+    Unauthorized: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/problem+json": components["schemas"]["ProblemDetail"];
+      };
+    };
+  };
+  parameters: {
+    /**
+     * @description GitHub repository owner (user or organization)
+     * @example facebook
+     */
+    Owner: string;
+    /**
+     * @description GitHub repository name
+     * @example react
+     */
+    Repo: string;
+  };
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    analyzeRepository: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /**
-                 * @description GitHub repository owner (user or organization)
-                 * @example facebook
-                 */
-                owner: components["parameters"]["Owner"];
-                /**
-                 * @description GitHub repository name
-                 * @example react
-                 */
-                repo: components["parameters"]["Repo"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Analysis completed successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CompletedResponse"];
-                };
-            };
-            /** @description Analysis accepted and processing */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QueuedResponse"] | components["schemas"]["AnalyzingResponse"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["InternalError"];
-        };
+  analyzeRepository: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /**
+         * @description GitHub repository owner (user or organization)
+         * @example facebook
+         */
+        owner: components["parameters"]["Owner"];
+        /**
+         * @description GitHub repository name
+         * @example react
+         */
+        repo: components["parameters"]["Repo"];
+      };
+      cookie?: never;
     };
-    getAnalysisStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /**
-                 * @description GitHub repository owner (user or organization)
-                 * @example facebook
-                 */
-                owner: components["parameters"]["Owner"];
-                /**
-                 * @description GitHub repository name
-                 * @example react
-                 */
-                repo: components["parameters"]["Repo"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Analysis completed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Analysis status retrieved */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AnalysisResponse"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalError"];
+        content: {
+          "application/json": components["schemas"]["CompletedResponse"];
         };
+      };
+      /** @description Analysis accepted and processing */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json":
+            | components["schemas"]["QueuedResponse"]
+            | components["schemas"]["AnalyzingResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      500: components["responses"]["InternalError"];
     };
-    authLogin: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OAuth authorization URL */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LoginResponse"];
-                };
-            };
-            500: components["responses"]["InternalError"];
-        };
+  };
+  getAnalysisStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /**
+         * @description GitHub repository owner (user or organization)
+         * @example facebook
+         */
+        owner: components["parameters"]["Owner"];
+        /**
+         * @description GitHub repository name
+         * @example react
+         */
+        repo: components["parameters"]["Repo"];
+      };
+      cookie?: never;
     };
-    authCallback: {
-        parameters: {
-            query: {
-                /** @description OAuth authorization code from GitHub */
-                code: string;
-                /** @description OAuth state for CSRF protection */
-                state: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Analysis status retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Redirect to frontend after successful authentication */
-            302: {
-                headers: {
-                    /** @description Frontend URL to redirect to */
-                    Location?: string;
-                    /** @description HTTP-only authentication cookie */
-                    "Set-Cookie"?: string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["InternalError"];
+        content: {
+          "application/json": components["schemas"]["AnalysisResponse"];
         };
+      };
+      400: components["responses"]["BadRequest"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
     };
-    authLogout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Logout successful */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LogoutResponse"];
-                };
-            };
-            500: components["responses"]["InternalError"];
-        };
+  };
+  authLogin: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    authMe: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description OAuth authorization URL */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description User information retrieved */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserInfo"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            500: components["responses"]["InternalError"];
+        content: {
+          "application/json": components["schemas"]["LoginResponse"];
         };
+      };
+      500: components["responses"]["InternalError"];
     };
+  };
+  authCallback: {
+    parameters: {
+      query: {
+        /** @description OAuth authorization code from GitHub */
+        code: string;
+        /** @description OAuth state for CSRF protection */
+        state: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Redirect to frontend after successful authentication */
+      302: {
+        headers: {
+          /** @description Frontend URL to redirect to */
+          Location?: string;
+          /** @description HTTP-only authentication cookie */
+          "Set-Cookie"?: string;
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components["responses"]["BadRequest"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  authLogout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Logout successful */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LogoutResponse"];
+        };
+      };
+      500: components["responses"]["InternalError"];
+    };
+  };
+  authMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description User information retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserInfo"];
+        };
+      };
+      401: components["responses"]["Unauthorized"];
+      500: components["responses"]["InternalError"];
+    };
+  };
 }
