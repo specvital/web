@@ -7,3 +7,4 @@ docs/work
 .claude/settings.local.json
 .claude-sessions/
 src/backend/tmp
+*.tsbuildinfo
