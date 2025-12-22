@@ -7,7 +7,7 @@ export const TrustBadges = async () => {
   const badges = [
     {
       icon: Zap,
-      label: t("zeroSetup"),
+      label: t("instant"),
     },
     {
       icon: Layers,

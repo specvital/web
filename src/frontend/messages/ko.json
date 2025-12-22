@@ -16,17 +16,17 @@
     "openUserMenu": "사용자 메뉴 열기"
   },
   "home": {
-    "title": "SpecVital",
-    "tagline": "테스트 커버리지를 한눈에 파악하세요",
-    "subtitle": "공개 GitHub 저장소의 테스트 사양 분석",
-    "inputPlaceholder": "https://github.com/owner/repo",
-    "analyzeButton": "분석",
-    "helperText": "테스트 파일을 분석할 공개 GitHub 저장소 URL을 입력하세요",
+    "headline": "테스트 현황, 즉시 파악",
+    "subheadline": "GitHub URL만 입력하세요. 설정 없이 바로 분석합니다.",
+    "inputPlaceholder": "https://github.com/facebook/react",
+    "analyzeButton": "분석 시작",
+    "helperText": "",
     "inputLabel": "GitHub 저장소 URL",
+    "demoLink": "예시 보기",
     "trustBadges": {
-      "free": "100% 무료",
-      "multiFramework": "다양한 프레임워크 지원",
-      "zeroSetup": "설정 없이 바로 시작"
+      "instant": "즉시 분석",
+      "multiFramework": "20+ 프레임워크",
+      "free": "무료"
     }
   },
   "analyze": {
