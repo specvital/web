@@ -92,5 +92,13 @@
     "copyFailedDescription": "Please copy the URL manually from the address bar",
     "linkCopied": "Link copied!",
     "linkCopiedDescription": "Share this analysis with your team"
+  },
+  "dashboard": {
+    "bookmarked": "Bookmarked",
+    "emptyState": {
+      "title": "No repositories yet",
+      "description": "Analyze a GitHub repository to see it here. Your analysis history will be saved automatically.",
+      "cta": "Analyze a repository"
+    }
   }
 }

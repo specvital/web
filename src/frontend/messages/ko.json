@@ -92,5 +92,13 @@
     "copyFailedDescription": "주소창에서 URL을 직접 복사해주세요",
     "linkCopied": "링크 복사됨!",
     "linkCopiedDescription": "팀원들과 이 분석을 공유하세요"
+  },
+  "dashboard": {
+    "bookmarked": "즐겨찾기",
+    "emptyState": {
+      "title": "아직 리포지토리가 없습니다",
+      "description": "GitHub 리포지토리를 분석하면 여기에 표시됩니다. 분석 기록은 자동으로 저장됩니다.",
+      "cta": "리포지토리 분석하기"
+    }
   }
 }
