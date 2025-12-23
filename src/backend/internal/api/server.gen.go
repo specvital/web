@@ -29,6 +29,13 @@ const (
 	Xfail   TestStatus = "xfail"
 )
 
+// Defines values for UpdateStatus.
+const (
+	NewCommits UpdateStatus = "new-commits"
+	Unknown    UpdateStatus = "unknown"
+	UpToDate   UpdateStatus = "up-to-date"
+)
+
 // AnalysisResponse defines model for AnalysisResponse.
 type AnalysisResponse struct {
 	union json.RawMessage
@@ -51,9 +58,39 @@ type AnalysisResult struct {
 	Summary Summary     `json:"summary"`
 }
 
+// AnalysisSummary defines model for AnalysisSummary.
+type AnalysisSummary struct {
+	// AnalyzedAt ISO 8601 timestamp when analysis was completed
+	AnalyzedAt time.Time `json:"analyzedAt"`
+
+	// Change Change in test count compared to previous analysis
+	Change int `json:"change"`
+
+	// CommitSHA Git commit SHA that was analyzed
+	CommitSHA string `json:"commitSha"`
+
+	// TestCount Total number of tests in the latest analysis
+	TestCount int `json:"testCount"`
+}
+
 // AnalyzingResponse defines model for AnalyzingResponse.
 type AnalyzingResponse struct {
 	Status string `json:"status"`
+}
+
+// BookmarkResponse defines model for BookmarkResponse.
+type BookmarkResponse struct {
+	// IsBookmarked Current bookmark status after the operation
+	IsBookmarked bool `json:"isBookmarked"`
+
+	// Success Operation success status
+	Success bool `json:"success"`
+}
+
+// BookmarkedRepositoriesResponse defines model for BookmarkedRepositoriesResponse.
+type BookmarkedRepositoriesResponse struct {
+	// Data Bookmarked repositories
+	Data []RepositoryCard `json:"data"`
 }
 
 // CompletedResponse defines model for CompletedResponse.
@@ -133,6 +170,46 @@ type RateLimitInfo struct {
 	ResetAt int64 `json:"resetAt"`
 }
 
+// RecentRepositoriesResponse defines model for RecentRepositoriesResponse.
+type RecentRepositoriesResponse struct {
+	// Data Recently analyzed repositories
+	Data []RepositoryCard `json:"data"`
+}
+
+// RepositoryCard defines model for RepositoryCard.
+type RepositoryCard struct {
+	// FullName Full repository name in owner/name format
+	FullName string `json:"fullName"`
+
+	// ID Repository ID
+	ID string `json:"id"`
+
+	// IsBookmarked Whether the repository is bookmarked by the user
+	IsBookmarked   bool             `json:"isBookmarked"`
+	LatestAnalysis *AnalysisSummary `json:"latestAnalysis,omitempty"`
+
+	// Name Repository name
+	Name string `json:"name"`
+
+	// Owner Repository owner (user or organization)
+	Owner string `json:"owner"`
+
+	// UpdateStatus Repository update status:
+	// - up-to-date: Latest analysis is current with HEAD
+	// - new-commits: New commits available since last analysis
+	// - unknown: Unable to determine status
+	UpdateStatus UpdateStatus `json:"updateStatus"`
+}
+
+// RepositoryStatsResponse defines model for RepositoryStatsResponse.
+type RepositoryStatsResponse struct {
+	// TotalRepositories Total number of analyzed repositories for the user
+	TotalRepositories int `json:"totalRepositories"`
+
+	// TotalTests Total number of tests across all repositories
+	TotalTests int `json:"totalTests"`
+}
+
 // Summary defines model for Summary.
 type Summary struct {
 	// Active Number of active tests
@@ -202,6 +279,27 @@ type TestSuite struct {
 	Tests     []TestCase `json:"tests"`
 }
 
+// UpdateStatus Repository update status:
+// - up-to-date: Latest analysis is current with HEAD
+// - new-commits: New commits available since last analysis
+// - unknown: Unable to determine status
+type UpdateStatus string
+
+// UpdateStatusResponse defines model for UpdateStatusResponse.
+type UpdateStatusResponse struct {
+	// AnalyzedCommitSHA Commit SHA from last analysis
+	AnalyzedCommitSHA *string `json:"analyzedCommitSha,omitempty"`
+
+	// LatestCommitSHA Latest commit SHA from remote
+	LatestCommitSHA *string `json:"latestCommitSha,omitempty"`
+
+	// Status Repository update status:
+	// - up-to-date: Latest analysis is current with HEAD
+	// - new-commits: New commits available since last analysis
+	// - unknown: Unable to determine status
+	Status UpdateStatus `json:"status"`
+}
+
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
 	// AvatarURL GitHub avatar URL
@@ -242,6 +340,12 @@ type AuthCallbackParams struct {
 
 	// State OAuth state for CSRF protection
 	State string `form:"state" json:"state"`
+}
+
+// GetRecentRepositoriesParams defines parameters for GetRecentRepositories.
+type GetRecentRepositoriesParams struct {
+	// Limit Maximum number of repositories to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // AsCompletedResponse returns the union data inside the AnalysisResponse as a CompletedResponse
@@ -413,6 +517,27 @@ type ServerInterface interface {
 	// Get current user info
 	// (GET /api/auth/me)
 	AuthMe(w http.ResponseWriter, r *http.Request)
+	// Get recently analyzed repositories
+	// (GET /api/repositories/recent)
+	GetRecentRepositories(w http.ResponseWriter, r *http.Request, params GetRecentRepositoriesParams)
+	// Get repository statistics
+	// (GET /api/repositories/stats)
+	GetRepositoryStats(w http.ResponseWriter, r *http.Request)
+	// Remove bookmark
+	// (DELETE /api/repositories/{owner}/{repo}/bookmark)
+	RemoveBookmark(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo)
+	// Bookmark a repository
+	// (POST /api/repositories/{owner}/{repo}/bookmark)
+	AddBookmark(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo)
+	// Trigger repository re-analysis
+	// (POST /api/repositories/{owner}/{repo}/reanalyze)
+	ReanalyzeRepository(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo)
+	// Check repository update status
+	// (GET /api/repositories/{owner}/{repo}/update-status)
+	GetUpdateStatus(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo)
+	// Get user's bookmarked repositories
+	// (GET /api/user/bookmarks)
+	GetUserBookmarks(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -452,6 +577,48 @@ func (_ Unimplemented) AuthLogout(w http.ResponseWriter, r *http.Request) {
 // Get current user info
 // (GET /api/auth/me)
 func (_ Unimplemented) AuthMe(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get recently analyzed repositories
+// (GET /api/repositories/recent)
+func (_ Unimplemented) GetRecentRepositories(w http.ResponseWriter, r *http.Request, params GetRecentRepositoriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get repository statistics
+// (GET /api/repositories/stats)
+func (_ Unimplemented) GetRepositoryStats(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove bookmark
+// (DELETE /api/repositories/{owner}/{repo}/bookmark)
+func (_ Unimplemented) RemoveBookmark(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Bookmark a repository
+// (POST /api/repositories/{owner}/{repo}/bookmark)
+func (_ Unimplemented) AddBookmark(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Trigger repository re-analysis
+// (POST /api/repositories/{owner}/{repo}/reanalyze)
+func (_ Unimplemented) ReanalyzeRepository(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Check repository update status
+// (GET /api/repositories/{owner}/{repo}/update-status)
+func (_ Unimplemented) GetUpdateStatus(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get user's bookmarked repositories
+// (GET /api/user/bookmarks)
+func (_ Unimplemented) GetUserBookmarks(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -635,6 +802,239 @@ func (siw *ServerInterfaceWrapper) AuthMe(w http.ResponseWriter, r *http.Request
 	handler.ServeHTTP(w, r)
 }
 
+// GetRecentRepositories operation middleware
+func (siw *ServerInterfaceWrapper) GetRecentRepositories(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRecentRepositoriesParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRecentRepositories(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRepositoryStats operation middleware
+func (siw *ServerInterfaceWrapper) GetRepositoryStats(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRepositoryStats(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveBookmark operation middleware
+func (siw *ServerInterfaceWrapper) RemoveBookmark(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "owner" -------------
+	var owner Owner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "repo" -------------
+	var repo Repo
+
+	err = runtime.BindStyledParameterWithOptions("simple", "repo", chi.URLParam(r, "repo"), &repo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveBookmark(w, r, owner, repo)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddBookmark operation middleware
+func (siw *ServerInterfaceWrapper) AddBookmark(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "owner" -------------
+	var owner Owner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "repo" -------------
+	var repo Repo
+
+	err = runtime.BindStyledParameterWithOptions("simple", "repo", chi.URLParam(r, "repo"), &repo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddBookmark(w, r, owner, repo)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReanalyzeRepository operation middleware
+func (siw *ServerInterfaceWrapper) ReanalyzeRepository(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "owner" -------------
+	var owner Owner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "repo" -------------
+	var repo Repo
+
+	err = runtime.BindStyledParameterWithOptions("simple", "repo", chi.URLParam(r, "repo"), &repo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReanalyzeRepository(w, r, owner, repo)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUpdateStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetUpdateStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "owner" -------------
+	var owner Owner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "repo" -------------
+	var repo Repo
+
+	err = runtime.BindStyledParameterWithOptions("simple", "repo", chi.URLParam(r, "repo"), &repo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUpdateStatus(w, r, owner, repo)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUserBookmarks operation middleware
+func (siw *ServerInterfaceWrapper) GetUserBookmarks(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserBookmarks(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -765,6 +1165,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/auth/me", wrapper.AuthMe)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/repositories/recent", wrapper.GetRecentRepositories)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/repositories/stats", wrapper.GetRepositoryStats)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/repositories/{owner}/{repo}/bookmark", wrapper.RemoveBookmark)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/repositories/{owner}/{repo}/bookmark", wrapper.AddBookmark)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/repositories/{owner}/{repo}/reanalyze", wrapper.ReanalyzeRepository)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/repositories/{owner}/{repo}/update-status", wrapper.GetUpdateStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/user/bookmarks", wrapper.GetUserBookmarks)
 	})
 
 	return r
@@ -1018,6 +1439,371 @@ func (response AuthMe500ApplicationProblemPlusJSONResponse) VisitAuthMeResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetRecentRepositoriesRequestObject struct {
+	Params GetRecentRepositoriesParams
+}
+
+type GetRecentRepositoriesResponseObject interface {
+	VisitGetRecentRepositoriesResponse(w http.ResponseWriter) error
+}
+
+type GetRecentRepositories200JSONResponse RecentRepositoriesResponse
+
+func (response GetRecentRepositories200JSONResponse) VisitGetRecentRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRecentRepositories401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetRecentRepositories401ApplicationProblemPlusJSONResponse) VisitGetRecentRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRecentRepositories500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetRecentRepositories500ApplicationProblemPlusJSONResponse) VisitGetRecentRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRepositoryStatsRequestObject struct {
+}
+
+type GetRepositoryStatsResponseObject interface {
+	VisitGetRepositoryStatsResponse(w http.ResponseWriter) error
+}
+
+type GetRepositoryStats200JSONResponse RepositoryStatsResponse
+
+func (response GetRepositoryStats200JSONResponse) VisitGetRepositoryStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRepositoryStats401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepositoryStats401ApplicationProblemPlusJSONResponse) VisitGetRepositoryStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRepositoryStats500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepositoryStats500ApplicationProblemPlusJSONResponse) VisitGetRepositoryStatsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RemoveBookmarkRequestObject struct {
+	Owner Owner `json:"owner"`
+	Repo  Repo  `json:"repo"`
+}
+
+type RemoveBookmarkResponseObject interface {
+	VisitRemoveBookmarkResponse(w http.ResponseWriter) error
+}
+
+type RemoveBookmark200JSONResponse BookmarkResponse
+
+func (response RemoveBookmark200JSONResponse) VisitRemoveBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RemoveBookmark400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveBookmark400ApplicationProblemPlusJSONResponse) VisitRemoveBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RemoveBookmark401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveBookmark401ApplicationProblemPlusJSONResponse) VisitRemoveBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RemoveBookmark404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveBookmark404ApplicationProblemPlusJSONResponse) VisitRemoveBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RemoveBookmark500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveBookmark500ApplicationProblemPlusJSONResponse) VisitRemoveBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddBookmarkRequestObject struct {
+	Owner Owner `json:"owner"`
+	Repo  Repo  `json:"repo"`
+}
+
+type AddBookmarkResponseObject interface {
+	VisitAddBookmarkResponse(w http.ResponseWriter) error
+}
+
+type AddBookmark200JSONResponse BookmarkResponse
+
+func (response AddBookmark200JSONResponse) VisitAddBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddBookmark400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response AddBookmark400ApplicationProblemPlusJSONResponse) VisitAddBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddBookmark401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response AddBookmark401ApplicationProblemPlusJSONResponse) VisitAddBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddBookmark404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response AddBookmark404ApplicationProblemPlusJSONResponse) VisitAddBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddBookmark500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response AddBookmark500ApplicationProblemPlusJSONResponse) VisitAddBookmarkResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ReanalyzeRepositoryRequestObject struct {
+	Owner Owner `json:"owner"`
+	Repo  Repo  `json:"repo"`
+}
+
+type ReanalyzeRepositoryResponseObject interface {
+	VisitReanalyzeRepositoryResponse(w http.ResponseWriter) error
+}
+
+type ReanalyzeRepository202JSONResponse struct {
+	union json.RawMessage
+}
+
+func (response ReanalyzeRepository202JSONResponse) VisitReanalyzeRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+
+	return json.NewEncoder(w).Encode(response.union)
+}
+
+type ReanalyzeRepository400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response ReanalyzeRepository400ApplicationProblemPlusJSONResponse) VisitReanalyzeRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ReanalyzeRepository401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response ReanalyzeRepository401ApplicationProblemPlusJSONResponse) VisitReanalyzeRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ReanalyzeRepository404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response ReanalyzeRepository404ApplicationProblemPlusJSONResponse) VisitReanalyzeRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ReanalyzeRepository500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response ReanalyzeRepository500ApplicationProblemPlusJSONResponse) VisitReanalyzeRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUpdateStatusRequestObject struct {
+	Owner Owner `json:"owner"`
+	Repo  Repo  `json:"repo"`
+}
+
+type GetUpdateStatusResponseObject interface {
+	VisitGetUpdateStatusResponse(w http.ResponseWriter) error
+}
+
+type GetUpdateStatus200JSONResponse UpdateStatusResponse
+
+func (response GetUpdateStatus200JSONResponse) VisitGetUpdateStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUpdateStatus400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response GetUpdateStatus400ApplicationProblemPlusJSONResponse) VisitGetUpdateStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUpdateStatus401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetUpdateStatus401ApplicationProblemPlusJSONResponse) VisitGetUpdateStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUpdateStatus404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetUpdateStatus404ApplicationProblemPlusJSONResponse) VisitGetUpdateStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUpdateStatus500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetUpdateStatus500ApplicationProblemPlusJSONResponse) VisitGetUpdateStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserBookmarksRequestObject struct {
+}
+
+type GetUserBookmarksResponseObject interface {
+	VisitGetUserBookmarksResponse(w http.ResponseWriter) error
+}
+
+type GetUserBookmarks200JSONResponse BookmarkedRepositoriesResponse
+
+func (response GetUserBookmarks200JSONResponse) VisitGetUserBookmarksResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserBookmarks401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserBookmarks401ApplicationProblemPlusJSONResponse) VisitGetUserBookmarksResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserBookmarks500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserBookmarks500ApplicationProblemPlusJSONResponse) VisitGetUserBookmarksResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Analyze repository test specifications
@@ -1038,6 +1824,27 @@ type StrictServerInterface interface {
 	// Get current user info
 	// (GET /api/auth/me)
 	AuthMe(ctx context.Context, request AuthMeRequestObject) (AuthMeResponseObject, error)
+	// Get recently analyzed repositories
+	// (GET /api/repositories/recent)
+	GetRecentRepositories(ctx context.Context, request GetRecentRepositoriesRequestObject) (GetRecentRepositoriesResponseObject, error)
+	// Get repository statistics
+	// (GET /api/repositories/stats)
+	GetRepositoryStats(ctx context.Context, request GetRepositoryStatsRequestObject) (GetRepositoryStatsResponseObject, error)
+	// Remove bookmark
+	// (DELETE /api/repositories/{owner}/{repo}/bookmark)
+	RemoveBookmark(ctx context.Context, request RemoveBookmarkRequestObject) (RemoveBookmarkResponseObject, error)
+	// Bookmark a repository
+	// (POST /api/repositories/{owner}/{repo}/bookmark)
+	AddBookmark(ctx context.Context, request AddBookmarkRequestObject) (AddBookmarkResponseObject, error)
+	// Trigger repository re-analysis
+	// (POST /api/repositories/{owner}/{repo}/reanalyze)
+	ReanalyzeRepository(ctx context.Context, request ReanalyzeRepositoryRequestObject) (ReanalyzeRepositoryResponseObject, error)
+	// Check repository update status
+	// (GET /api/repositories/{owner}/{repo}/update-status)
+	GetUpdateStatus(ctx context.Context, request GetUpdateStatusRequestObject) (GetUpdateStatusResponseObject, error)
+	// Get user's bookmarked repositories
+	// (GET /api/user/bookmarks)
+	GetUserBookmarks(ctx context.Context, request GetUserBookmarksRequestObject) (GetUserBookmarksResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -1214,6 +2021,188 @@ func (sh *strictHandler) AuthMe(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AuthMeResponseObject); ok {
 		if err := validResponse.VisitAuthMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRecentRepositories operation middleware
+func (sh *strictHandler) GetRecentRepositories(w http.ResponseWriter, r *http.Request, params GetRecentRepositoriesParams) {
+	var request GetRecentRepositoriesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRecentRepositories(ctx, request.(GetRecentRepositoriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRecentRepositories")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRecentRepositoriesResponseObject); ok {
+		if err := validResponse.VisitGetRecentRepositoriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRepositoryStats operation middleware
+func (sh *strictHandler) GetRepositoryStats(w http.ResponseWriter, r *http.Request) {
+	var request GetRepositoryStatsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRepositoryStats(ctx, request.(GetRepositoryStatsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRepositoryStats")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRepositoryStatsResponseObject); ok {
+		if err := validResponse.VisitGetRepositoryStatsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveBookmark operation middleware
+func (sh *strictHandler) RemoveBookmark(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	var request RemoveBookmarkRequestObject
+
+	request.Owner = owner
+	request.Repo = repo
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveBookmark(ctx, request.(RemoveBookmarkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveBookmark")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveBookmarkResponseObject); ok {
+		if err := validResponse.VisitRemoveBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddBookmark operation middleware
+func (sh *strictHandler) AddBookmark(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	var request AddBookmarkRequestObject
+
+	request.Owner = owner
+	request.Repo = repo
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddBookmark(ctx, request.(AddBookmarkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddBookmark")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddBookmarkResponseObject); ok {
+		if err := validResponse.VisitAddBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReanalyzeRepository operation middleware
+func (sh *strictHandler) ReanalyzeRepository(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	var request ReanalyzeRepositoryRequestObject
+
+	request.Owner = owner
+	request.Repo = repo
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReanalyzeRepository(ctx, request.(ReanalyzeRepositoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReanalyzeRepository")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReanalyzeRepositoryResponseObject); ok {
+		if err := validResponse.VisitReanalyzeRepositoryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUpdateStatus operation middleware
+func (sh *strictHandler) GetUpdateStatus(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	var request GetUpdateStatusRequestObject
+
+	request.Owner = owner
+	request.Repo = repo
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUpdateStatus(ctx, request.(GetUpdateStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUpdateStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUpdateStatusResponseObject); ok {
+		if err := validResponse.VisitGetUpdateStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserBookmarks operation middleware
+func (sh *strictHandler) GetUserBookmarks(w http.ResponseWriter, r *http.Request) {
+	var request GetUserBookmarksRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserBookmarks(ctx, request.(GetUserBookmarksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserBookmarks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserBookmarksResponseObject); ok {
+		if err := validResponse.VisitGetUserBookmarksResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

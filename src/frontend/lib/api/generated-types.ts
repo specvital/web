@@ -150,6 +150,167 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user/bookmarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user's bookmarked repositories
+         * @description Returns list of repositories bookmarked by the authenticated user
+         */
+        get: operations["getUserBookmarks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get recently analyzed repositories
+         * @description Returns list of repositories recently analyzed by the user
+         */
+        get: operations["getRecentRepositories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get repository statistics
+         * @description Returns aggregate statistics for user's repositories
+         */
+        get: operations["getRepositoryStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories/{owner}/{repo}/bookmark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub repository owner (user or organization)
+                 * @example facebook
+                 */
+                owner: components["parameters"]["Owner"];
+                /**
+                 * @description GitHub repository name
+                 * @example react
+                 */
+                repo: components["parameters"]["Repo"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bookmark a repository
+         * @description Add repository to user's bookmarks
+         */
+        post: operations["addBookmark"];
+        /**
+         * Remove bookmark
+         * @description Remove repository from user's bookmarks
+         */
+        delete: operations["removeBookmark"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories/{owner}/{repo}/update-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub repository owner (user or organization)
+                 * @example facebook
+                 */
+                owner: components["parameters"]["Owner"];
+                /**
+                 * @description GitHub repository name
+                 * @example react
+                 */
+                repo: components["parameters"]["Repo"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Check repository update status
+         * @description Checks if repository has new commits since last analysis.
+         *     Uses git ls-remote to check latest commit SHA.
+         *
+         */
+        get: operations["getUpdateStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories/{owner}/{repo}/reanalyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub repository owner (user or organization)
+                 * @example facebook
+                 */
+                owner: components["parameters"]["Owner"];
+                /**
+                 * @description GitHub repository name
+                 * @example react
+                 */
+                repo: components["parameters"]["Repo"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger repository re-analysis
+         * @description Queues a new analysis job for the repository.
+         *     Returns job status that can be polled via /api/analyze/{owner}/{repo}/status
+         *
+         */
+        post: operations["reanalyzeRepository"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -328,6 +489,103 @@ export interface components {
         LogoutResponse: {
             /** @description Logout operation result */
             success: boolean;
+        };
+        BookmarkedRepositoriesResponse: {
+            /** @description Bookmarked repositories */
+            data: components["schemas"]["RepositoryCard"][];
+        };
+        RecentRepositoriesResponse: {
+            /** @description Recently analyzed repositories */
+            data: components["schemas"]["RepositoryCard"][];
+        };
+        RepositoryStatsResponse: {
+            /**
+             * @description Total number of analyzed repositories for the user
+             * @example 12
+             */
+            totalRepositories: number;
+            /**
+             * @description Total number of tests across all repositories
+             * @example 1543
+             */
+            totalTests: number;
+        };
+        RepositoryCard: {
+            /**
+             * @description Repository ID
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            id: string;
+            /**
+             * @description Repository owner (user or organization)
+             * @example facebook
+             */
+            owner: string;
+            /**
+             * @description Repository name
+             * @example react
+             */
+            name: string;
+            /**
+             * @description Full repository name in owner/name format
+             * @example facebook/react
+             */
+            fullName: string;
+            /** @description Whether the repository is bookmarked by the user */
+            isBookmarked: boolean;
+            latestAnalysis?: components["schemas"]["AnalysisSummary"];
+            updateStatus: components["schemas"]["UpdateStatus"];
+        };
+        AnalysisSummary: {
+            /**
+             * @description Total number of tests in the latest analysis
+             * @example 312
+             */
+            testCount: number;
+            /**
+             * @description Change in test count compared to previous analysis
+             * @example 5
+             */
+            change: number;
+            /**
+             * Format: date-time
+             * @description ISO 8601 timestamp when analysis was completed
+             * @example 2024-01-15T10:30:00Z
+             */
+            analyzedAt: string;
+            /**
+             * @description Git commit SHA that was analyzed
+             * @example abc123def456
+             */
+            commitSha: string;
+        };
+        /**
+         * @description Repository update status:
+         *     - up-to-date: Latest analysis is current with HEAD
+         *     - new-commits: New commits available since last analysis
+         *     - unknown: Unable to determine status
+         *
+         * @enum {string}
+         */
+        UpdateStatus: "up-to-date" | "new-commits" | "unknown";
+        UpdateStatusResponse: {
+            status: components["schemas"]["UpdateStatus"];
+            /**
+             * @description Latest commit SHA from remote
+             * @example def789abc123
+             */
+            latestCommitSha?: string;
+            /**
+             * @description Commit SHA from last analysis
+             * @example abc123def456
+             */
+            analyzedCommitSha?: string;
+        };
+        BookmarkResponse: {
+            /** @description Operation success status */
+            success: boolean;
+            /** @description Current bookmark status after the operation */
+            isBookmarked: boolean;
         };
     };
     responses: {
@@ -552,6 +810,215 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserBookmarks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bookmarked repositories retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookmarkedRepositoriesResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getRecentRepositories: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of repositories to return */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent repositories retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecentRepositoriesResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getRepositoryStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Statistics retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepositoryStatsResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    addBookmark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub repository owner (user or organization)
+                 * @example facebook
+                 */
+                owner: components["parameters"]["Owner"];
+                /**
+                 * @description GitHub repository name
+                 * @example react
+                 */
+                repo: components["parameters"]["Repo"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bookmark added successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookmarkResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    removeBookmark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub repository owner (user or organization)
+                 * @example facebook
+                 */
+                owner: components["parameters"]["Owner"];
+                /**
+                 * @description GitHub repository name
+                 * @example react
+                 */
+                repo: components["parameters"]["Repo"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bookmark removed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookmarkResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUpdateStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub repository owner (user or organization)
+                 * @example facebook
+                 */
+                owner: components["parameters"]["Owner"];
+                /**
+                 * @description GitHub repository name
+                 * @example react
+                 */
+                repo: components["parameters"]["Repo"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Update status retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatusResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    reanalyzeRepository: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub repository owner (user or organization)
+                 * @example facebook
+                 */
+                owner: components["parameters"]["Owner"];
+                /**
+                 * @description GitHub repository name
+                 * @example react
+                 */
+                repo: components["parameters"]["Repo"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Re-analysis queued successfully */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueuedResponse"] | components["schemas"]["AnalyzingResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };
     };
