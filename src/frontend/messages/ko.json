@@ -94,11 +94,38 @@
     "linkCopiedDescription": "팀원들과 이 분석을 공유하세요"
   },
   "dashboard": {
+    "allRepositories": "전체 리포지토리",
     "bookmarked": "즐겨찾기",
+    "card": {
+      "addBookmark": "즐겨찾기 추가",
+      "analyzeLatest": "최신 커밋 분석",
+      "noAnalysis": "분석 기록 없음",
+      "reanalyze": "리포지토리 재분석",
+      "removeBookmark": "즐겨찾기 제거",
+      "tests": "개 테스트",
+      "update": "업데이트"
+    },
+    "delta": {
+      "decreased": "테스트 {count}개 감소",
+      "increased": "테스트 {count}개 증가",
+      "unchanged": "테스트 변화 없음"
+    },
     "emptyState": {
-      "title": "아직 리포지토리가 없습니다",
+      "cta": "리포지토리 분석하기",
       "description": "GitHub 리포지토리를 분석하면 여기에 표시됩니다. 분석 기록은 자동으로 저장됩니다.",
-      "cta": "리포지토리 분석하기"
+      "title": "아직 리포지토리가 없습니다"
+    },
+    "searchPlaceholder": "리포지토리 검색...",
+    "sort": {
+      "label": "정렬",
+      "name": "이름순",
+      "recent": "최신순",
+      "tests": "테스트순"
+    },
+    "status": {
+      "newCommits": "새 커밋 있음",
+      "unknown": "상태 알 수 없음",
+      "upToDate": "최신 상태"
     }
   }
 }

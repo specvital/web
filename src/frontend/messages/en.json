@@ -94,11 +94,38 @@
     "linkCopiedDescription": "Share this analysis with your team"
   },
   "dashboard": {
+    "allRepositories": "All Repositories",
     "bookmarked": "Bookmarked",
+    "card": {
+      "addBookmark": "Add bookmark",
+      "analyzeLatest": "Analyze latest commits",
+      "noAnalysis": "No analysis yet",
+      "reanalyze": "Reanalyze repository",
+      "removeBookmark": "Remove bookmark",
+      "tests": "tests",
+      "update": "Update"
+    },
+    "delta": {
+      "decreased": "Tests decreased by {count}",
+      "increased": "Tests increased by {count}",
+      "unchanged": "Tests unchanged"
+    },
     "emptyState": {
-      "title": "No repositories yet",
+      "cta": "Analyze a repository",
       "description": "Analyze a GitHub repository to see it here. Your analysis history will be saved automatically.",
-      "cta": "Analyze a repository"
+      "title": "No repositories yet"
+    },
+    "searchPlaceholder": "Search repositories...",
+    "sort": {
+      "label": "Sort",
+      "name": "Name",
+      "recent": "Recent",
+      "tests": "Tests"
+    },
+    "status": {
+      "newCommits": "New commits available",
+      "unknown": "Status unknown",
+      "upToDate": "Up to date"
     }
   }
 }

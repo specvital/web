@@ -62,7 +62,7 @@ export const DashboardContent = () => {
 
       <section aria-labelledby="all-repos-heading">
         <h2 className="mb-4 text-xl font-semibold" id="all-repos-heading">
-          {t("allRepositories", { defaultValue: "All Repositories" })}
+          {t("allRepositories")}
         </h2>
 
         {isLoading ? (

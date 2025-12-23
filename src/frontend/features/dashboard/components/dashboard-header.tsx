@@ -36,12 +36,12 @@ export const DashboardHeader = ({
   const t = useTranslations("dashboard");
 
   const sortLabels: Record<SortOption, string> = {
-    name: t("sort.name", { defaultValue: "Name" }),
-    recent: t("sort.recent", { defaultValue: "Recent" }),
-    tests: t("sort.tests", { defaultValue: "Tests" }),
+    name: t("sort.name"),
+    recent: t("sort.recent"),
+    tests: t("sort.tests"),
   };
 
-  const searchPlaceholder = t("searchPlaceholder", { defaultValue: "Search repositories..." });
+  const searchPlaceholder = t("searchPlaceholder");
 
   const handleSortChange = (value: string) => {
     if (isSortOption(value)) {
@@ -71,7 +71,7 @@ export const DashboardHeader = ({
           <Button className="sm:w-auto w-full" variant="outline">
             <ArrowUpDown aria-hidden="true" />
             <span>
-              {t("sort.label", { defaultValue: "Sort" })}: {sortLabels[sortBy]}
+              {t("sort.label")}: {sortLabels[sortBy]}
             </span>
           </Button>
         </DropdownMenuTrigger>

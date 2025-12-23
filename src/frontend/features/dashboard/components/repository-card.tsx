@@ -2,7 +2,7 @@
 
 import { RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
-import { useFormatter } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,6 +21,7 @@ type RepositoryCardProps = {
 
 export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: RepositoryCardProps) => {
   const format = useFormatter();
+  const t = useTranslations("dashboard.card");
   const { fullName, isBookmarked, latestAnalysis, name, owner, updateStatus } = repo;
   const hasNewCommits = updateStatus === "new-commits";
   const hasAnalysis = Boolean(latestAnalysis);
@@ -59,7 +60,7 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                aria-label={isBookmarked ? t("removeBookmark") : t("addBookmark")}
                 aria-pressed={isBookmarked}
                 className={cn(
                   "size-8 shrink-0",
@@ -72,7 +73,7 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
                 <Star aria-hidden="true" className={cn("size-4", isBookmarked && "fill-current")} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{isBookmarked ? "Remove bookmark" : "Add bookmark"}</TooltipContent>
+            <TooltipContent>{isBookmarked ? t("removeBookmark") : t("addBookmark")}</TooltipContent>
           </Tooltip>
         </div>
 
@@ -82,7 +83,7 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
             {/* Test count */}
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold">{latestAnalysis.testCount}</span>
-              <span className="text-sm text-muted-foreground">tests</span>
+              <span className="text-sm text-muted-foreground">{t("tests")}</span>
               {latestAnalysis.change !== 0 && (
                 <TestDeltaBadge delta={latestAnalysis.change} isCompact />
               )}
@@ -116,17 +117,17 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      aria-label="Reanalyze repository"
+                      aria-label={t("reanalyze")}
                       className="h-7 px-2 text-xs"
                       onClick={handleReanalyzeClick}
                       size="sm"
                       variant="outline"
                     >
                       <RefreshCw aria-hidden="true" className="size-3 mr-1" />
-                      Update
+                      {t("update")}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Analyze latest commits</TooltipContent>
+                  <TooltipContent>{t("analyzeLatest")}</TooltipContent>
                 </Tooltip>
               )}
             </div>
@@ -134,7 +135,7 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
         ) : (
           /* No analysis yet */
           <div className="flex items-center justify-center h-20 text-sm text-muted-foreground">
-            No analysis yet
+            {t("noAnalysis")}
           </div>
         )}
       </Card>
