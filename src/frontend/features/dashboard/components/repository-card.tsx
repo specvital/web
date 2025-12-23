@@ -1,0 +1,143 @@
+"use client";
+
+import { RefreshCw, Star } from "lucide-react";
+import Link from "next/link";
+import { useFormatter } from "next-intl";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { RepositoryCard as RepositoryCardType } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
+
+import { TestDeltaBadge } from "./test-delta-badge";
+import { UpdateStatusBadge } from "./update-status-badge";
+
+type RepositoryCardProps = {
+  onBookmarkToggle?: (owner: string, repo: string, isBookmarked: boolean) => void;
+  onReanalyze?: (owner: string, repo: string) => void;
+  repo: RepositoryCardType;
+};
+
+export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: RepositoryCardProps) => {
+  const format = useFormatter();
+  const { fullName, isBookmarked, latestAnalysis, name, owner, updateStatus } = repo;
+  const hasNewCommits = updateStatus === "new-commits";
+  const hasAnalysis = Boolean(latestAnalysis);
+
+  const handleBookmarkClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onBookmarkToggle?.(owner, name, isBookmarked);
+  };
+
+  const handleReanalyzeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onReanalyze?.(owner, name);
+  };
+
+  return (
+    <Link
+      className="group block outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xl"
+      href={`/analyze/${owner}/${name}`}
+    >
+      <Card
+        className={cn(
+          "relative h-full p-4 transition-all duration-200",
+          "hover:shadow-md hover:border-primary/20",
+          "group-focus-visible:shadow-md group-focus-visible:border-primary/20"
+        )}
+      >
+        {/* Header: Repo name + Bookmark */}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-sm truncate" title={fullName}>
+              {fullName}
+            </h3>
+          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                aria-pressed={isBookmarked}
+                className={cn(
+                  "size-8 shrink-0",
+                  isBookmarked && "text-amber-500 hover:text-amber-600"
+                )}
+                onClick={handleBookmarkClick}
+                size="icon"
+                variant="ghost"
+              >
+                <Star aria-hidden="true" className={cn("size-4", isBookmarked && "fill-current")} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{isBookmarked ? "Remove bookmark" : "Add bookmark"}</TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Content: Test count + badges */}
+        {hasAnalysis && latestAnalysis ? (
+          <div className="space-y-3">
+            {/* Test count */}
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold">{latestAnalysis.testCount}</span>
+              <span className="text-sm text-muted-foreground">tests</span>
+              {latestAnalysis.change !== 0 && (
+                <TestDeltaBadge delta={latestAnalysis.change} isCompact />
+              )}
+            </div>
+
+            {/* Status badges */}
+            <div className="flex items-center gap-2">
+              <UpdateStatusBadge status={updateStatus} />
+            </div>
+
+            {/* Footer: Time + Reanalyze */}
+            <div className="flex items-center justify-between pt-2 border-t">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <time
+                    className="text-xs text-muted-foreground"
+                    dateTime={latestAnalysis.analyzedAt}
+                  >
+                    {format.relativeTime(new Date(latestAnalysis.analyzedAt))}
+                  </time>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {format.dateTime(new Date(latestAnalysis.analyzedAt), {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </TooltipContent>
+              </Tooltip>
+
+              {hasNewCommits && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      aria-label="Reanalyze repository"
+                      className="h-7 px-2 text-xs"
+                      onClick={handleReanalyzeClick}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <RefreshCw aria-hidden="true" className="size-3 mr-1" />
+                      Update
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Analyze latest commits</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* No analysis yet */
+          <div className="flex items-center justify-center h-20 text-sm text-muted-foreground">
+            No analysis yet
+          </div>
+        )}
+      </Card>
+    </Link>
+  );
+};
