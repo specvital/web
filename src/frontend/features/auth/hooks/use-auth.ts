@@ -38,7 +38,10 @@ export const useAuth = (): UseAuthReturn => {
 
   const logoutMutation = useMutation({
     mutationFn: fetchLogout,
-    onSuccess: () => queryClient.setQueryData(authKeys.user(), null),
+    onSuccess: () => {
+      queryClient.setQueryData(authKeys.user(), null);
+      window.location.href = "/";
+    },
   });
 
   return {

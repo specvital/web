@@ -94,6 +94,7 @@
     "linkCopiedDescription": "Share this analysis with your team"
   },
   "dashboard": {
+    "title": "Dashboard",
     "allRepositories": "All Repositories",
     "bookmarked": "Bookmarked",
     "card": {

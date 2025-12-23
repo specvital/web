@@ -94,6 +94,7 @@
     "linkCopiedDescription": "팀원들과 이 분석을 공유하세요"
   },
   "dashboard": {
+    "title": "대시보드",
     "allRepositories": "전체 리포지토리",
     "bookmarked": "즐겨찾기",
     "card": {
