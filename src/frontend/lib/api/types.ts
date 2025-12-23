@@ -34,3 +34,14 @@ export type UserInfo = components["schemas"]["UserInfo"];
 
 // Convenience type for analysis status
 export type AnalysisStatus = AnalysisResponse["status"];
+
+// Dashboard types
+export type RepositoryCard = components["schemas"]["RepositoryCard"];
+export type AnalysisSummary = components["schemas"]["AnalysisSummary"];
+export type UpdateStatus = components["schemas"]["UpdateStatus"];
+export type UpdateStatusResponse = components["schemas"]["UpdateStatusResponse"];
+export type BookmarkResponse = components["schemas"]["BookmarkResponse"];
+export type BookmarkedRepositoriesResponse =
+  components["schemas"]["BookmarkedRepositoriesResponse"];
+export type RecentRepositoriesResponse = components["schemas"]["RecentRepositoriesResponse"];
+export type RepositoryStatsResponse = components["schemas"]["RepositoryStatsResponse"];

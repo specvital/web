@@ -9,7 +9,7 @@ export const getApiUrl = (path: string): string => {
 };
 
 type FetchOptions = {
-  method?: "GET" | "POST";
+  method?: "DELETE" | "GET" | "POST";
   timeoutMs?: number;
 };
 
