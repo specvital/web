@@ -18,7 +18,7 @@ func NewHandler() *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Get("/docs", h.serveIndex)
+	r.Get("/api/docs", h.serveIndex)
 	r.Get("/api/openapi.yaml", h.serveSpec)
 }
 
