@@ -13,6 +13,7 @@ import (
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/user"
 )
 
 type mockService struct {
@@ -55,7 +56,7 @@ var _ Service = (*mockService)(nil)
 
 func setupTestRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, handler, NewMockBookmarkHandler(), &mockGitHubHandler{}, &mockRepositoryHandler{})
+	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, user.NewMockAnalysisHistoryHandler(), handler, NewMockBookmarkHandler(), &mockGitHubHandler{}, &mockRepositoryHandler{})
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 	return r

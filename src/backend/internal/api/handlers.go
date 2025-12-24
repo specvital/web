@@ -20,6 +20,10 @@ type BookmarkHandlers interface {
 	RemoveBookmark(ctx context.Context, request RemoveBookmarkRequestObject) (RemoveBookmarkResponseObject, error)
 }
 
+type AnalysisHistoryHandlers interface {
+	GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error)
+}
+
 type GitHubHandlers interface {
 	GetOrganizationRepositories(ctx context.Context, request GetOrganizationRepositoriesRequestObject) (GetOrganizationRepositoriesResponseObject, error)
 	GetUserGitHubOrganizations(ctx context.Context, request GetUserGitHubOrganizationsRequestObject) (GetUserGitHubOrganizationsResponseObject, error)
@@ -34,22 +38,31 @@ type RepositoryHandlers interface {
 }
 
 type APIHandlers struct {
-	analyzer   AnalyzerHandlers
-	auth       AuthHandlers
-	bookmark   BookmarkHandlers
-	github     GitHubHandlers
-	repository RepositoryHandlers
+	analyzer        AnalyzerHandlers
+	analysisHistory AnalysisHistoryHandlers
+	auth            AuthHandlers
+	bookmark        BookmarkHandlers
+	github          GitHubHandlers
+	repository      RepositoryHandlers
 }
 
 var _ StrictServerInterface = (*APIHandlers)(nil)
 
-func NewAPIHandlers(analyzer AnalyzerHandlers, auth AuthHandlers, bookmark BookmarkHandlers, github GitHubHandlers, repository RepositoryHandlers) *APIHandlers {
+func NewAPIHandlers(
+	analyzer AnalyzerHandlers,
+	analysisHistory AnalysisHistoryHandlers,
+	auth AuthHandlers,
+	bookmark BookmarkHandlers,
+	github GitHubHandlers,
+	repository RepositoryHandlers,
+) *APIHandlers {
 	return &APIHandlers{
-		analyzer:   analyzer,
-		auth:       auth,
-		bookmark:   bookmark,
-		github:     github,
-		repository: repository,
+		analyzer:        analyzer,
+		analysisHistory: analysisHistory,
+		auth:            auth,
+		bookmark:        bookmark,
+		github:          github,
+		repository:      repository,
 	}
 }
 
@@ -103,6 +116,10 @@ func (h *APIHandlers) GetUserBookmarks(ctx context.Context, request GetUserBookm
 
 func (h *APIHandlers) RemoveBookmark(ctx context.Context, request RemoveBookmarkRequestObject) (RemoveBookmarkResponseObject, error) {
 	return h.bookmark.RemoveBookmark(ctx, request)
+}
+
+func (h *APIHandlers) GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error) {
+	return h.analysisHistory.GetUserAnalyzedRepositories(ctx, request)
 }
 
 func (h *APIHandlers) GetOrganizationRepositories(ctx context.Context, request GetOrganizationRepositoriesRequestObject) (GetOrganizationRepositoriesResponseObject, error) {

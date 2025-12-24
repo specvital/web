@@ -10,6 +10,7 @@ import (
 	"github.com/specvital/web/src/backend/internal/client"
 	"github.com/specvital/web/src/backend/modules/analyzer/domain"
 	"github.com/specvital/web/src/backend/modules/auth"
+	"github.com/specvital/web/src/backend/modules/user"
 )
 
 // mockRepository is a test double for Repository.
@@ -155,7 +156,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 
 	r := chi.NewRouter()
 	repoHandler := NewMockRepositoryHandler()
-	apiHandlers := api.NewAPIHandlers(handler, auth.NewMockHandler(), auth.NewMockBookmarkHandler(), NewMockGitHubHandler(), repoHandler)
+	apiHandlers := api.NewAPIHandlers(handler, user.NewMockAnalysisHistoryHandler(), auth.NewMockHandler(), auth.NewMockBookmarkHandler(), NewMockGitHubHandler(), repoHandler)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 

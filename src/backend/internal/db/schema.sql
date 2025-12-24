@@ -698,10 +698,10 @@ CREATE INDEX idx_user_analysis_history_analysis ON public.user_analysis_history 
 
 
 --
--- Name: idx_user_analysis_history_user; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_user_analysis_history_cursor; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_user_analysis_history_user ON public.user_analysis_history USING btree (user_id, updated_at);
+CREATE INDEX idx_user_analysis_history_cursor ON public.user_analysis_history USING btree (user_id, updated_at, id);
 
 
 --

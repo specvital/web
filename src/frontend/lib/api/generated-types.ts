@@ -170,6 +170,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user/analyzed-repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user's analyzed repositories
+         * @description Returns paginated list of repositories analyzed by the authenticated user with ownership filtering
+         */
+        get: operations["getUserAnalyzedRepositories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/repositories/recent": {
         parameters: {
             query?: never;
@@ -576,6 +596,14 @@ export interface components {
              */
             totalTests: number;
         };
+        UserAnalyzedRepositoriesResponse: {
+            /** @description Analyzed repositories in the current page */
+            data: components["schemas"]["RepositoryCard"][];
+            /** @description Cursor for fetching the next page (null if no more pages) */
+            nextCursor?: string | null;
+            /** @description Whether more pages are available */
+            hasNext: boolean;
+        };
         RepositoryCard: {
             /**
              * @description Repository ID
@@ -971,6 +999,40 @@ export interface operations {
                     "application/json": components["schemas"]["BookmarkedRepositoriesResponse"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserAnalyzedRepositories: {
+        parameters: {
+            query?: {
+                /** @description Pagination cursor for next page (opaque string from previous response) */
+                cursor?: string;
+                /** @description Maximum number of repositories to return per page */
+                limit?: number;
+                /** @description Filter repositories by ownership:
+                 *     - all: All analyzed repositories (personal and organization)
+                 *     - mine: Only repositories owned by the user
+                 *     - organization: Only repositories owned by organizations
+                 *      */
+                ownership?: "all" | "mine" | "organization";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Analyzed repositories retrieved with pagination */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserAnalyzedRepositoriesResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalError"];
         };

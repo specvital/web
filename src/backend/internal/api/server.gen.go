@@ -36,6 +36,13 @@ const (
 	UpToDate   UpdateStatus = "up-to-date"
 )
 
+// Defines values for GetUserAnalyzedRepositoriesParamsOwnership.
+const (
+	All          GetUserAnalyzedRepositoriesParamsOwnership = "all"
+	Mine         GetUserAnalyzedRepositoriesParamsOwnership = "mine"
+	Organization GetUserAnalyzedRepositoriesParamsOwnership = "organization"
+)
+
 // AnalysisResponse defines model for AnalysisResponse.
 type AnalysisResponse struct {
 	union json.RawMessage
@@ -354,6 +361,18 @@ type UpdateStatusResponse struct {
 	Status UpdateStatus `json:"status"`
 }
 
+// UserAnalyzedRepositoriesResponse defines model for UserAnalyzedRepositoriesResponse.
+type UserAnalyzedRepositoriesResponse struct {
+	// Data Analyzed repositories in the current page
+	Data []RepositoryCard `json:"data"`
+
+	// HasNext Whether more pages are available
+	HasNext bool `json:"hasNext"`
+
+	// NextCursor Cursor for fetching the next page (null if no more pages)
+	NextCursor *string `json:"nextCursor"`
+}
+
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
 	// AvatarURL GitHub avatar URL
@@ -404,6 +423,24 @@ type GetRecentRepositoriesParams struct {
 	// Limit Maximum number of repositories to return
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
+
+// GetUserAnalyzedRepositoriesParams defines parameters for GetUserAnalyzedRepositories.
+type GetUserAnalyzedRepositoriesParams struct {
+	// Cursor Pagination cursor for next page (opaque string from previous response)
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum number of repositories to return per page
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Ownership Filter repositories by ownership:
+	// - all: All analyzed repositories (personal and organization)
+	// - mine: Only repositories owned by the user
+	// - organization: Only repositories owned by organizations
+	Ownership *GetUserAnalyzedRepositoriesParamsOwnership `form:"ownership,omitempty" json:"ownership,omitempty"`
+}
+
+// GetUserAnalyzedRepositoriesParamsOwnership defines parameters for GetUserAnalyzedRepositories.
+type GetUserAnalyzedRepositoriesParamsOwnership string
 
 // GetUserGitHubOrganizationsParams defines parameters for GetUserGitHubOrganizations.
 type GetUserGitHubOrganizationsParams struct {
@@ -610,6 +647,9 @@ type ServerInterface interface {
 	// Check repository update status
 	// (GET /api/repositories/{owner}/{repo}/update-status)
 	GetUpdateStatus(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo)
+	// Get user's analyzed repositories
+	// (GET /api/user/analyzed-repositories)
+	GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request, params GetUserAnalyzedRepositoriesParams)
 	// Get user's bookmarked repositories
 	// (GET /api/user/bookmarks)
 	GetUserBookmarks(w http.ResponseWriter, r *http.Request)
@@ -697,6 +737,12 @@ func (_ Unimplemented) ReanalyzeRepository(w http.ResponseWriter, r *http.Reques
 // Check repository update status
 // (GET /api/repositories/{owner}/{repo}/update-status)
 func (_ Unimplemented) GetUpdateStatus(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get user's analyzed repositories
+// (GET /api/user/analyzed-repositories)
+func (_ Unimplemented) GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request, params GetUserAnalyzedRepositoriesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1117,6 +1163,55 @@ func (siw *ServerInterfaceWrapper) GetUpdateStatus(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetUserAnalyzedRepositories operation middleware
+func (siw *ServerInterfaceWrapper) GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserAnalyzedRepositoriesParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "cursor", r.URL.Query(), &params.Cursor)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "ownership" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "ownership", r.URL.Query(), &params.Ownership)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ownership", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserAnalyzedRepositories(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetUserBookmarks operation middleware
 func (siw *ServerInterfaceWrapper) GetUserBookmarks(w http.ResponseWriter, r *http.Request) {
 
@@ -1393,6 +1488,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/repositories/{owner}/{repo}/update-status", wrapper.GetUpdateStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/user/analyzed-repositories", wrapper.GetUserAnalyzedRepositories)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/bookmarks", wrapper.GetUserBookmarks)
@@ -1987,6 +2085,56 @@ func (response GetUpdateStatus500ApplicationProblemPlusJSONResponse) VisitGetUpd
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetUserAnalyzedRepositoriesRequestObject struct {
+	Params GetUserAnalyzedRepositoriesParams
+}
+
+type GetUserAnalyzedRepositoriesResponseObject interface {
+	VisitGetUserAnalyzedRepositoriesResponse(w http.ResponseWriter) error
+}
+
+type GetUserAnalyzedRepositories200JSONResponse UserAnalyzedRepositoriesResponse
+
+func (response GetUserAnalyzedRepositories200JSONResponse) VisitGetUserAnalyzedRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserAnalyzedRepositories400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserAnalyzedRepositories400ApplicationProblemPlusJSONResponse) VisitGetUserAnalyzedRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserAnalyzedRepositories401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserAnalyzedRepositories401ApplicationProblemPlusJSONResponse) VisitGetUserAnalyzedRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserAnalyzedRepositories500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserAnalyzedRepositories500ApplicationProblemPlusJSONResponse) VisitGetUserAnalyzedRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type GetUserBookmarksRequestObject struct {
 }
 
@@ -2225,6 +2373,9 @@ type StrictServerInterface interface {
 	// Check repository update status
 	// (GET /api/repositories/{owner}/{repo}/update-status)
 	GetUpdateStatus(ctx context.Context, request GetUpdateStatusRequestObject) (GetUpdateStatusResponseObject, error)
+	// Get user's analyzed repositories
+	// (GET /api/user/analyzed-repositories)
+	GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error)
 	// Get user's bookmarked repositories
 	// (GET /api/user/bookmarks)
 	GetUserBookmarks(ctx context.Context, request GetUserBookmarksRequestObject) (GetUserBookmarksResponseObject, error)
@@ -2571,6 +2722,32 @@ func (sh *strictHandler) GetUpdateStatus(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetUpdateStatusResponseObject); ok {
 		if err := validResponse.VisitGetUpdateStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserAnalyzedRepositories operation middleware
+func (sh *strictHandler) GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request, params GetUserAnalyzedRepositoriesParams) {
+	var request GetUserAnalyzedRepositoriesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserAnalyzedRepositories(ctx, request.(GetUserAnalyzedRepositoriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserAnalyzedRepositories")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserAnalyzedRepositoriesResponseObject); ok {
+		if err := validResponse.VisitGetUserAnalyzedRepositoriesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

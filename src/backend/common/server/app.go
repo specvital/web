@@ -15,6 +15,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/analyzer"
 	"github.com/specvital/web/src/backend/modules/auth"
 	"github.com/specvital/web/src/backend/modules/github"
+	"github.com/specvital/web/src/backend/modules/user"
 )
 
 type Handlers struct {
@@ -84,6 +85,16 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		return nil, fmt.Errorf("create bookmark handler: %w", err)
 	}
 
+	analysisHistoryRepo := user.NewAnalysisHistoryRepository(queries)
+	analysisHistoryService := user.NewAnalysisHistoryService(analysisHistoryRepo)
+	analysisHistoryHandler, err := user.NewAnalysisHistoryHandler(&user.AnalysisHistoryHandlerConfig{
+		Logger:  log,
+		Service: analysisHistoryService,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create analysis history handler: %w", err)
+	}
+
 	analyzerRepo := analyzer.NewRepository(queries)
 	queueSvc := analyzer.NewQueueService(container.River.Client(), analyzerRepo)
 	analyzerService := analyzer.NewAnalyzerService(log, analyzerRepo, queueSvc, container.GitClient, authService)
@@ -102,7 +113,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		return nil, fmt.Errorf("create github handler: %w", err)
 	}
 
-	apiHandlers := api.NewAPIHandlers(analyzerHandler, authHandler, bookmarkHandler, githubHandler, repoHandler)
+	apiHandlers := api.NewAPIHandlers(analyzerHandler, analysisHistoryHandler, authHandler, bookmarkHandler, githubHandler, repoHandler)
 
 	return &Handlers{
 		API:    apiHandlers,
