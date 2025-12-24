@@ -321,6 +321,104 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /api/user/github/repositories:
+    get:
+      operationId: getUserGitHubRepositories
+      summary: Get user's GitHub repositories
+      description: Returns all repositories accessible by the authenticated user from GitHub
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: refresh
+          in: query
+          required: false
+          description: Force refresh from GitHub API, bypassing cache
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: GitHub repositories retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubRepositoriesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/user/github/organizations:
+    get:
+      operationId: getUserGitHubOrganizations
+      summary: Get user's GitHub organizations
+      description: Returns all organizations the authenticated user belongs to
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: refresh
+          in: query
+          required: false
+          description: Force refresh from GitHub API, bypassing cache
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: GitHub organizations retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubOrganizationsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/user/github/organizations/{org}/repositories:
+    parameters:
+      - name: org
+        in: path
+        required: true
+        description: GitHub organization login name
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9._-]+$"
+        example: facebook
+    get:
+      operationId: getOrganizationRepositories
+      summary: Get organization's repositories
+      description: Returns all repositories in the specified organization
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: refresh
+          in: query
+          required: false
+          description: Force refresh from GitHub API, bypassing cache
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Organization repositories retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubRepositoriesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   securitySchemes:
     cookieAuth:
@@ -374,6 +472,13 @@ components:
 
     Unauthorized:
       description: Authentication required
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+
+    TooManyRequests:
+      description: Rate limit exceeded
       content:
         application/problem+json:
           schema:
@@ -851,3 +956,91 @@ components:
         isBookmarked:
           type: boolean
           description: Current bookmark status after the operation
+
+    # GitHub API Responses
+    GitHubRepositoriesResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GitHubRepository"
+          description: List of GitHub repositories
+
+    GitHubOrganizationsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GitHubOrganization"
+          description: List of GitHub organizations
+
+    GitHubRepository:
+      type: object
+      required:
+        - id
+        - name
+        - fullName
+        - owner
+        - defaultBranch
+        - isPrivate
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: GitHub repository ID
+          example: 10270250
+        name:
+          type: string
+          description: Repository name
+          example: react
+        fullName:
+          type: string
+          description: Full repository name in owner/name format
+          example: facebook/react
+        owner:
+          type: string
+          description: Repository owner login
+          example: facebook
+        description:
+          type: string
+          description: Repository description
+        defaultBranch:
+          type: string
+          description: Default branch name
+          example: main
+        isPrivate:
+          type: boolean
+          description: Whether the repository is private
+        pushedAt:
+          type: string
+          format: date-time
+          description: Last push timestamp
+
+    GitHubOrganization:
+      type: object
+      required:
+        - id
+        - login
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: GitHub organization ID
+          example: 69631
+        login:
+          type: string
+          description: Organization login name
+          example: facebook
+        avatarUrl:
+          type: string
+          format: uri
+          description: Organization avatar URL
+        description:
+          type: string
+          description: Organization description

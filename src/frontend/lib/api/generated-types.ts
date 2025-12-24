@@ -311,6 +311,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user/github/repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user's GitHub repositories
+         * @description Returns all repositories accessible by the authenticated user from GitHub
+         */
+        get: operations["getUserGitHubRepositories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user/github/organizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user's GitHub organizations
+         * @description Returns all organizations the authenticated user belongs to
+         */
+        get: operations["getUserGitHubOrganizations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user/github/organizations/{org}/repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub organization login name
+                 * @example facebook
+                 */
+                org: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Get organization's repositories
+         * @description Returns all repositories in the specified organization
+         */
+        get: operations["getOrganizationRepositories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -587,6 +653,71 @@ export interface components {
             /** @description Current bookmark status after the operation */
             isBookmarked: boolean;
         };
+        GitHubRepositoriesResponse: {
+            /** @description List of GitHub repositories */
+            data: components["schemas"]["GitHubRepository"][];
+        };
+        GitHubOrganizationsResponse: {
+            /** @description List of GitHub organizations */
+            data: components["schemas"]["GitHubOrganization"][];
+        };
+        GitHubRepository: {
+            /**
+             * Format: int64
+             * @description GitHub repository ID
+             * @example 10270250
+             */
+            id: number;
+            /**
+             * @description Repository name
+             * @example react
+             */
+            name: string;
+            /**
+             * @description Full repository name in owner/name format
+             * @example facebook/react
+             */
+            fullName: string;
+            /**
+             * @description Repository owner login
+             * @example facebook
+             */
+            owner: string;
+            /** @description Repository description */
+            description?: string;
+            /**
+             * @description Default branch name
+             * @example main
+             */
+            defaultBranch: string;
+            /** @description Whether the repository is private */
+            isPrivate: boolean;
+            /**
+             * Format: date-time
+             * @description Last push timestamp
+             */
+            pushedAt?: string;
+        };
+        GitHubOrganization: {
+            /**
+             * Format: int64
+             * @description GitHub organization ID
+             * @example 69631
+             */
+            id: number;
+            /**
+             * @description Organization login name
+             * @example facebook
+             */
+            login: string;
+            /**
+             * Format: uri
+             * @description Organization avatar URL
+             */
+            avatarUrl?: string;
+            /** @description Organization description */
+            description?: string;
+        };
     };
     responses: {
         /** @description Invalid request parameters */
@@ -618,6 +749,15 @@ export interface components {
         };
         /** @description Authentication required */
         Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
+        /** @description Rate limit exceeded */
+        TooManyRequests: {
             headers: {
                 [name: string]: unknown;
             };
@@ -1019,6 +1159,91 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserGitHubRepositories: {
+        parameters: {
+            query?: {
+                /** @description Force refresh from GitHub API, bypassing cache */
+                refresh?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description GitHub repositories retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubRepositoriesResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserGitHubOrganizations: {
+        parameters: {
+            query?: {
+                /** @description Force refresh from GitHub API, bypassing cache */
+                refresh?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description GitHub organizations retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubOrganizationsResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getOrganizationRepositories: {
+        parameters: {
+            query?: {
+                /** @description Force refresh from GitHub API, bypassing cache */
+                refresh?: boolean;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description GitHub organization login name
+                 * @example facebook
+                 */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Organization repositories retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubRepositoriesResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
         };
     };

@@ -9,10 +9,12 @@ import (
 	"github.com/specvital/web/src/backend/common/logger"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/internal/api"
+	"github.com/specvital/web/src/backend/internal/client"
 	"github.com/specvital/web/src/backend/internal/db"
 	"github.com/specvital/web/src/backend/internal/infra"
 	"github.com/specvital/web/src/backend/modules/analyzer"
 	"github.com/specvital/web/src/backend/modules/auth"
+	"github.com/specvital/web/src/backend/modules/github"
 )
 
 type Handlers struct {
@@ -90,7 +92,17 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	repoService := analyzer.NewRepositoryService(log, analyzerRepo, container.GitClient, authService)
 	repoHandler := analyzer.NewRepositoryHandler(log, repoService, analyzerService)
 
-	apiHandlers := api.NewAPIHandlers(analyzerHandler, authHandler, bookmarkHandler, repoHandler)
+	githubRepo := github.NewRepository(container.DB, queries)
+	githubService := github.NewService(authService, githubRepo, client.NewGitHubClientFactory())
+	githubHandler, err := github.NewHandler(&github.HandlerConfig{
+		Logger:  log,
+		Service: githubService,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create github handler: %w", err)
+	}
+
+	apiHandlers := api.NewAPIHandlers(analyzerHandler, authHandler, bookmarkHandler, githubHandler, repoHandler)
 
 	return &Handlers{
 		API:    apiHandlers,

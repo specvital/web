@@ -155,7 +155,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 
 	r := chi.NewRouter()
 	repoHandler := NewMockRepositoryHandler()
-	apiHandlers := api.NewAPIHandlers(handler, auth.NewMockHandler(), auth.NewMockBookmarkHandler(), repoHandler)
+	apiHandlers := api.NewAPIHandlers(handler, auth.NewMockHandler(), auth.NewMockBookmarkHandler(), NewMockGitHubHandler(), repoHandler)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 
@@ -186,4 +186,24 @@ func (m *mockRepositoryHandler) ReanalyzeRepository(ctx context.Context, request
 	return api.ReanalyzeRepository500ApplicationProblemPlusJSONResponse{
 		InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("mock"),
 	}, nil
+}
+
+type mockGitHubHandler struct{}
+
+var _ api.GitHubHandlers = (*mockGitHubHandler)(nil)
+
+func NewMockGitHubHandler() *mockGitHubHandler {
+	return &mockGitHubHandler{}
+}
+
+func (m *mockGitHubHandler) GetOrganizationRepositories(_ context.Context, _ api.GetOrganizationRepositoriesRequestObject) (api.GetOrganizationRepositoriesResponseObject, error) {
+	return api.GetOrganizationRepositories200JSONResponse{Data: []api.GitHubRepository{}}, nil
+}
+
+func (m *mockGitHubHandler) GetUserGitHubOrganizations(_ context.Context, _ api.GetUserGitHubOrganizationsRequestObject) (api.GetUserGitHubOrganizationsResponseObject, error) {
+	return api.GetUserGitHubOrganizations200JSONResponse{Data: []api.GitHubOrganization{}}, nil
+}
+
+func (m *mockGitHubHandler) GetUserGitHubRepositories(_ context.Context, _ api.GetUserGitHubRepositoriesRequestObject) (api.GetUserGitHubRepositoriesResponseObject, error) {
+	return api.GetUserGitHubRepositories200JSONResponse{Data: []api.GitHubRepository{}}, nil
 }

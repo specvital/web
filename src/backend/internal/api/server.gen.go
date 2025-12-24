@@ -122,6 +122,60 @@ type FrameworkSummary struct {
 	Xfail     int       `json:"xfail"`
 }
 
+// GitHubOrganization defines model for GitHubOrganization.
+type GitHubOrganization struct {
+	// AvatarURL Organization avatar URL
+	AvatarURL *string `json:"avatarUrl,omitempty"`
+
+	// Description Organization description
+	Description *string `json:"description,omitempty"`
+
+	// ID GitHub organization ID
+	ID int64 `json:"id"`
+
+	// Login Organization login name
+	Login string `json:"login"`
+}
+
+// GitHubOrganizationsResponse defines model for GitHubOrganizationsResponse.
+type GitHubOrganizationsResponse struct {
+	// Data List of GitHub organizations
+	Data []GitHubOrganization `json:"data"`
+}
+
+// GitHubRepositoriesResponse defines model for GitHubRepositoriesResponse.
+type GitHubRepositoriesResponse struct {
+	// Data List of GitHub repositories
+	Data []GitHubRepository `json:"data"`
+}
+
+// GitHubRepository defines model for GitHubRepository.
+type GitHubRepository struct {
+	// DefaultBranch Default branch name
+	DefaultBranch string `json:"defaultBranch"`
+
+	// Description Repository description
+	Description *string `json:"description,omitempty"`
+
+	// FullName Full repository name in owner/name format
+	FullName string `json:"fullName"`
+
+	// ID GitHub repository ID
+	ID int64 `json:"id"`
+
+	// IsPrivate Whether the repository is private
+	IsPrivate bool `json:"isPrivate"`
+
+	// Name Repository name
+	Name string `json:"name"`
+
+	// Owner Repository owner login
+	Owner string `json:"owner"`
+
+	// PushedAt Last push timestamp
+	PushedAt *time.Time `json:"pushedAt,omitempty"`
+}
+
 // LoginResponse defines model for LoginResponse.
 type LoginResponse struct {
 	// AuthURL GitHub OAuth authorization URL to redirect user
@@ -330,6 +384,9 @@ type InternalError = ProblemDetail
 // NotFound defines model for NotFound.
 type NotFound = ProblemDetail
 
+// TooManyRequests defines model for TooManyRequests.
+type TooManyRequests = ProblemDetail
+
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = ProblemDetail
 
@@ -346,6 +403,24 @@ type AuthCallbackParams struct {
 type GetRecentRepositoriesParams struct {
 	// Limit Maximum number of repositories to return
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetUserGitHubOrganizationsParams defines parameters for GetUserGitHubOrganizations.
+type GetUserGitHubOrganizationsParams struct {
+	// Refresh Force refresh from GitHub API, bypassing cache
+	Refresh *bool `form:"refresh,omitempty" json:"refresh,omitempty"`
+}
+
+// GetOrganizationRepositoriesParams defines parameters for GetOrganizationRepositories.
+type GetOrganizationRepositoriesParams struct {
+	// Refresh Force refresh from GitHub API, bypassing cache
+	Refresh *bool `form:"refresh,omitempty" json:"refresh,omitempty"`
+}
+
+// GetUserGitHubRepositoriesParams defines parameters for GetUserGitHubRepositories.
+type GetUserGitHubRepositoriesParams struct {
+	// Refresh Force refresh from GitHub API, bypassing cache
+	Refresh *bool `form:"refresh,omitempty" json:"refresh,omitempty"`
 }
 
 // AsCompletedResponse returns the union data inside the AnalysisResponse as a CompletedResponse
@@ -538,6 +613,15 @@ type ServerInterface interface {
 	// Get user's bookmarked repositories
 	// (GET /api/user/bookmarks)
 	GetUserBookmarks(w http.ResponseWriter, r *http.Request)
+	// Get user's GitHub organizations
+	// (GET /api/user/github/organizations)
+	GetUserGitHubOrganizations(w http.ResponseWriter, r *http.Request, params GetUserGitHubOrganizationsParams)
+	// Get organization's repositories
+	// (GET /api/user/github/organizations/{org}/repositories)
+	GetOrganizationRepositories(w http.ResponseWriter, r *http.Request, org string, params GetOrganizationRepositoriesParams)
+	// Get user's GitHub repositories
+	// (GET /api/user/github/repositories)
+	GetUserGitHubRepositories(w http.ResponseWriter, r *http.Request, params GetUserGitHubRepositoriesParams)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -619,6 +703,24 @@ func (_ Unimplemented) GetUpdateStatus(w http.ResponseWriter, r *http.Request, o
 // Get user's bookmarked repositories
 // (GET /api/user/bookmarks)
 func (_ Unimplemented) GetUserBookmarks(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get user's GitHub organizations
+// (GET /api/user/github/organizations)
+func (_ Unimplemented) GetUserGitHubOrganizations(w http.ResponseWriter, r *http.Request, params GetUserGitHubOrganizationsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get organization's repositories
+// (GET /api/user/github/organizations/{org}/repositories)
+func (_ Unimplemented) GetOrganizationRepositories(w http.ResponseWriter, r *http.Request, org string, params GetOrganizationRepositoriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get user's GitHub repositories
+// (GET /api/user/github/repositories)
+func (_ Unimplemented) GetUserGitHubRepositories(w http.ResponseWriter, r *http.Request, params GetUserGitHubRepositoriesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1035,6 +1137,114 @@ func (siw *ServerInterfaceWrapper) GetUserBookmarks(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// GetUserGitHubOrganizations operation middleware
+func (siw *ServerInterfaceWrapper) GetUserGitHubOrganizations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserGitHubOrganizationsParams
+
+	// ------------- Optional query parameter "refresh" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "refresh", r.URL.Query(), &params.Refresh)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "refresh", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserGitHubOrganizations(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrganizationRepositories operation middleware
+func (siw *ServerInterfaceWrapper) GetOrganizationRepositories(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "org" -------------
+	var org string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetOrganizationRepositoriesParams
+
+	// ------------- Optional query parameter "refresh" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "refresh", r.URL.Query(), &params.Refresh)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "refresh", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrganizationRepositories(w, r, org, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUserGitHubRepositories operation middleware
+func (siw *ServerInterfaceWrapper) GetUserGitHubRepositories(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserGitHubRepositoriesParams
+
+	// ------------- Optional query parameter "refresh" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "refresh", r.URL.Query(), &params.Refresh)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "refresh", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserGitHubRepositories(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -1187,6 +1397,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/bookmarks", wrapper.GetUserBookmarks)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/user/github/organizations", wrapper.GetUserGitHubOrganizations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/user/github/organizations/{org}/repositories", wrapper.GetOrganizationRepositories)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/user/github/repositories", wrapper.GetUserGitHubRepositories)
+	})
 
 	return r
 }
@@ -1196,6 +1415,8 @@ type BadRequestApplicationProblemPlusJSONResponse ProblemDetail
 type InternalErrorApplicationProblemPlusJSONResponse ProblemDetail
 
 type NotFoundApplicationProblemPlusJSONResponse ProblemDetail
+
+type TooManyRequestsApplicationProblemPlusJSONResponse ProblemDetail
 
 type UnauthorizedApplicationProblemPlusJSONResponse ProblemDetail
 
@@ -1804,6 +2025,168 @@ func (response GetUserBookmarks500ApplicationProblemPlusJSONResponse) VisitGetUs
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetUserGitHubOrganizationsRequestObject struct {
+	Params GetUserGitHubOrganizationsParams
+}
+
+type GetUserGitHubOrganizationsResponseObject interface {
+	VisitGetUserGitHubOrganizationsResponse(w http.ResponseWriter) error
+}
+
+type GetUserGitHubOrganizations200JSONResponse GitHubOrganizationsResponse
+
+func (response GetUserGitHubOrganizations200JSONResponse) VisitGetUserGitHubOrganizationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserGitHubOrganizations401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserGitHubOrganizations401ApplicationProblemPlusJSONResponse) VisitGetUserGitHubOrganizationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserGitHubOrganizations429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserGitHubOrganizations429ApplicationProblemPlusJSONResponse) VisitGetUserGitHubOrganizationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserGitHubOrganizations500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserGitHubOrganizations500ApplicationProblemPlusJSONResponse) VisitGetUserGitHubOrganizationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrganizationRepositoriesRequestObject struct {
+	Org    string `json:"org"`
+	Params GetOrganizationRepositoriesParams
+}
+
+type GetOrganizationRepositoriesResponseObject interface {
+	VisitGetOrganizationRepositoriesResponse(w http.ResponseWriter) error
+}
+
+type GetOrganizationRepositories200JSONResponse GitHubRepositoriesResponse
+
+func (response GetOrganizationRepositories200JSONResponse) VisitGetOrganizationRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrganizationRepositories401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetOrganizationRepositories401ApplicationProblemPlusJSONResponse) VisitGetOrganizationRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrganizationRepositories404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetOrganizationRepositories404ApplicationProblemPlusJSONResponse) VisitGetOrganizationRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrganizationRepositories429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response GetOrganizationRepositories429ApplicationProblemPlusJSONResponse) VisitGetOrganizationRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetOrganizationRepositories500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetOrganizationRepositories500ApplicationProblemPlusJSONResponse) VisitGetOrganizationRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserGitHubRepositoriesRequestObject struct {
+	Params GetUserGitHubRepositoriesParams
+}
+
+type GetUserGitHubRepositoriesResponseObject interface {
+	VisitGetUserGitHubRepositoriesResponse(w http.ResponseWriter) error
+}
+
+type GetUserGitHubRepositories200JSONResponse GitHubRepositoriesResponse
+
+func (response GetUserGitHubRepositories200JSONResponse) VisitGetUserGitHubRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserGitHubRepositories401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserGitHubRepositories401ApplicationProblemPlusJSONResponse) VisitGetUserGitHubRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserGitHubRepositories429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserGitHubRepositories429ApplicationProblemPlusJSONResponse) VisitGetUserGitHubRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserGitHubRepositories500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserGitHubRepositories500ApplicationProblemPlusJSONResponse) VisitGetUserGitHubRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Analyze repository test specifications
@@ -1845,6 +2228,15 @@ type StrictServerInterface interface {
 	// Get user's bookmarked repositories
 	// (GET /api/user/bookmarks)
 	GetUserBookmarks(ctx context.Context, request GetUserBookmarksRequestObject) (GetUserBookmarksResponseObject, error)
+	// Get user's GitHub organizations
+	// (GET /api/user/github/organizations)
+	GetUserGitHubOrganizations(ctx context.Context, request GetUserGitHubOrganizationsRequestObject) (GetUserGitHubOrganizationsResponseObject, error)
+	// Get organization's repositories
+	// (GET /api/user/github/organizations/{org}/repositories)
+	GetOrganizationRepositories(ctx context.Context, request GetOrganizationRepositoriesRequestObject) (GetOrganizationRepositoriesResponseObject, error)
+	// Get user's GitHub repositories
+	// (GET /api/user/github/repositories)
+	GetUserGitHubRepositories(ctx context.Context, request GetUserGitHubRepositoriesRequestObject) (GetUserGitHubRepositoriesResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -2203,6 +2595,85 @@ func (sh *strictHandler) GetUserBookmarks(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetUserBookmarksResponseObject); ok {
 		if err := validResponse.VisitGetUserBookmarksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserGitHubOrganizations operation middleware
+func (sh *strictHandler) GetUserGitHubOrganizations(w http.ResponseWriter, r *http.Request, params GetUserGitHubOrganizationsParams) {
+	var request GetUserGitHubOrganizationsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserGitHubOrganizations(ctx, request.(GetUserGitHubOrganizationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserGitHubOrganizations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserGitHubOrganizationsResponseObject); ok {
+		if err := validResponse.VisitGetUserGitHubOrganizationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrganizationRepositories operation middleware
+func (sh *strictHandler) GetOrganizationRepositories(w http.ResponseWriter, r *http.Request, org string, params GetOrganizationRepositoriesParams) {
+	var request GetOrganizationRepositoriesRequestObject
+
+	request.Org = org
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrganizationRepositories(ctx, request.(GetOrganizationRepositoriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrganizationRepositories")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOrganizationRepositoriesResponseObject); ok {
+		if err := validResponse.VisitGetOrganizationRepositoriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserGitHubRepositories operation middleware
+func (sh *strictHandler) GetUserGitHubRepositories(w http.ResponseWriter, r *http.Request, params GetUserGitHubRepositoriesParams) {
+	var request GetUserGitHubRepositoriesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserGitHubRepositories(ctx, request.(GetUserGitHubRepositoriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserGitHubRepositories")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserGitHubRepositoriesResponseObject); ok {
+		if err := validResponse.VisitGetUserGitHubRepositoriesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

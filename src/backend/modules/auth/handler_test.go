@@ -55,7 +55,7 @@ var _ Service = (*mockService)(nil)
 
 func setupTestRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, handler, NewMockBookmarkHandler(), &mockRepositoryHandler{})
+	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, handler, NewMockBookmarkHandler(), &mockGitHubHandler{}, &mockRepositoryHandler{})
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 	return r
@@ -86,6 +86,20 @@ func (m *mockRepositoryHandler) GetUpdateStatus(_ context.Context, _ api.GetUpda
 }
 
 func (m *mockRepositoryHandler) ReanalyzeRepository(_ context.Context, _ api.ReanalyzeRepositoryRequestObject) (api.ReanalyzeRepositoryResponseObject, error) {
+	return nil, nil
+}
+
+type mockGitHubHandler struct{}
+
+func (m *mockGitHubHandler) GetOrganizationRepositories(_ context.Context, _ api.GetOrganizationRepositoriesRequestObject) (api.GetOrganizationRepositoriesResponseObject, error) {
+	return nil, nil
+}
+
+func (m *mockGitHubHandler) GetUserGitHubOrganizations(_ context.Context, _ api.GetUserGitHubOrganizationsRequestObject) (api.GetUserGitHubOrganizationsResponseObject, error) {
+	return nil, nil
+}
+
+func (m *mockGitHubHandler) GetUserGitHubRepositories(_ context.Context, _ api.GetUserGitHubRepositoriesRequestObject) (api.GetUserGitHubRepositoriesResponseObject, error) {
 	return nil, nil
 }
 

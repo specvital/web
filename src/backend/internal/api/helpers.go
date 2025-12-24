@@ -34,8 +34,8 @@ func NewUnauthorized(detail string) UnauthorizedApplicationProblemPlusJSONRespon
 	}
 }
 
-func NewTooManyRequests(detail string) ProblemDetail {
-	return ProblemDetail{
+func NewTooManyRequests(detail string) TooManyRequestsApplicationProblemPlusJSONResponse {
+	return TooManyRequestsApplicationProblemPlusJSONResponse{
 		Detail: detail,
 		Status: http.StatusTooManyRequests,
 		Title:  "Too Many Requests",

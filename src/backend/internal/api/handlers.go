@@ -20,6 +20,12 @@ type BookmarkHandlers interface {
 	RemoveBookmark(ctx context.Context, request RemoveBookmarkRequestObject) (RemoveBookmarkResponseObject, error)
 }
 
+type GitHubHandlers interface {
+	GetOrganizationRepositories(ctx context.Context, request GetOrganizationRepositoriesRequestObject) (GetOrganizationRepositoriesResponseObject, error)
+	GetUserGitHubOrganizations(ctx context.Context, request GetUserGitHubOrganizationsRequestObject) (GetUserGitHubOrganizationsResponseObject, error)
+	GetUserGitHubRepositories(ctx context.Context, request GetUserGitHubRepositoriesRequestObject) (GetUserGitHubRepositoriesResponseObject, error)
+}
+
 type RepositoryHandlers interface {
 	GetRecentRepositories(ctx context.Context, request GetRecentRepositoriesRequestObject) (GetRecentRepositoriesResponseObject, error)
 	GetRepositoryStats(ctx context.Context, request GetRepositoryStatsRequestObject) (GetRepositoryStatsResponseObject, error)
@@ -31,16 +37,18 @@ type APIHandlers struct {
 	analyzer   AnalyzerHandlers
 	auth       AuthHandlers
 	bookmark   BookmarkHandlers
+	github     GitHubHandlers
 	repository RepositoryHandlers
 }
 
 var _ StrictServerInterface = (*APIHandlers)(nil)
 
-func NewAPIHandlers(analyzer AnalyzerHandlers, auth AuthHandlers, bookmark BookmarkHandlers, repository RepositoryHandlers) *APIHandlers {
+func NewAPIHandlers(analyzer AnalyzerHandlers, auth AuthHandlers, bookmark BookmarkHandlers, github GitHubHandlers, repository RepositoryHandlers) *APIHandlers {
 	return &APIHandlers{
 		analyzer:   analyzer,
 		auth:       auth,
 		bookmark:   bookmark,
+		github:     github,
 		repository: repository,
 	}
 }
@@ -95,4 +103,16 @@ func (h *APIHandlers) GetUserBookmarks(ctx context.Context, request GetUserBookm
 
 func (h *APIHandlers) RemoveBookmark(ctx context.Context, request RemoveBookmarkRequestObject) (RemoveBookmarkResponseObject, error) {
 	return h.bookmark.RemoveBookmark(ctx, request)
+}
+
+func (h *APIHandlers) GetOrganizationRepositories(ctx context.Context, request GetOrganizationRepositoriesRequestObject) (GetOrganizationRepositoriesResponseObject, error) {
+	return h.github.GetOrganizationRepositories(ctx, request)
+}
+
+func (h *APIHandlers) GetUserGitHubOrganizations(ctx context.Context, request GetUserGitHubOrganizationsRequestObject) (GetUserGitHubOrganizationsResponseObject, error) {
+	return h.github.GetUserGitHubOrganizations(ctx, request)
+}
+
+func (h *APIHandlers) GetUserGitHubRepositories(ctx context.Context, request GetUserGitHubRepositoriesRequestObject) (GetUserGitHubRepositoriesResponseObject, error) {
+	return h.github.GetUserGitHubRepositories(ctx, request)
 }
