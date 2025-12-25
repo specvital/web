@@ -6,6 +6,7 @@ export { DiscoveryCard } from "./discovery-card";
 export { DiscoveryListSheet } from "./discovery-list-sheet";
 export { DiscoverySection } from "./discovery-section";
 export { EmptyState } from "./empty-state";
+export { OrganizationPicker } from "./organization-picker";
 export { OwnershipFilter } from "./ownership-filter";
 export { RepositoryCard } from "./repository-card";
 export { RepositoryList } from "./repository-list";

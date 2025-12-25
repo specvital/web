@@ -4,16 +4,25 @@ import { Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-import type { GitHubRepository, RepositoryCard as RepositoryCardType } from "@/lib/api/types";
+import type {
+  GitHubOrganization,
+  GitHubRepository,
+  RepositoryCard as RepositoryCardType,
+} from "@/lib/api/types";
 
-import { useMyRepositories, useOrganizations, useUnanalyzedRepos } from "../hooks";
+import { useAllOrgRepos, useMyRepositories, useOrganizations, useUnanalyzedRepos } from "../hooks";
 import { DiscoveryCard } from "./discovery-card";
 import { DiscoveryListSheet } from "./discovery-list-sheet";
+import { OrganizationPicker } from "./organization-picker";
 
 type SheetState = {
   isOpen: boolean;
   repositories: GitHubRepository[];
   title: string;
+};
+
+type OrgPickerState = {
+  isOpen: boolean;
 };
 
 type DiscoverySectionProps = {
@@ -37,10 +46,24 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
     refresh: refreshOrgs,
   } = useOrganizations();
 
+  const {
+    isLoading: isLoadingOrgRepos,
+    orgData,
+    refreshOrg,
+    totalUnanalyzedCount,
+  } = useAllOrgRepos({
+    analyzedRepositories,
+    organizations: orgs,
+  });
+
   const [sheetState, setSheetState] = useState<SheetState>({
     isOpen: false,
     repositories: [],
     title: "",
+  });
+
+  const [orgPickerState, setOrgPickerState] = useState<OrgPickerState>({
+    isOpen: false,
   });
 
   const { count: unanalyzedPersonalCount, data: unanalyzedPersonalRepos } = useUnanalyzedRepos({
@@ -48,7 +71,13 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
     githubRepositories: myRepos,
   });
 
-  const orgRepoCount = useMemo(() => orgs.length, [orgs]);
+  const unanalyzedCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    Object.entries(orgData).forEach(([orgLogin, data]) => {
+      counts[orgLogin] = data.unanalyzedCount;
+    });
+    return counts;
+  }, [orgData]);
 
   const handlePersonalClick = () => {
     setSheetState({
@@ -59,16 +88,47 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
   };
 
   const handleOrgClick = () => {
-    setSheetState({
-      isOpen: true,
-      repositories: [],
-      title: t("orgRepos"),
-    });
+    if (orgs.length === 1) {
+      const org = orgs[0];
+      const data = orgData[org.login];
+      if (data && data.unanalyzedCount > 0) {
+        setSheetState({
+          isOpen: true,
+          repositories: data.unanalyzedRepos,
+          title: org.login,
+        });
+      }
+    } else if (orgs.length > 1) {
+      setOrgPickerState({ isOpen: true });
+    }
+  };
+
+  const handleSelectOrg = (org: GitHubOrganization) => {
+    const data = orgData[org.login];
+    setOrgPickerState({ isOpen: false });
+    if (data) {
+      setSheetState({
+        isOpen: true,
+        repositories: data.unanalyzedRepos,
+        title: org.login,
+      });
+    }
+  };
+
+  const handleOrgPickerOpenChange = (open: boolean) => {
+    setOrgPickerState({ isOpen: open });
   };
 
   const handleSheetOpenChange = (open: boolean) => {
     setSheetState((prev) => ({ ...prev, isOpen: open }));
   };
+
+  const handleRefreshOrgs = () => {
+    refreshOrgs();
+  };
+
+  const isOrgLoading = isLoadingOrgs || isLoadingOrgRepos;
+  const isOrgRefreshing = isRefreshingOrgs;
 
   return (
     <section aria-labelledby="discovery-heading" className="mt-8">
@@ -91,11 +151,11 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
           type="personal"
         />
         <DiscoveryCard
-          count={orgRepoCount}
-          isLoading={isLoadingOrgs}
-          isRefreshing={isRefreshingOrgs}
+          count={totalUnanalyzedCount}
+          isLoading={isOrgLoading}
+          isRefreshing={isOrgRefreshing}
           onClick={handleOrgClick}
-          onRefresh={refreshOrgs}
+          onRefresh={handleRefreshOrgs}
           type="organization"
         />
       </div>
@@ -105,6 +165,17 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
         onOpenChange={handleSheetOpenChange}
         repositories={sheetState.repositories}
         title={sheetState.title}
+      />
+
+      <OrganizationPicker
+        isLoading={isOrgLoading}
+        isOpen={orgPickerState.isOpen}
+        isRefreshing={isOrgRefreshing}
+        onOpenChange={handleOrgPickerOpenChange}
+        onRefreshOrg={refreshOrg}
+        onSelectOrg={handleSelectOrg}
+        organizations={orgs}
+        unanalyzedCounts={unanalyzedCounts}
       />
     </section>
   );

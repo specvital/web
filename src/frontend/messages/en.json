@@ -152,12 +152,15 @@
       "loading": "Loading...",
       "reposFound": "{count, plural, =0 {No repos} =1 {1 repo} other {# repos}} to analyze",
       "noRepos": "No repositories found",
+      "noOrganizations": "No organizations found",
       "refresh": "Refresh from GitHub",
       "analyze": "Analyze",
       "lastPush": "Last push",
       "searchPlaceholder": "Search repositories...",
       "sheetDescription": "{count, plural, =0 {No repositories} =1 {1 repository} other {# repositories}} available to analyze",
-      "noSearchResults": "No repositories match your search"
+      "noSearchResults": "No repositories match your search",
+      "selectOrganization": "Select Organization",
+      "selectOrganizationDescription": "{count, plural, =0 {No organizations} =1 {1 organization} other {# organizations}} available"
     }
   }
 }
