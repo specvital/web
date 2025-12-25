@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import type { GitHubOrganization } from "@/lib/api/types";
 
@@ -29,8 +30,16 @@ export const useOrganizations = (): UseOrganizationsReturn => {
   });
 
   const refresh = async () => {
-    const freshData = await fetchUserGitHubOrganizations({ refresh: true });
-    queryClient.setQueryData(organizationsKeys.list(), freshData);
+    try {
+      const freshData = await fetchUserGitHubOrganizations({ refresh: true });
+      queryClient.setQueryData(organizationsKeys.list(), freshData);
+      toast.success("Refreshed from GitHub");
+    } catch (error) {
+      toast.error("Failed to refresh", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   };
 
   return {

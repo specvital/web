@@ -61,15 +61,26 @@ export const OrganizationPicker = ({
               const count = unanalyzedCounts[org.login] ?? 0;
               const isDisabled = count === 0;
 
+              const handleKeyDown = (e: React.KeyboardEvent) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelectOrg(org);
+                }
+              };
+
               return (
                 <li key={org.id}>
                   <Card
+                    aria-label={org.login}
                     className={cn(
                       "relative p-4 transition-all duration-200",
                       !isDisabled && "cursor-pointer hover:shadow-md hover:border-primary/20",
+                      !isDisabled &&
+                        "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
                       isDisabled && "opacity-60"
                     )}
                     onClick={isDisabled ? undefined : () => onSelectOrg(org)}
+                    onKeyDown={isDisabled ? undefined : handleKeyDown}
                     role={isDisabled ? undefined : "button"}
                     tabIndex={isDisabled ? undefined : 0}
                   >

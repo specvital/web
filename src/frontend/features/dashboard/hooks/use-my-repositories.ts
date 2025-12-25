@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import type { GitHubRepository } from "@/lib/api/types";
 
@@ -29,8 +30,16 @@ export const useMyRepositories = (): UseMyRepositoriesReturn => {
   });
 
   const refresh = async () => {
-    const freshData = await fetchUserGitHubRepositories({ refresh: true });
-    queryClient.setQueryData(myRepositoriesKeys.list(), freshData);
+    try {
+      const freshData = await fetchUserGitHubRepositories({ refresh: true });
+      queryClient.setQueryData(myRepositoriesKeys.list(), freshData);
+      toast.success("Refreshed from GitHub");
+    } catch (error) {
+      toast.error("Failed to refresh", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   };
 
   return {

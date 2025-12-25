@@ -35,14 +35,27 @@ export const DiscoveryCard = ({
     onRefresh();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
+  const ariaLabel = isPersonal ? t("myRepos") : t("orgRepos");
+
   return (
     <Card
+      aria-label={ariaLabel}
       className={cn(
         "relative p-4 transition-all duration-200",
         !isDisabled && "cursor-pointer hover:shadow-md hover:border-primary/20",
+        !isDisabled &&
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
         isDisabled && "opacity-60"
       )}
       onClick={isDisabled ? undefined : onClick}
+      onKeyDown={isDisabled ? undefined : handleKeyDown}
       role={isDisabled ? undefined : "button"}
       tabIndex={isDisabled ? undefined : 0}
     >

@@ -2,6 +2,7 @@
 
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { toast } from "sonner";
 
 import type { GitHubOrganization, GitHubRepository, RepositoryCard } from "@/lib/api/types";
 
@@ -76,8 +77,16 @@ export const useAllOrgRepos = ({
   );
 
   const refreshOrg = async (org: string) => {
-    const freshData = await fetchOrganizationRepositories(org, { refresh: true });
-    queryClient.setQueryData(organizationReposKeys.byOrg(org), freshData);
+    try {
+      const freshData = await fetchOrganizationRepositories(org, { refresh: true });
+      queryClient.setQueryData(organizationReposKeys.byOrg(org), freshData);
+      toast.success(`Refreshed ${org} from GitHub`);
+    } catch (error) {
+      toast.error(`Failed to refresh ${org}`, {
+        description: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   };
 
   return {

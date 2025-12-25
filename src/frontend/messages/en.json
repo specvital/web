@@ -179,7 +179,14 @@
       "sheetDescription": "{count, plural, =0 {No repositories} =1 {1 repository} other {# repositories}} available to analyze",
       "noSearchResults": "No repositories match your search",
       "selectOrganization": "Select Organization",
-      "selectOrganizationDescription": "{count, plural, =0 {No organizations} =1 {1 organization} other {# organizations}} available"
+      "selectOrganizationDescription": "{count, plural, =0 {No organizations} =1 {1 organization} other {# organizations}} available",
+      "errorTitle": "Failed to load discovery",
+      "errorDescription": "We couldn't load your GitHub repositories. Please try again.",
+      "retry": "Retry",
+      "refreshSuccess": "Refreshed from GitHub",
+      "refreshError": "Failed to refresh",
+      "refreshOrgSuccess": "Refreshed {org} from GitHub",
+      "refreshOrgError": "Failed to refresh {org}"
     }
   }
 }

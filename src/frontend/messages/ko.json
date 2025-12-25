@@ -179,7 +179,14 @@
       "sheetDescription": "분석 가능한 저장소 {count}개",
       "noSearchResults": "검색 결과가 없습니다",
       "selectOrganization": "조직 선택",
-      "selectOrganizationDescription": "사용 가능한 조직 {count}개"
+      "selectOrganizationDescription": "사용 가능한 조직 {count}개",
+      "errorTitle": "저장소 탐색 로드 실패",
+      "errorDescription": "GitHub 저장소를 불러오지 못했습니다. 다시 시도해주세요.",
+      "retry": "다시 시도",
+      "refreshSuccess": "GitHub에서 새로고침 완료",
+      "refreshError": "새로고침 실패",
+      "refreshOrgSuccess": "{org} GitHub에서 새로고침 완료",
+      "refreshOrgError": "{org} 새로고침 실패"
     }
   }
 }

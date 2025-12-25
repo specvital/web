@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
+import { AuthErrorBoundary } from "@/components/feedback";
 import { AnalyzeDialog } from "@/features/home";
 
 import {
@@ -14,6 +15,7 @@ import {
 } from "../hooks";
 import { BookmarkedSection } from "./bookmarked-section";
 import { DashboardHeader } from "./dashboard-header";
+import { DiscoveryErrorFallback } from "./discovery-error-fallback";
 import { DiscoverySection } from "./discovery-section";
 import { EmptyStateVariant } from "./empty-state-variant";
 import { RepositoryList } from "./repository-list";
@@ -41,6 +43,10 @@ export const DashboardContent = () => {
 
   const handleReanalyze = (owner: string, repo: string) => {
     reanalyze(owner, repo);
+  };
+
+  const handleDiscoveryReset = () => {
+    window.location.reload();
   };
 
   const isLoading = isLoadingBookmarked || isLoadingRecent;
@@ -88,7 +94,12 @@ export const DashboardContent = () => {
         )}
       </section>
 
-      <DiscoverySection analyzedRepositories={recent} />
+      <AuthErrorBoundary
+        fallback={<DiscoveryErrorFallback resetErrorBoundary={handleDiscoveryReset} />}
+        onReset={handleDiscoveryReset}
+      >
+        <DiscoverySection analyzedRepositories={recent} />
+      </AuthErrorBoundary>
     </div>
   );
 };
