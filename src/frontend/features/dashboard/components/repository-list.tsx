@@ -3,9 +3,8 @@
 import type { RepositoryCard as RepositoryCardType } from "@/lib/api/types";
 
 import { RepositoryCard } from "./repository-card";
+import { RepositoryGrid } from "./repository-grid";
 import { RepositorySkeleton } from "./repository-skeleton";
-
-const GRID_CLASSES = "grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
 type RepositoryListProps = {
   isLoading?: boolean;
@@ -22,13 +21,13 @@ export const RepositoryList = ({
 }: RepositoryListProps) => {
   if (isLoading) {
     return (
-      <ul aria-busy="true" aria-label="Loading repositories" className={GRID_CLASSES}>
+      <RepositoryGrid ariaLabel="Loading repositories" isLoading>
         {Array.from({ length: 8 }).map((_, index) => (
           <li key={index}>
             <RepositorySkeleton />
           </li>
         ))}
-      </ul>
+      </RepositoryGrid>
     );
   }
 
@@ -37,7 +36,7 @@ export const RepositoryList = ({
   }
 
   return (
-    <ul aria-label="Repository list" className={GRID_CLASSES}>
+    <RepositoryGrid ariaLabel="Repository list">
       {repositories.map((repo) => (
         <li key={repo.id}>
           <RepositoryCard
@@ -47,6 +46,6 @@ export const RepositoryList = ({
           />
         </li>
       ))}
-    </ul>
+    </RepositoryGrid>
   );
 };

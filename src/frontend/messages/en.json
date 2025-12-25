@@ -126,6 +126,25 @@
       "description": "Analyze a GitHub repository to see it here. Your analysis history will be saved automatically.",
       "title": "No repositories yet"
     },
+    "emptyStateVariant": {
+      "noRepos": {
+        "title": "No repositories yet",
+        "description": "Analyze a GitHub repository to see it here. Your analysis history will be saved automatically."
+      },
+      "noSearchResults": {
+        "title": "No matching repositories",
+        "description": "Try adjusting your search query or filters",
+        "descriptionWithQuery": "No results found for \"{query}\". Try adjusting your search or filters."
+      },
+      "noBookmarks": {
+        "title": "No bookmarked repositories",
+        "description": "Star your favorite repositories to see them here"
+      },
+      "error": {
+        "title": "Unable to load repositories",
+        "description": "Something went wrong. Please try again later."
+      }
+    },
     "searchPlaceholder": "Search repositories...",
     "sort": {
       "label": "Sort",

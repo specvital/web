@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import { AnalyzeDialog } from "@/features/home";
+
 import {
   useAddBookmark,
   useBookmarkedRepositories,
@@ -13,7 +15,7 @@ import {
 import { BookmarkedSection } from "./bookmarked-section";
 import { DashboardHeader } from "./dashboard-header";
 import { DiscoverySection } from "./discovery-section";
-import { EmptyState } from "./empty-state";
+import { EmptyStateVariant } from "./empty-state-variant";
 import { RepositoryList } from "./repository-list";
 
 export const DashboardContent = () => {
@@ -74,7 +76,9 @@ export const DashboardContent = () => {
             repositories={[]}
           />
         ) : hasNoRepositories ? (
-          <EmptyState />
+          <EmptyStateVariant action={<AnalyzeDialog variant="empty-state" />} variant="no-repos" />
+        ) : filteredRepositories.length === 0 ? (
+          <EmptyStateVariant searchQuery={searchQuery} variant="no-search-results" />
         ) : (
           <RepositoryList
             onBookmarkToggle={handleBookmarkToggle}

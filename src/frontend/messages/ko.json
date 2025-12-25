@@ -126,6 +126,25 @@
       "description": "GitHub 리포지토리를 분석하면 여기에 표시됩니다. 분석 기록은 자동으로 저장됩니다.",
       "title": "아직 리포지토리가 없습니다"
     },
+    "emptyStateVariant": {
+      "noRepos": {
+        "title": "아직 리포지토리가 없습니다",
+        "description": "GitHub 리포지토리를 분석하면 여기에 표시됩니다. 분석 기록은 자동으로 저장됩니다."
+      },
+      "noSearchResults": {
+        "title": "검색 결과가 없습니다",
+        "description": "검색어나 필터를 조정해보세요",
+        "descriptionWithQuery": "\"{query}\"에 대한 검색 결과가 없습니다. 검색어나 필터를 조정해보세요."
+      },
+      "noBookmarks": {
+        "title": "즐겨찾기한 리포지토리가 없습니다",
+        "description": "자주 사용하는 리포지토리를 즐겨찾기하면 여기에 표시됩니다"
+      },
+      "error": {
+        "title": "리포지토리를 불러올 수 없습니다",
+        "description": "문제가 발생했습니다. 나중에 다시 시도해주세요."
+      }
+    },
     "searchPlaceholder": "리포지토리 검색...",
     "sort": {
       "label": "정렬",

@@ -50,7 +50,6 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
           "group-focus-visible:shadow-md group-focus-visible:border-primary/20"
         )}
       >
-        {/* Header: Repo name + Bookmark */}
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-sm truncate" title={fullName}>
@@ -77,10 +76,8 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
           </Tooltip>
         </div>
 
-        {/* Content: Test count + badges */}
         {hasAnalysis && latestAnalysis ? (
           <div className="space-y-3">
-            {/* Test count */}
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold">{latestAnalysis.testCount}</span>
               <span className="text-sm text-muted-foreground">{t("tests")}</span>
@@ -89,12 +86,10 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
               )}
             </div>
 
-            {/* Status badges */}
             <div className="flex items-center gap-2">
               <UpdateStatusBadge status={updateStatus} />
             </div>
 
-            {/* Footer: Time + Reanalyze */}
             <div className="flex items-center justify-between pt-2 border-t">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -133,7 +128,6 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
             </div>
           </div>
         ) : (
-          /* No analysis yet */
           <div className="flex items-center justify-center h-20 text-sm text-muted-foreground">
             {t("noAnalysis")}
           </div>
