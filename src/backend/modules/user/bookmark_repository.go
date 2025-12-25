@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/specvital/web/src/backend/internal/db"
-	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 )
 
 const defaultHost = "github.com"

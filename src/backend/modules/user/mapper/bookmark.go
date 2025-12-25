@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/specvital/web/src/backend/internal/api"
-	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 )
 
 func ToBookmarkedRepositoriesResponse(repos []*domain.BookmarkedRepository) api.BookmarkedRepositoriesResponse {

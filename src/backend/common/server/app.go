@@ -75,9 +75,9 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		return nil, fmt.Errorf("create auth handler: %w", err)
 	}
 
-	bookmarkRepo := auth.NewBookmarkRepository(queries)
-	bookmarkService := auth.NewBookmarkService(bookmarkRepo)
-	bookmarkHandler, err := auth.NewBookmarkHandler(&auth.BookmarkHandlerConfig{
+	bookmarkRepo := user.NewBookmarkRepository(queries)
+	bookmarkService := user.NewBookmarkService(bookmarkRepo)
+	bookmarkHandler, err := user.NewBookmarkHandler(&user.BookmarkHandlerConfig{
 		Logger:  log,
 		Service: bookmarkService,
 	})
