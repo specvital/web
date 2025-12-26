@@ -59,13 +59,26 @@ User → GitHub URL → /analyze/{owner}/{repo}
 
 ### Required (Root `.env`)
 
-| Variable         | Purpose                                |
-| ---------------- | -------------------------------------- |
-| `GITHUB_TOKEN`   | GitHub API rate limit (60 → 5000/hour) |
-| `JWT_SECRET`     | Auth token signing (32+ chars)         |
-| `ENCRYPTION_KEY` | Sensitive data encryption (32+ chars)  |
+| Variable                    | Purpose                                |
+| --------------------------- | -------------------------------------- |
+| `GITHUB_TOKEN`              | GitHub API rate limit (60 → 5000/hour) |
+| `JWT_SECRET`                | Auth token signing (32+ chars)         |
+| `ENCRYPTION_KEY`            | Sensitive data encryption (32+ chars)  |
+| `GITHUB_APP_ID`             | GitHub App ID for org repo access      |
+| `GITHUB_APP_SLUG`           | GitHub App slug name                   |
+| `GITHUB_APP_PRIVATE_KEY`    | GitHub App private key (PEM format)    |
+| `GITHUB_APP_WEBHOOK_SECRET` | Webhook signature verification         |
+| `SMEE_URL`                  | Webhook proxy URL (dev only)           |
 
 For stack-specific variables, see:
 
 - Backend: `src/backend/CLAUDE.md`
 - Frontend: `src/frontend/CLAUDE.md`
+
+## GitHub App Integration
+
+OAuth Apps require organization admin approval. GitHub App is used for organization repository access.
+
+- **Architecture**: OAuth (login/personal repos) + GitHub App (organization repos)
+- **Setup**: See `src/backend/.env.example` for configuration
+- **Module**: `modules/github-app/` (backend)
