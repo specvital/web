@@ -1,13 +1,14 @@
 package domain
 
-import "github.com/cockroachdb/errors"
+import (
+	"errors"
+	"fmt"
+)
 
-// Sentinel errors for domain-level error handling.
-// Check using errors.Is() by callers.
 var (
 	ErrNotFound = errors.New("analysis not found")
 )
 
 func WrapNotFound(owner, repo string) error {
-	return errors.Wrapf(ErrNotFound, "%s/%s", owner, repo)
+	return fmt.Errorf("%s/%s: %w", owner, repo, ErrNotFound)
 }
