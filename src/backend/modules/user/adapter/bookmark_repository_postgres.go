@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/specvital/web/src/backend/internal/db"
-	"github.com/specvital/web/src/backend/modules/user"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 	"github.com/specvital/web/src/backend/modules/user/domain/entity"
 	"github.com/specvital/web/src/backend/modules/user/domain/port"
 )
@@ -58,7 +58,7 @@ func (r *BookmarkRepositoryPostgres) GetCodebaseIDByOwnerRepo(ctx context.Contex
 	id, err := r.queries.GetCodebaseByOwnerRepo(ctx, params)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", user.ErrCodebaseNotFound
+			return "", domain.ErrCodebaseNotFound
 		}
 		return "", fmt.Errorf("get codebase: %w", err)
 	}

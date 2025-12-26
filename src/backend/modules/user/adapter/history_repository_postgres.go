@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/specvital/web/src/backend/internal/db"
-	"github.com/specvital/web/src/backend/modules/user"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 	"github.com/specvital/web/src/backend/modules/user/domain/entity"
 	"github.com/specvital/web/src/backend/modules/user/domain/port"
 )
@@ -39,7 +39,7 @@ func (r *HistoryRepositoryPostgres) GetUserAnalyzedRepositories(
 		cursorTime = pgtype.Timestamptz{Time: params.Cursor.Time, Valid: true}
 		cursorID, err = stringToUUID(params.Cursor.ID)
 		if err != nil {
-			return nil, user.ErrInvalidCursor
+			return nil, domain.ErrInvalidCursor
 		}
 	}
 

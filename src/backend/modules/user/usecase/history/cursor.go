@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/specvital/web/src/backend/modules/user"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 	"github.com/specvital/web/src/backend/modules/user/domain/entity"
 )
 
@@ -26,11 +26,11 @@ func EncodeCursor(updatedAt time.Time, historyID string) (string, error) {
 func DecodeCursor(s string) (*entity.CursorData, error) {
 	b, err := base64.URLEncoding.DecodeString(s)
 	if err != nil {
-		return nil, user.ErrInvalidCursor
+		return nil, domain.ErrInvalidCursor
 	}
 	var data cursorJSON
 	if err := json.Unmarshal(b, &data); err != nil {
-		return nil, user.ErrInvalidCursor
+		return nil, domain.ErrInvalidCursor
 	}
 	return &entity.CursorData{ID: data.ID, Time: data.Time}, nil
 }

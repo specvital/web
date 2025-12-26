@@ -8,8 +8,8 @@ import (
 	"github.com/specvital/web/src/backend/common/logger"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/internal/api"
-	"github.com/specvital/web/src/backend/modules/user"
 	"github.com/specvital/web/src/backend/modules/user/adapter/mapper"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 	"github.com/specvital/web/src/backend/modules/user/domain/entity"
 	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
 	historyuc "github.com/specvital/web/src/backend/modules/user/usecase/history"
@@ -81,7 +81,7 @@ func (h *Handler) AddBookmark(ctx context.Context, request api.AddBookmarkReques
 		UserID: userID,
 	})
 	if err != nil {
-		if errors.Is(err, user.ErrCodebaseNotFound) {
+		if errors.Is(err, domain.ErrCodebaseNotFound) {
 			return api.AddBookmark404ApplicationProblemPlusJSONResponse{
 				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("repository not found"),
 			}, nil
@@ -131,7 +131,7 @@ func (h *Handler) RemoveBookmark(ctx context.Context, request api.RemoveBookmark
 		UserID: userID,
 	})
 	if err != nil {
-		if errors.Is(err, user.ErrCodebaseNotFound) {
+		if errors.Is(err, domain.ErrCodebaseNotFound) {
 			return api.RemoveBookmark404ApplicationProblemPlusJSONResponse{
 				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("repository not found"),
 			}, nil
@@ -174,7 +174,7 @@ func (h *Handler) GetUserAnalyzedRepositories(
 		UserID:    userID,
 	})
 	if err != nil {
-		if errors.Is(err, user.ErrInvalidCursor) {
+		if errors.Is(err, domain.ErrInvalidCursor) {
 			return api.GetUserAnalyzedRepositories400ApplicationProblemPlusJSONResponse{
 				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid cursor format"),
 			}, nil

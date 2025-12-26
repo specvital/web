@@ -6,7 +6,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 
-	"github.com/specvital/web/src/backend/modules/user"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 	"github.com/specvital/web/src/backend/modules/user/domain/port"
 )
 
@@ -31,8 +31,8 @@ func NewAddBookmarkUseCase(repository port.BookmarkRepository) *AddBookmarkUseCa
 func (uc *AddBookmarkUseCase) Execute(ctx context.Context, input AddBookmarkInput) (*AddBookmarkOutput, error) {
 	codebaseID, err := uc.repository.GetCodebaseIDByOwnerRepo(ctx, input.Owner, input.Repo)
 	if err != nil {
-		if errors.Is(err, user.ErrCodebaseNotFound) {
-			return nil, user.ErrCodebaseNotFound
+		if errors.Is(err, domain.ErrCodebaseNotFound) {
+			return nil, domain.ErrCodebaseNotFound
 		}
 		return nil, fmt.Errorf("get codebase: %w", err)
 	}

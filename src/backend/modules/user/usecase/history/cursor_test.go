@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/specvital/web/src/backend/modules/user"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 )
 
 func TestEncodeCursor(t *testing.T) {
@@ -44,21 +44,21 @@ func TestDecodeCursor_Valid(t *testing.T) {
 
 func TestDecodeCursor_InvalidBase64(t *testing.T) {
 	_, err := DecodeCursor("not-valid-base64!!!")
-	if err != user.ErrInvalidCursor {
+	if err != domain.ErrInvalidCursor {
 		t.Errorf("expected ErrInvalidCursor, got %v", err)
 	}
 }
 
 func TestDecodeCursor_InvalidJSON(t *testing.T) {
 	_, err := DecodeCursor("aW52YWxpZC1qc29u")
-	if err != user.ErrInvalidCursor {
+	if err != domain.ErrInvalidCursor {
 		t.Errorf("expected ErrInvalidCursor, got %v", err)
 	}
 }
 
 func TestDecodeCursor_EmptyString(t *testing.T) {
 	_, err := DecodeCursor("")
-	if err != user.ErrInvalidCursor {
+	if err != domain.ErrInvalidCursor {
 		t.Errorf("expected ErrInvalidCursor, got %v", err)
 	}
 }

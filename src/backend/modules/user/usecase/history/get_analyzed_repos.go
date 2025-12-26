@@ -6,7 +6,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 
-	"github.com/specvital/web/src/backend/modules/user"
+	"github.com/specvital/web/src/backend/modules/user/domain"
 	"github.com/specvital/web/src/backend/modules/user/domain/entity"
 	"github.com/specvital/web/src/backend/modules/user/domain/port"
 )
@@ -45,7 +45,7 @@ func (uc *GetAnalyzedReposUseCase) Execute(ctx context.Context, input GetAnalyze
 
 	repos, err := uc.repository.GetUserAnalyzedRepositories(ctx, input.UserID, fetchParams)
 	if err != nil {
-		if errors.Is(err, user.ErrInvalidCursor) {
+		if errors.Is(err, domain.ErrInvalidCursor) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("get user analyzed repositories: %w", err)
