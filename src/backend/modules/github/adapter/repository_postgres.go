@@ -13,6 +13,8 @@ import (
 	"github.com/specvital/web/src/backend/modules/github/domain/port"
 )
 
+var _ port.Repository = (*PostgresRepository)(nil)
+
 type PostgresRepository struct {
 	pool    *pgxpool.Pool
 	queries *db.Queries

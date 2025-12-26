@@ -9,6 +9,8 @@ import (
 	"github.com/specvital/web/src/backend/modules/github/domain/port"
 )
 
+var _ port.GitHubClient = (*GitHubClientAdapter)(nil)
+
 type GitHubClientAdapter struct {
 	client client.GitHubClient
 }
