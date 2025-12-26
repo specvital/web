@@ -21,7 +21,10 @@ import (
 	githubadapter "github.com/specvital/web/src/backend/modules/github/adapter"
 	githubhandler "github.com/specvital/web/src/backend/modules/github/handler"
 	githubusecase "github.com/specvital/web/src/backend/modules/github/usecase"
-	"github.com/specvital/web/src/backend/modules/user"
+	useradapter "github.com/specvital/web/src/backend/modules/user/adapter"
+	userhandler "github.com/specvital/web/src/backend/modules/user/handler"
+	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
+	historyuc "github.com/specvital/web/src/backend/modules/user/usecase/history"
 )
 
 type Handlers struct {
@@ -89,24 +92,23 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		return nil, fmt.Errorf("create auth handler: %w", err)
 	}
 
-	bookmarkRepo := user.NewBookmarkRepository(queries)
-	bookmarkService := user.NewBookmarkService(bookmarkRepo)
-	bookmarkHandler, err := user.NewBookmarkHandler(&user.BookmarkHandlerConfig{
-		Logger:  log,
-		Service: bookmarkService,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("create bookmark handler: %w", err)
-	}
+	bookmarkRepo := useradapter.NewBookmarkRepository(queries)
+	historyRepo := useradapter.NewHistoryRepository(queries)
 
-	analysisHistoryRepo := user.NewAnalysisHistoryRepository(queries)
-	analysisHistoryService := user.NewAnalysisHistoryService(analysisHistoryRepo)
-	analysisHistoryHandler, err := user.NewAnalysisHistoryHandler(&user.AnalysisHistoryHandlerConfig{
-		Logger:  log,
-		Service: analysisHistoryService,
+	addBookmarkUC := bookmarkuc.NewAddBookmarkUseCase(bookmarkRepo)
+	getBookmarksUC := bookmarkuc.NewGetBookmarksUseCase(bookmarkRepo)
+	removeBookmarkUC := bookmarkuc.NewRemoveBookmarkUseCase(bookmarkRepo)
+	getAnalyzedReposUC := historyuc.NewGetAnalyzedReposUseCase(historyRepo)
+
+	userHandler, err := userhandler.NewHandler(&userhandler.HandlerConfig{
+		AddBookmark:      addBookmarkUC,
+		GetAnalyzedRepos: getAnalyzedReposUC,
+		GetBookmarks:     getBookmarksUC,
+		Logger:           log,
+		RemoveBookmark:   removeBookmarkUC,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create analysis history handler: %w", err)
+		return nil, fmt.Errorf("create user handler: %w", err)
 	}
 
 	analyzerRepo := analyzeradapter.NewPostgresRepository(queries)
@@ -147,7 +149,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		return nil, fmt.Errorf("create github handler: %w", err)
 	}
 
-	apiHandlers := api.NewAPIHandlers(analyzerHandler, analysisHistoryHandler, authHandler, bookmarkHandler, githubHandler, analyzerHandler)
+	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, analyzerHandler)
 
 	return &Handlers{
 		API:    apiHandlers,

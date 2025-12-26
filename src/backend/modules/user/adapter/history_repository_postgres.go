@@ -1,4 +1,4 @@
-package user
+package adapter
 
 import (
 	"context"
@@ -7,26 +7,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/specvital/web/src/backend/internal/db"
-	"github.com/specvital/web/src/backend/modules/user/domain"
+	"github.com/specvital/web/src/backend/modules/user"
+	"github.com/specvital/web/src/backend/modules/user/domain/entity"
+	"github.com/specvital/web/src/backend/modules/user/domain/port"
 )
 
-type AnalysisHistoryRepository interface {
-	GetUserAnalyzedRepositories(ctx context.Context, userID string, params domain.AnalyzedReposParams) ([]*domain.AnalyzedRepository, error)
-}
-
-type analysisHistoryRepositoryImpl struct {
+type HistoryRepositoryPostgres struct {
 	queries *db.Queries
 }
 
-func NewAnalysisHistoryRepository(queries *db.Queries) AnalysisHistoryRepository {
-	return &analysisHistoryRepositoryImpl{queries: queries}
+var _ port.AnalysisHistoryRepository = (*HistoryRepositoryPostgres)(nil)
+
+func NewHistoryRepository(queries *db.Queries) *HistoryRepositoryPostgres {
+	return &HistoryRepositoryPostgres{queries: queries}
 }
 
-func (r *analysisHistoryRepositoryImpl) GetUserAnalyzedRepositories(
+func (r *HistoryRepositoryPostgres) GetUserAnalyzedRepositories(
 	ctx context.Context,
 	userID string,
-	params domain.AnalyzedReposParams,
-) ([]*domain.AnalyzedRepository, error) {
+	params port.AnalyzedReposParams,
+) ([]*entity.AnalyzedRepository, error) {
 	userUUID, err := stringToUUID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("parse user ID: %w", err)
@@ -36,14 +36,10 @@ func (r *analysisHistoryRepositoryImpl) GetUserAnalyzedRepositories(
 	var cursorID pgtype.UUID
 
 	if params.Cursor != nil {
-		cursor, err := domain.DecodeCursor(*params.Cursor)
+		cursorTime = pgtype.Timestamptz{Time: params.Cursor.Time, Valid: true}
+		cursorID, err = stringToUUID(params.Cursor.ID)
 		if err != nil {
-			return nil, err
-		}
-		cursorTime = pgtype.Timestamptz{Time: cursor.Time, Valid: true}
-		cursorID, err = stringToUUID(cursor.ID)
-		if err != nil {
-			return nil, domain.ErrInvalidCursor
+			return nil, user.ErrInvalidCursor
 		}
 	}
 
@@ -63,11 +59,11 @@ func (r *analysisHistoryRepositoryImpl) GetUserAnalyzedRepositories(
 	return mapAnalyzedRepositoriesFromDB(rows), nil
 }
 
-func mapAnalyzedRepositoriesFromDB(rows []db.GetUserAnalyzedRepositoriesRow) []*domain.AnalyzedRepository {
-	result := make([]*domain.AnalyzedRepository, 0, len(rows))
+func mapAnalyzedRepositoriesFromDB(rows []db.GetUserAnalyzedRepositoriesRow) []*entity.AnalyzedRepository {
+	result := make([]*entity.AnalyzedRepository, 0, len(rows))
 
 	for _, row := range rows {
-		repo := &domain.AnalyzedRepository{
+		repo := &entity.AnalyzedRepository{
 			CodebaseID: uuidToString(row.CodebaseID),
 			CommitSHA:  row.CommitSha,
 			HistoryID:  uuidToString(row.HistoryID),

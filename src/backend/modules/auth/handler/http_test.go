@@ -168,7 +168,7 @@ func createTestHandler(
 
 func setupTestRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, user.NewMockAnalysisHistoryHandler(), handler, NewMockBookmarkHandler(), &mockGitHubHandler{}, &mockRepositoryHandler{})
+	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, user.NewMockHandler(), handler, user.NewMockHandler(), &mockGitHubHandler{}, &mockRepositoryHandler{})
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 	return r

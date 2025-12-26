@@ -1,4 +1,4 @@
-package user
+package adapter
 
 import (
 	"context"
@@ -8,28 +8,24 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/specvital/web/src/backend/internal/db"
-	"github.com/specvital/web/src/backend/modules/user/domain"
+	"github.com/specvital/web/src/backend/modules/user"
+	"github.com/specvital/web/src/backend/modules/user/domain/entity"
+	"github.com/specvital/web/src/backend/modules/user/domain/port"
 )
 
 const defaultHost = "github.com"
 
-type BookmarkRepository interface {
-	AddBookmark(ctx context.Context, userID, codebaseID string) error
-	GetCodebaseIDByOwnerRepo(ctx context.Context, owner, repo string) (string, error)
-	GetUserBookmarks(ctx context.Context, userID string) ([]*domain.BookmarkedRepository, error)
-	IsBookmarked(ctx context.Context, userID, codebaseID string) (bool, error)
-	RemoveBookmark(ctx context.Context, userID, codebaseID string) error
-}
-
-type bookmarkRepositoryImpl struct {
+type BookmarkRepositoryPostgres struct {
 	queries *db.Queries
 }
 
-func NewBookmarkRepository(queries *db.Queries) BookmarkRepository {
-	return &bookmarkRepositoryImpl{queries: queries}
+var _ port.BookmarkRepository = (*BookmarkRepositoryPostgres)(nil)
+
+func NewBookmarkRepository(queries *db.Queries) *BookmarkRepositoryPostgres {
+	return &BookmarkRepositoryPostgres{queries: queries}
 }
 
-func (r *bookmarkRepositoryImpl) AddBookmark(ctx context.Context, userID, codebaseID string) error {
+func (r *BookmarkRepositoryPostgres) AddBookmark(ctx context.Context, userID, codebaseID string) error {
 	userUUID, err := stringToUUID(userID)
 	if err != nil {
 		return fmt.Errorf("parse user ID: %w", err)
@@ -52,7 +48,7 @@ func (r *bookmarkRepositoryImpl) AddBookmark(ctx context.Context, userID, codeba
 	return nil
 }
 
-func (r *bookmarkRepositoryImpl) GetCodebaseIDByOwnerRepo(ctx context.Context, owner, repo string) (string, error) {
+func (r *BookmarkRepositoryPostgres) GetCodebaseIDByOwnerRepo(ctx context.Context, owner, repo string) (string, error) {
 	params := db.GetCodebaseByOwnerRepoParams{
 		Host:  defaultHost,
 		Owner: owner,
@@ -62,7 +58,7 @@ func (r *bookmarkRepositoryImpl) GetCodebaseIDByOwnerRepo(ctx context.Context, o
 	id, err := r.queries.GetCodebaseByOwnerRepo(ctx, params)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", domain.ErrCodebaseNotFound
+			return "", user.ErrCodebaseNotFound
 		}
 		return "", fmt.Errorf("get codebase: %w", err)
 	}
@@ -70,7 +66,7 @@ func (r *bookmarkRepositoryImpl) GetCodebaseIDByOwnerRepo(ctx context.Context, o
 	return uuidToString(id), nil
 }
 
-func (r *bookmarkRepositoryImpl) GetUserBookmarks(ctx context.Context, userID string) ([]*domain.BookmarkedRepository, error) {
+func (r *BookmarkRepositoryPostgres) GetUserBookmarks(ctx context.Context, userID string) ([]*entity.BookmarkedRepository, error) {
 	userUUID, err := stringToUUID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("parse user ID: %w", err)
@@ -84,31 +80,7 @@ func (r *bookmarkRepositoryImpl) GetUserBookmarks(ctx context.Context, userID st
 	return mapBookmarkedRepositoriesFromDB(rows), nil
 }
 
-func (r *bookmarkRepositoryImpl) IsBookmarked(ctx context.Context, userID, codebaseID string) (bool, error) {
-	userUUID, err := stringToUUID(userID)
-	if err != nil {
-		return false, fmt.Errorf("parse user ID: %w", err)
-	}
-
-	codebaseUUID, err := stringToUUID(codebaseID)
-	if err != nil {
-		return false, fmt.Errorf("parse codebase ID: %w", err)
-	}
-
-	params := db.IsBookmarkedParams{
-		UserID:     userUUID,
-		CodebaseID: codebaseUUID,
-	}
-
-	isBookmarked, err := r.queries.IsBookmarked(ctx, params)
-	if err != nil {
-		return false, fmt.Errorf("check bookmark: %w", err)
-	}
-
-	return isBookmarked, nil
-}
-
-func (r *bookmarkRepositoryImpl) RemoveBookmark(ctx context.Context, userID, codebaseID string) error {
+func (r *BookmarkRepositoryPostgres) RemoveBookmark(ctx context.Context, userID, codebaseID string) error {
 	userUUID, err := stringToUUID(userID)
 	if err != nil {
 		return fmt.Errorf("parse user ID: %w", err)
@@ -131,11 +103,11 @@ func (r *bookmarkRepositoryImpl) RemoveBookmark(ctx context.Context, userID, cod
 	return nil
 }
 
-func mapBookmarkedRepositoriesFromDB(rows []db.GetUserBookmarksRow) []*domain.BookmarkedRepository {
-	result := make([]*domain.BookmarkedRepository, 0, len(rows))
+func mapBookmarkedRepositoriesFromDB(rows []db.GetUserBookmarksRow) []*entity.BookmarkedRepository {
+	result := make([]*entity.BookmarkedRepository, 0, len(rows))
 
 	for _, row := range rows {
-		repo := &domain.BookmarkedRepository{
+		repo := &entity.BookmarkedRepository{
 			BookmarkedAt: row.BookmarkedAt.Time,
 			CodebaseID:   uuidToString(row.CodebaseID),
 			CommitSHA:    row.CommitSha,

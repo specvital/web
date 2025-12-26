@@ -1,4 +1,4 @@
-package user
+package handler
 
 import (
 	"context"
@@ -14,7 +14,10 @@ import (
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	authhandler "github.com/specvital/web/src/backend/modules/auth/handler"
-	"github.com/specvital/web/src/backend/modules/user/domain"
+	domainentity "github.com/specvital/web/src/backend/modules/user/domain/entity"
+	"github.com/specvital/web/src/backend/modules/user/domain/port"
+	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
+	historyuc "github.com/specvital/web/src/backend/modules/user/usecase/history"
 )
 
 func withTestUserContext(ctx context.Context, userID string) context.Context {
@@ -28,25 +31,53 @@ func withTestUserContext(ctx context.Context, userID string) context.Context {
 	return middleware.WithClaims(ctx, claims)
 }
 
-type mockAnalysisHistoryService struct {
-	result *domain.AnalyzedReposResult
-	err    error
+type mockBookmarkRepository struct {
+	bookmarks  []*domainentity.BookmarkedRepository
+	codebaseID string
+	err        error
 }
 
-func (m *mockAnalysisHistoryService) GetUserAnalyzedRepositories(_ context.Context, _ string, _ domain.AnalyzedReposParams) (*domain.AnalyzedReposResult, error) {
+func (m *mockBookmarkRepository) AddBookmark(_ context.Context, _, _ string) error {
+	return m.err
+}
+
+func (m *mockBookmarkRepository) GetCodebaseIDByOwnerRepo(_ context.Context, _, _ string) (string, error) {
+	if m.err != nil {
+		return "", m.err
+	}
+	return m.codebaseID, nil
+}
+
+func (m *mockBookmarkRepository) GetUserBookmarks(_ context.Context, _ string) ([]*domainentity.BookmarkedRepository, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
-	return m.result, nil
+	return m.bookmarks, nil
 }
 
-func setupAnalysisHistoryTestRouter(handler *AnalysisHistoryHandler) *chi.Mux {
+func (m *mockBookmarkRepository) RemoveBookmark(_ context.Context, _, _ string) error {
+	return m.err
+}
+
+type mockHistoryRepository struct {
+	repos []*domainentity.AnalyzedRepository
+	err   error
+}
+
+func (m *mockHistoryRepository) GetUserAnalyzedRepositories(_ context.Context, _ string, _ port.AnalyzedReposParams) ([]*domainentity.AnalyzedRepository, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.repos, nil
+}
+
+func setupTestRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
 	apiHandlers := api.NewAPIHandlers(
 		&mockAnalyzerHandler{},
 		handler,
 		authhandler.NewMockHandler(),
-		authhandler.NewMockBookmarkHandler(),
+		handler,
 		&mockGitHubHandler{},
 		&mockRepositoryHandler{},
 	)
@@ -97,18 +128,32 @@ func (m *mockGitHubHandler) GetUserGitHubRepositories(_ context.Context, _ api.G
 	return nil, nil
 }
 
-func TestGetUserAnalyzedRepositories_Unauthorized(t *testing.T) {
-	svc := &mockAnalysisHistoryService{
-		result: &domain.AnalyzedReposResult{Data: []*domain.AnalyzedRepository{}, HasNext: false},
-	}
-	handler, err := NewAnalysisHistoryHandler(&AnalysisHistoryHandlerConfig{
-		Logger:  logger.New(),
-		Service: svc,
+func createTestHandler(t *testing.T, bookmarkRepo *mockBookmarkRepository, historyRepo *mockHistoryRepository) *Handler {
+	t.Helper()
+
+	addBookmarkUC := bookmarkuc.NewAddBookmarkUseCase(bookmarkRepo)
+	getBookmarksUC := bookmarkuc.NewGetBookmarksUseCase(bookmarkRepo)
+	removeBookmarkUC := bookmarkuc.NewRemoveBookmarkUseCase(bookmarkRepo)
+	getAnalyzedReposUC := historyuc.NewGetAnalyzedReposUseCase(historyRepo)
+
+	handler, err := NewHandler(&HandlerConfig{
+		AddBookmark:      addBookmarkUC,
+		GetAnalyzedRepos: getAnalyzedReposUC,
+		GetBookmarks:     getBookmarksUC,
+		Logger:           logger.New(),
+		RemoveBookmark:   removeBookmarkUC,
 	})
 	if err != nil {
 		t.Fatalf("failed to create handler: %v", err)
 	}
-	router := setupAnalysisHistoryTestRouter(handler)
+	return handler
+}
+
+func TestGetUserAnalyzedRepositories_Unauthorized(t *testing.T) {
+	bookmarkRepo := &mockBookmarkRepository{codebaseID: "test-id"}
+	historyRepo := &mockHistoryRepository{repos: []*domainentity.AnalyzedRepository{}}
+	handler := createTestHandler(t, bookmarkRepo, historyRepo)
+	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/analyzed-repositories", nil)
 	rec := httptest.NewRecorder()
@@ -121,32 +166,23 @@ func TestGetUserAnalyzedRepositories_Unauthorized(t *testing.T) {
 
 func TestGetUserAnalyzedRepositories_Success(t *testing.T) {
 	now := time.Now()
-	svc := &mockAnalysisHistoryService{
-		result: &domain.AnalyzedReposResult{
-			Data: []*domain.AnalyzedRepository{
-				{
-					CodebaseID:  "codebase-1",
-					CommitSHA:   "abc123",
-					CompletedAt: now,
-					HistoryID:   "history-1",
-					Name:        "repo1",
-					Owner:       "user1",
-					TotalTests:  100,
-					UpdatedAt:   now,
-				},
+	bookmarkRepo := &mockBookmarkRepository{codebaseID: "test-id"}
+	historyRepo := &mockHistoryRepository{
+		repos: []*domainentity.AnalyzedRepository{
+			{
+				CodebaseID:  "codebase-1",
+				CommitSHA:   "abc123",
+				CompletedAt: now,
+				HistoryID:   "history-1",
+				Name:        "repo1",
+				Owner:       "user1",
+				TotalTests:  100,
+				UpdatedAt:   now,
 			},
-			HasNext:    false,
-			NextCursor: nil,
 		},
 	}
-	handler, err := NewAnalysisHistoryHandler(&AnalysisHistoryHandlerConfig{
-		Logger:  logger.New(),
-		Service: svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
-	router := setupAnalysisHistoryTestRouter(handler)
+	handler := createTestHandler(t, bookmarkRepo, historyRepo)
+	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/user/analyzed-repositories", nil)
 	req = req.WithContext(withTestUserContext(req.Context(), "test-user-id"))
@@ -161,81 +197,11 @@ func TestGetUserAnalyzedRepositories_Success(t *testing.T) {
 	}
 }
 
-func TestGetUserAnalyzedRepositories_WithPagination(t *testing.T) {
-	now := time.Now()
-	nextCursor := now.Add(-time.Hour).Format(time.RFC3339Nano)
-	svc := &mockAnalysisHistoryService{
-		result: &domain.AnalyzedReposResult{
-			Data: []*domain.AnalyzedRepository{
-				{
-					CodebaseID:  "codebase-1",
-					CommitSHA:   "abc123",
-					CompletedAt: now,
-					HistoryID:   "history-1",
-					Name:        "repo1",
-					Owner:       "user1",
-					TotalTests:  100,
-					UpdatedAt:   now,
-				},
-			},
-			HasNext:    true,
-			NextCursor: &nextCursor,
-		},
-	}
-	handler, err := NewAnalysisHistoryHandler(&AnalysisHistoryHandlerConfig{
-		Logger:  logger.New(),
-		Service: svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
-	router := setupAnalysisHistoryTestRouter(handler)
-
-	req := httptest.NewRequest(http.MethodGet, "/api/user/analyzed-repositories?limit=1", nil)
-	req = req.WithContext(withTestUserContext(req.Context(), "test-user-id"))
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("expected status 200, got %d", rec.Code)
-	}
-}
-
-func TestGetUserAnalyzedRepositories_InvalidCursor(t *testing.T) {
-	svc := &mockAnalysisHistoryService{
-		err: domain.ErrInvalidCursor,
-	}
-	handler, err := NewAnalysisHistoryHandler(&AnalysisHistoryHandlerConfig{
-		Logger:  logger.New(),
-		Service: svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
-	router := setupAnalysisHistoryTestRouter(handler)
-
-	req := httptest.NewRequest(http.MethodGet, "/api/user/analyzed-repositories?cursor=invalid-cursor", nil)
-	req = req.WithContext(withTestUserContext(req.Context(), "test-user-id"))
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("expected status 400, got %d", rec.Code)
-	}
-}
-
 func TestGetUserAnalyzedRepositories_WithOwnershipFilter(t *testing.T) {
-	svc := &mockAnalysisHistoryService{
-		result: &domain.AnalyzedReposResult{Data: []*domain.AnalyzedRepository{}, HasNext: false},
-	}
-	handler, err := NewAnalysisHistoryHandler(&AnalysisHistoryHandlerConfig{
-		Logger:  logger.New(),
-		Service: svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
-	router := setupAnalysisHistoryTestRouter(handler)
+	bookmarkRepo := &mockBookmarkRepository{codebaseID: "test-id"}
+	historyRepo := &mockHistoryRepository{repos: []*domainentity.AnalyzedRepository{}}
+	handler := createTestHandler(t, bookmarkRepo, historyRepo)
+	router := setupTestRouter(handler)
 
 	tests := []struct {
 		name       string

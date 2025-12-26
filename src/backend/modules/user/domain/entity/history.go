@@ -1,4 +1,4 @@
-package domain
+package entity
 
 import "time"
 
@@ -19,12 +19,6 @@ func ParseOwnershipFilter(s string) OwnershipFilter {
 	default:
 		return OwnershipAll
 	}
-}
-
-type AnalyzedReposParams struct {
-	Cursor    *string
-	Limit     int
-	Ownership OwnershipFilter
 }
 
 type AnalyzedRepository struct {

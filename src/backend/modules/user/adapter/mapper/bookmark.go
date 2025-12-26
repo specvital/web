@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/specvital/web/src/backend/internal/api"
-	"github.com/specvital/web/src/backend/modules/user/domain"
+	"github.com/specvital/web/src/backend/modules/user/domain/entity"
 )
 
-func ToBookmarkedRepositoriesResponse(repos []*domain.BookmarkedRepository) api.BookmarkedRepositoriesResponse {
+func ToBookmarkedRepositoriesResponse(repos []*entity.BookmarkedRepository) api.BookmarkedRepositoriesResponse {
 	cards := make([]api.RepositoryCard, 0, len(repos))
 
 	for _, repo := range repos {
@@ -19,7 +19,7 @@ func ToBookmarkedRepositoriesResponse(repos []*domain.BookmarkedRepository) api.
 	}
 }
 
-func ToRepositoryCard(repo *domain.BookmarkedRepository) api.RepositoryCard {
+func ToRepositoryCard(repo *entity.BookmarkedRepository) api.RepositoryCard {
 	card := api.RepositoryCard{
 		FullName:     fmt.Sprintf("%s/%s", repo.Owner, repo.Name),
 		ID:           repo.CodebaseID,
