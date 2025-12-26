@@ -116,6 +116,9 @@ run target *args:
         ;;
     esac
 
+smee:
+    npx smee-client -u "$SMEE_URL" -t http://localhost:8000/api/webhooks/github-app
+
 sync-docs:
     baedal specvital/specvital.github.io/docs docs --exclude ".vitepress/**"
 
