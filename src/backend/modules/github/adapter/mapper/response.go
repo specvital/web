@@ -7,8 +7,9 @@ import (
 
 func ToGitHubOrganization(org entity.Organization) api.GitHubOrganization {
 	o := api.GitHubOrganization{
-		ID:    org.ID,
-		Login: org.Login,
+		AccessStatus: toAPIAccessStatus(org.AccessStatus),
+		ID:           org.ID,
+		Login:        org.Login,
 	}
 
 	if org.AvatarURL != "" {
@@ -19,6 +20,17 @@ func ToGitHubOrganization(org entity.Organization) api.GitHubOrganization {
 	}
 
 	return o
+}
+
+func toAPIAccessStatus(status entity.AccessStatus) api.OrganizationAccessStatus {
+	switch status {
+	case entity.AccessStatusAccessible:
+		return api.Accessible
+	case entity.AccessStatusPending:
+		return api.Pending
+	default:
+		return api.Restricted
+	}
 }
 
 func ToGitHubOrganizations(orgs []entity.Organization) []api.GitHubOrganization {

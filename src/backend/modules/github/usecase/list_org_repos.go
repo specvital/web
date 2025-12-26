@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"golang.org/x/sync/singleflight"
 
@@ -17,21 +18,27 @@ type ListOrgReposInput struct {
 }
 
 type ListOrgReposUseCase struct {
-	clientFactory port.GitHubClientFactory
-	repository    port.Repository
-	sfGroup       singleflight.Group
-	tokenProvider port.TokenProvider
+	clientFactory             port.GitHubClientFactory
+	installationLookup        port.InstallationLookup
+	installationTokenProvider port.InstallationTokenProvider
+	repository                port.Repository
+	sfGroup                   singleflight.Group
+	tokenProvider             port.TokenProvider
 }
 
 func NewListOrgReposUseCase(
 	clientFactory port.GitHubClientFactory,
 	repository port.Repository,
 	tokenProvider port.TokenProvider,
+	installationLookup port.InstallationLookup,
+	installationTokenProvider port.InstallationTokenProvider,
 ) *ListOrgReposUseCase {
 	return &ListOrgReposUseCase{
-		clientFactory: clientFactory,
-		repository:    repository,
-		tokenProvider: tokenProvider,
+		clientFactory:             clientFactory,
+		installationLookup:        installationLookup,
+		installationTokenProvider: installationTokenProvider,
+		repository:                repository,
+		tokenProvider:             tokenProvider,
 	}
 }
 
@@ -107,7 +114,12 @@ func (uc *ListOrgReposUseCase) fetchAndCacheOrgRepos(ctx context.Context, userID
 		return nil, fmt.Errorf("get org id: %w", err)
 	}
 
-	ghRepos, err := ghClient.ListOrgRepositories(ctx, orgLogin, maxReposPerFetch)
+	repoClient, err := uc.getOrgRepoClient(ctx, userID, ghOrg.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	ghRepos, err := repoClient.ListOrgRepositories(ctx, orgLogin, maxReposPerFetch)
 	if err != nil {
 		return nil, mapClientError(err)
 	}
@@ -120,4 +132,40 @@ func (uc *ListOrgReposUseCase) fetchAndCacheOrgRepos(ctx context.Context, userID
 	}
 
 	return repos, nil
+}
+
+func (uc *ListOrgReposUseCase) getOrgRepoClient(ctx context.Context, userID string, orgAccountID int64) (port.GitHubClient, error) {
+	if uc.installationLookup == nil || uc.installationTokenProvider == nil {
+		return getGitHubClient(ctx, uc.clientFactory, uc.tokenProvider, userID)
+	}
+
+	installation, err := uc.installationLookup.GetInstallationByAccountID(ctx, orgAccountID)
+	if err != nil {
+		slog.WarnContext(ctx, "failed to lookup installation, falling back to OAuth token",
+			"orgAccountID", orgAccountID,
+			"error", err)
+		return getGitHubClient(ctx, uc.clientFactory, uc.tokenProvider, userID)
+	}
+
+	if installation == nil {
+		return getGitHubClient(ctx, uc.clientFactory, uc.tokenProvider, userID)
+	}
+
+	if installation.IsSuspended {
+		slog.DebugContext(ctx, "installation is suspended, falling back to OAuth token",
+			"orgAccountID", orgAccountID,
+			"installationID", installation.InstallationID)
+		return getGitHubClient(ctx, uc.clientFactory, uc.tokenProvider, userID)
+	}
+
+	token, err := uc.installationTokenProvider.GetInstallationToken(ctx, installation.InstallationID)
+	if err != nil {
+		slog.WarnContext(ctx, "failed to get installation token, falling back to OAuth token",
+			"orgAccountID", orgAccountID,
+			"installationID", installation.InstallationID,
+			"error", err)
+		return getGitHubClient(ctx, uc.clientFactory, uc.tokenProvider, userID)
+	}
+
+	return uc.clientFactory(token), nil
 }

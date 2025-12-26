@@ -808,7 +808,17 @@ export interface components {
             avatarUrl?: string;
             /** @description Organization description */
             description?: string;
+            accessStatus: components["schemas"]["OrganizationAccessStatus"];
         };
+        /**
+         * @description Organization repository access status.
+         *     - accessible: GitHub App installed, can access organization repositories
+         *     - restricted: No GitHub App installation, cannot access organization repositories
+         *     - pending: GitHub App installation is suspended
+         *
+         * @enum {string}
+         */
+        OrganizationAccessStatus: "accessible" | "restricted" | "pending";
         GitHubAppInstallationsResponse: {
             /** @description List of GitHub App installations */
             data: components["schemas"]["GitHubAppInstallation"][];

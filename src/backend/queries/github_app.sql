@@ -48,3 +48,8 @@ WHERE installation_id = @installation_id;
 UPDATE github_app_installations
 SET suspended_at = @suspended_at, updated_at = now()
 WHERE installation_id = @installation_id;
+
+-- name: ListGitHubAppInstallationsByAccountIDs :many
+SELECT * FROM github_app_installations
+WHERE account_id = ANY(@account_ids::bigint[])
+ORDER BY account_id;

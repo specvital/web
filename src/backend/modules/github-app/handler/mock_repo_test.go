@@ -42,6 +42,19 @@ func (r *mockRepo) GetByInstallationID(_ context.Context, installationID int64) 
 	return nil, domain.ErrInstallationNotFound
 }
 
+func (r *mockRepo) ListByAccountIDs(_ context.Context, accountIDs []int64) ([]entity.Installation, error) {
+	var result []entity.Installation
+	for _, accountID := range accountIDs {
+		for _, inst := range r.installations {
+			if inst.AccountID == accountID {
+				result = append(result, *inst)
+				break
+			}
+		}
+	}
+	return result, nil
+}
+
 func (r *mockRepo) ListByUserID(_ context.Context, _ string) ([]entity.Installation, error) {
 	return nil, nil
 }

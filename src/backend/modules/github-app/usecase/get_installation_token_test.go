@@ -49,6 +49,10 @@ func (m *mockInstallationRepository) GetByInstallationID(ctx context.Context, in
 	return nil, domain.ErrInstallationNotFound
 }
 
+func (m *mockInstallationRepository) ListByAccountIDs(ctx context.Context, accountIDs []int64) ([]entity.Installation, error) {
+	return nil, nil
+}
+
 func (m *mockInstallationRepository) ListByUserID(ctx context.Context, userID string) ([]entity.Installation, error) {
 	return nil, nil
 }

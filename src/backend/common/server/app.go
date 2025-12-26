@@ -139,9 +139,18 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	githubRepo := githubadapter.NewPostgresRepository(container.DB, queries)
 	githubClientFactory := githubadapter.NewGitHubClientFactory(client.NewGitHubClientFactory())
 
+	ghAppRepo := ghappadapter.NewPostgresRepository(queries)
+	installationLookup := githubadapter.NewInstallationLookupAdapter(ghAppRepo)
+
+	var installationTokenProvider *githubadapter.InstallationTokenProviderAdapter
+	if container.GitHubAppClient != nil {
+		getInstallationTokenUC := ghappusecase.NewGetInstallationTokenUseCase(container.GitHubAppClient, ghAppRepo)
+		installationTokenProvider = githubadapter.NewInstallationTokenProviderAdapter(getInstallationTokenUC)
+	}
+
 	listUserReposUC := githubusecase.NewListUserReposUseCase(githubClientFactory, githubRepo, tokenProvider)
-	listUserOrgsUC := githubusecase.NewListUserOrgsUseCase(githubClientFactory, githubRepo, tokenProvider)
-	listOrgReposUC := githubusecase.NewListOrgReposUseCase(githubClientFactory, githubRepo, tokenProvider)
+	listUserOrgsUC := githubusecase.NewListUserOrgsUseCase(githubClientFactory, githubRepo, tokenProvider, installationLookup)
+	listOrgReposUC := githubusecase.NewListOrgReposUseCase(githubClientFactory, githubRepo, tokenProvider, installationLookup, installationTokenProvider)
 
 	githubHandler, err := githubhandler.NewHandler(&githubhandler.HandlerConfig{
 		ListOrgRepos:  listOrgReposUC,
@@ -152,8 +161,6 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create github handler: %w", err)
 	}
-
-	ghAppRepo := ghappadapter.NewPostgresRepository(queries)
 
 	var webhookHandler api.WebhookHandlers
 	if container.GitHubAppWebhookSecret != "" {

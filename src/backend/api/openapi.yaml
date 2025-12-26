@@ -1191,6 +1191,7 @@ components:
       required:
         - id
         - login
+        - accessStatus
       properties:
         id:
           type: integer
@@ -1208,6 +1209,20 @@ components:
         description:
           type: string
           description: Organization description
+        accessStatus:
+          $ref: "#/components/schemas/OrganizationAccessStatus"
+
+    OrganizationAccessStatus:
+      type: string
+      enum:
+        - accessible
+        - restricted
+        - pending
+      description: |
+        Organization repository access status.
+        - accessible: GitHub App installed, can access organization repositories
+        - restricted: No GitHub App installation, cannot access organization repositories
+        - pending: GitHub App installation is suspended
 
     # GitHub App API Schemas
     GitHubAppInstallationsResponse:

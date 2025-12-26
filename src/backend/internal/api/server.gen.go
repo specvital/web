@@ -27,6 +27,13 @@ const (
 	GitHubAppInstallationAccountTypeUser         GitHubAppInstallationAccountType = "user"
 )
 
+// Defines values for OrganizationAccessStatus.
+const (
+	Accessible OrganizationAccessStatus = "accessible"
+	Pending    OrganizationAccessStatus = "pending"
+	Restricted OrganizationAccessStatus = "restricted"
+)
+
 // Defines values for TestStatus.
 const (
 	Active  TestStatus = "active"
@@ -186,6 +193,12 @@ type GitHubAppInstallationsResponse struct {
 
 // GitHubOrganization defines model for GitHubOrganization.
 type GitHubOrganization struct {
+	// AccessStatus Organization repository access status.
+	// - accessible: GitHub App installed, can access organization repositories
+	// - restricted: No GitHub App installation, cannot access organization repositories
+	// - pending: GitHub App installation is suspended
+	AccessStatus OrganizationAccessStatus `json:"accessStatus"`
+
 	// AvatarURL Organization avatar URL
 	AvatarURL *string `json:"avatarUrl,omitempty"`
 
@@ -267,6 +280,12 @@ type LogoutResponse struct {
 	// Success Logout operation result
 	Success bool `json:"success"`
 }
+
+// OrganizationAccessStatus Organization repository access status.
+// - accessible: GitHub App installed, can access organization repositories
+// - restricted: No GitHub App installation, cannot access organization repositories
+// - pending: GitHub App installation is suspended
+type OrganizationAccessStatus string
 
 // ProblemDetail defines model for ProblemDetail.
 type ProblemDetail struct {

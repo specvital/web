@@ -58,6 +58,23 @@ func (r *PostgresRepository) GetByInstallationID(ctx context.Context, installati
 	return toEntity(row), nil
 }
 
+func (r *PostgresRepository) ListByAccountIDs(ctx context.Context, accountIDs []int64) ([]entity.Installation, error) {
+	if len(accountIDs) == 0 {
+		return []entity.Installation{}, nil
+	}
+
+	rows, err := r.queries.ListGitHubAppInstallationsByAccountIDs(ctx, accountIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	installations := make([]entity.Installation, 0, len(rows))
+	for _, row := range rows {
+		installations = append(installations, *toEntity(row))
+	}
+	return installations, nil
+}
+
 func (r *PostgresRepository) ListByUserID(ctx context.Context, userID string) ([]entity.Installation, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {

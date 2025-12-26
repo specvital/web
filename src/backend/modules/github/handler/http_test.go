@@ -295,8 +295,8 @@ func TestHandler_GetOrganizationRepositories_NotFound(t *testing.T) {
 
 func TestNewHandler_Validation(t *testing.T) {
 	listUserRepos := usecase.NewListUserReposUseCase(nil, nil, nil)
-	listUserOrgs := usecase.NewListUserOrgsUseCase(nil, nil, nil)
-	listOrgRepos := usecase.NewListOrgReposUseCase(nil, nil, nil)
+	listUserOrgs := usecase.NewListUserOrgsUseCase(nil, nil, nil, nil)
+	listOrgRepos := usecase.NewListOrgReposUseCase(nil, nil, nil, nil, nil)
 
 	tests := []struct {
 		name    string

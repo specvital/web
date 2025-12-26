@@ -67,6 +67,43 @@ func (q *Queries) GetGitHubAppInstallationByID(ctx context.Context, installation
 	return i, err
 }
 
+const listGitHubAppInstallationsByAccountIDs = `-- name: ListGitHubAppInstallationsByAccountIDs :many
+SELECT id, installation_id, account_type, account_id, account_login, account_avatar_url, installer_user_id, suspended_at, created_at, updated_at FROM github_app_installations
+WHERE account_id = ANY($1::bigint[])
+ORDER BY account_id
+`
+
+func (q *Queries) ListGitHubAppInstallationsByAccountIDs(ctx context.Context, accountIds []int64) ([]GithubAppInstallation, error) {
+	rows, err := q.db.Query(ctx, listGitHubAppInstallationsByAccountIDs, accountIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GithubAppInstallation
+	for rows.Next() {
+		var i GithubAppInstallation
+		if err := rows.Scan(
+			&i.ID,
+			&i.InstallationID,
+			&i.AccountType,
+			&i.AccountID,
+			&i.AccountLogin,
+			&i.AccountAvatarUrl,
+			&i.InstallerUserID,
+			&i.SuspendedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listGitHubAppInstallationsByUserID = `-- name: ListGitHubAppInstallationsByUserID :many
 SELECT id, installation_id, account_type, account_id, account_login, account_avatar_url, installer_user_id, suspended_at, created_at, updated_at FROM github_app_installations
 WHERE installer_user_id = $1
