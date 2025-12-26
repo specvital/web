@@ -161,39 +161,3 @@ func TestListOrgReposUseCase_FallsBackWhenSuspended(t *testing.T) {
 		t.Errorf("expected oauth-token when suspended, got %s", lastToken)
 	}
 }
-
-func TestListOrgReposUseCase_NilLookup(t *testing.T) {
-	orgAccountID := int64(123)
-
-	repo := &mockRepository{
-		hasOrgRepos: false,
-		orgID:       "org-internal-id",
-	}
-	provider := &mockTokenProvider{token: "oauth-token"}
-
-	oauthClient := &mockGitHubClient{
-		org:   &port.GitHubOrganization{ID: orgAccountID, Login: "test-org"},
-		repos: []port.GitHubRepository{},
-	}
-
-	lastToken := ""
-	factory := func(token string) port.GitHubClient {
-		lastToken = token
-		return oauthClient
-	}
-
-	uc := NewListOrgReposUseCase(factory, repo, provider, nil, nil)
-
-	_, err := uc.Execute(context.Background(), ListOrgReposInput{
-		UserID:   "user-123",
-		OrgLogin: "test-org",
-		Refresh:  false,
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if lastToken != "oauth-token" {
-		t.Errorf("expected oauth-token when lookup is nil, got %s", lastToken)
-	}
-}

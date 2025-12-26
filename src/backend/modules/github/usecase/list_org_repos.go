@@ -135,10 +135,6 @@ func (uc *ListOrgReposUseCase) fetchAndCacheOrgRepos(ctx context.Context, userID
 }
 
 func (uc *ListOrgReposUseCase) getOrgRepoClient(ctx context.Context, userID string, orgAccountID int64) (port.GitHubClient, error) {
-	if uc.installationLookup == nil || uc.installationTokenProvider == nil {
-		return getGitHubClient(ctx, uc.clientFactory, uc.tokenProvider, userID)
-	}
-
 	installation, err := uc.installationLookup.GetInstallationByAccountID(ctx, orgAccountID)
 	if err != nil {
 		slog.WarnContext(ctx, "failed to lookup installation, falling back to OAuth token",

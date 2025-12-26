@@ -138,18 +138,14 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 
 	gitClient := client.NewGitClient()
 
-	var ghAppClient ghappport.GitHubAppClient
-	if cfg.GitHubAppID != 0 && len(cfg.GitHubAppPrivateKey) > 0 {
-		c, err := client.NewGitHubAppClient(client.GitHubAppConfig{
-			AppID:      cfg.GitHubAppID,
-			AppSlug:    cfg.GitHubAppSlug,
-			PrivateKey: cfg.GitHubAppPrivateKey,
-		})
-		if err != nil {
-			cleanup()
-			return nil, fmt.Errorf("github app: %w", err)
-		}
-		ghAppClient = c
+	ghAppClient, err := client.NewGitHubAppClient(client.GitHubAppConfig{
+		AppID:      cfg.GitHubAppID,
+		AppSlug:    cfg.GitHubAppSlug,
+		PrivateKey: cfg.GitHubAppPrivateKey,
+	})
+	if err != nil {
+		cleanup()
+		return nil, fmt.Errorf("github app: %w", err)
 	}
 
 	return &Container{
@@ -173,6 +169,18 @@ func validateConfig(cfg Config) error {
 	}
 	if cfg.EncryptionKey == "" {
 		return fmt.Errorf("ENCRYPTION_KEY is required")
+	}
+	if cfg.GitHubAppID == 0 {
+		return fmt.Errorf("GITHUB_APP_ID is required")
+	}
+	if len(cfg.GitHubAppPrivateKey) == 0 {
+		return fmt.Errorf("GITHUB_APP_PRIVATE_KEY is required")
+	}
+	if cfg.GitHubAppSlug == "" {
+		return fmt.Errorf("GITHUB_APP_SLUG is required")
+	}
+	if cfg.GitHubAppWebhookSecret == "" {
+		return fmt.Errorf("GITHUB_APP_WEBHOOK_SECRET is required")
 	}
 	if cfg.GitHubOAuthClientID == "" {
 		return fmt.Errorf("GITHUB_OAUTH_CLIENT_ID is required")

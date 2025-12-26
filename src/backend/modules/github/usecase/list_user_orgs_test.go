@@ -126,31 +126,6 @@ func TestListUserOrgsUseCase_AccessStatus_SuspendedInstallation(t *testing.T) {
 	}
 }
 
-func TestListUserOrgsUseCase_AccessStatus_NilLookup(t *testing.T) {
-	repo := &mockRepository{
-		hasOrgs: true,
-		orgs:    []port.OrganizationRecord{{ID: 123, Login: "org1"}},
-	}
-	provider := &mockTokenProvider{token: "test-token"}
-	ghClient := &mockGitHubClient{}
-
-	uc := NewListUserOrgsUseCase(mockClientFactory(ghClient), repo, provider, nil)
-
-	orgs, err := uc.Execute(context.Background(), ListUserOrgsInput{
-		UserID:  "user-123",
-		Refresh: false,
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(orgs) != 1 {
-		t.Fatalf("expected 1 org, got %d", len(orgs))
-	}
-	if orgs[0].AccessStatus != entity.AccessStatusRestricted {
-		t.Errorf("expected AccessStatusRestricted when lookup is nil, got %v", orgs[0].AccessStatus)
-	}
-}
-
 func TestListUserOrgsUseCase_AccessStatus_MixedStatus(t *testing.T) {
 	repo := &mockRepository{
 		hasOrgs: true,

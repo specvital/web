@@ -58,10 +58,7 @@ func (uc *ListUserOrgsUseCase) Execute(ctx context.Context, input ListUserOrgsIn
 }
 
 func (uc *ListUserOrgsUseCase) enrichWithAccessStatus(ctx context.Context, orgs []entity.Organization) []entity.Organization {
-	if uc.installationLookup == nil || len(orgs) == 0 {
-		for i := range orgs {
-			orgs[i].AccessStatus = entity.AccessStatusRestricted
-		}
+	if len(orgs) == 0 {
 		return orgs
 	}
 
