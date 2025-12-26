@@ -139,7 +139,7 @@ func TestManager_ValidateInvalidToken(t *testing.T) {
 func TestManager_ValidateExpiredToken(t *testing.T) {
 	m, _ := NewManager(testSecret)
 
-	claims := domain.Claims{
+	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    Issuer,
 			Subject:   "user-123",
@@ -161,7 +161,7 @@ func TestManager_ValidateExpiredToken(t *testing.T) {
 func TestManager_ValidateInvalidIssuer(t *testing.T) {
 	m, _ := NewManager(testSecret)
 
-	claims := domain.Claims{
+	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "other-issuer",
 			Subject:   "user-123",
@@ -181,7 +181,7 @@ func TestManager_ValidateInvalidIssuer(t *testing.T) {
 }
 
 func generateTokenWithSecret(secret string) string {
-	claims := domain.Claims{
+	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    Issuer,
 			Subject:   "user-123",

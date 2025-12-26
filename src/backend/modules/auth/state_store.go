@@ -10,23 +10,13 @@ import (
 	"github.com/cockroachdb/errors"
 
 	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/port"
 )
 
 const (
 	DefaultStateTTL  = 10 * time.Minute
 	StateTokenLength = 32
 )
-
-var (
-	ErrStateNotFound = errors.New("oauth state not found")
-	ErrStateExpired  = errors.New("oauth state expired")
-)
-
-type StateStore interface {
-	Create(ctx context.Context) (string, error)
-	Validate(ctx context.Context, state string) error
-	Close() error
-}
 
 type stateEntry struct {
 	expiresAt time.Time
@@ -40,7 +30,7 @@ type inMemoryStateStore struct {
 	stopped sync.Once
 }
 
-func NewStateStore() StateStore {
+func NewStateStore() port.StateStore {
 	store := &inMemoryStateStore{
 		states: make(map[string]stateEntry),
 		ttl:    DefaultStateTTL,
@@ -50,7 +40,7 @@ func NewStateStore() StateStore {
 	return store
 }
 
-func NewStateStoreWithTTL(ttl time.Duration) StateStore {
+func NewStateStoreWithTTL(ttl time.Duration) port.StateStore {
 	store := &inMemoryStateStore{
 		states: make(map[string]stateEntry),
 		ttl:    ttl,

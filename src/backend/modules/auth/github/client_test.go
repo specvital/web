@@ -12,6 +12,13 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type testUserInfo struct {
+	AvatarURL string
+	Email     *string
+	ID        int64
+	Login     string
+}
+
 func TestNewClient(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -344,7 +351,7 @@ func TestGetUserInfo(t *testing.T) {
 	}
 }
 
-func (c *oauthClient) getUserInfoWithURL(ctx context.Context, accessToken string, url string) (*GitHubUser, error) {
+func (c *oauthClient) getUserInfoWithURL(ctx context.Context, accessToken string, url string) (*testUserInfo, error) {
 	if accessToken == "" {
 		return nil, pkgerrors.Wrap(ErrInvalidGitHubToken, "access token is empty")
 	}
@@ -383,7 +390,7 @@ func (c *oauthClient) getUserInfoWithURL(ctx context.Context, accessToken string
 		return nil, pkgerrors.Wrap(ErrNetworkFailure, "failed to parse response")
 	}
 
-	return &GitHubUser{
+	return &testUserInfo{
 		AvatarURL: userResp.AvatarURL,
 		Email:     userResp.Email,
 		ID:        userResp.ID,

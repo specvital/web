@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 )
 
 const (
@@ -41,7 +42,7 @@ func (m *Manager) Generate(userID, login string) (string, error) {
 	}
 
 	now := time.Now()
-	claims := domain.Claims{
+	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    Issuer,
 			Subject:   userID,
@@ -55,8 +56,8 @@ func (m *Manager) Generate(userID, login string) (string, error) {
 	return token.SignedString(m.secret)
 }
 
-func (m *Manager) Validate(tokenString string) (*domain.Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &domain.Claims{}, func(t *jwt.Token) (interface{}, error) {
+func (m *Manager) Validate(tokenString string) (*entity.Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.Wrapf(domain.ErrInvalidToken, "unexpected signing method: %v", t.Header["alg"])
 		}
@@ -69,15 +70,24 @@ func (m *Manager) Validate(tokenString string) (*domain.Claims, error) {
 		return nil, errors.Wrapf(domain.ErrInvalidToken, "token validation failed: %v", err)
 	}
 
-	claims, ok := token.Claims.(*domain.Claims)
+	jwtClaims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
 		return nil, domain.ErrInvalidToken
 	}
 
-	// Validate issuer to prevent token confusion attacks
-	if claims.Issuer != Issuer {
+	if jwtClaims.Issuer != Issuer {
 		return nil, errors.Wrapf(domain.ErrInvalidToken, "invalid issuer: expected %s", Issuer)
 	}
 
-	return claims, nil
+	if jwtClaims.ExpiresAt == nil || jwtClaims.IssuedAt == nil {
+		return nil, errors.Wrap(domain.ErrInvalidToken, "missing required time claims")
+	}
+
+	return &entity.Claims{
+		ExpiresAt: jwtClaims.ExpiresAt.Time,
+		IssuedAt:  jwtClaims.IssuedAt.Time,
+		Issuer:    jwtClaims.Issuer,
+		Login:     jwtClaims.Login,
+		Subject:   jwtClaims.Subject,
+	}, nil
 }

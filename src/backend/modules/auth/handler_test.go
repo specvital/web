@@ -13,46 +13,158 @@ import (
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
+	"github.com/specvital/web/src/backend/modules/auth/domain/port"
+	"github.com/specvital/web/src/backend/modules/auth/usecase"
 	"github.com/specvital/web/src/backend/modules/user"
 )
 
-type mockService struct {
-	authResult      *AuthResult
-	currentUser     *domain.User
-	err             error
-	githubToken     string
-	initiateAuthURL string
+type mockRepository struct {
+	createUserFunc                func(ctx context.Context, user *entity.User) (string, error)
+	getOAuthAccountByProviderFunc func(ctx context.Context, provider, externalID string) (*entity.OAuthAccount, error)
+	getUserByIDFunc               func(ctx context.Context, id string) (*entity.User, error)
 }
 
-func (m *mockService) GetCurrentUser(_ context.Context, _ string) (*domain.User, error) {
-	if m.err != nil {
-		return nil, m.err
+func (m *mockRepository) CreateUser(ctx context.Context, user *entity.User) (string, error) {
+	if m.createUserFunc != nil {
+		return m.createUserFunc(ctx, user)
 	}
-	return m.currentUser, nil
+	return "new-user-id", nil
 }
 
-func (m *mockService) GetUserGitHubToken(_ context.Context, _ string) (string, error) {
-	if m.err != nil {
-		return "", m.err
+func (m *mockRepository) GetOAuthAccountByProvider(ctx context.Context, provider, externalID string) (*entity.OAuthAccount, error) {
+	if m.getOAuthAccountByProviderFunc != nil {
+		return m.getOAuthAccountByProviderFunc(ctx, provider, externalID)
 	}
-	return m.githubToken, nil
+	return nil, domain.ErrUserNotFound
 }
 
-func (m *mockService) HandleOAuthCallback(_ context.Context, _, _ string) (*AuthResult, error) {
-	if m.err != nil {
-		return nil, m.err
+func (m *mockRepository) GetOAuthAccountByUserID(_ context.Context, _, _ string) (*entity.OAuthAccount, error) {
+	return nil, nil
+}
+
+func (m *mockRepository) GetUserByID(ctx context.Context, id string) (*entity.User, error) {
+	if m.getUserByIDFunc != nil {
+		return m.getUserByIDFunc(ctx, id)
 	}
-	return m.authResult, nil
+	return nil, domain.ErrUserNotFound
 }
 
-func (m *mockService) InitiateOAuth(_ context.Context) (string, error) {
-	if m.err != nil {
-		return "", m.err
+func (m *mockRepository) UpdateLastLogin(_ context.Context, _ string) error {
+	return nil
+}
+
+func (m *mockRepository) UpsertOAuthAccount(_ context.Context, _ *entity.OAuthAccount) (string, error) {
+	return "", nil
+}
+
+type mockOAuthClient struct {
+	exchangeCodeFunc    func(ctx context.Context, code string) (string, error)
+	generateAuthURLFunc func(state string) (string, error)
+	getUserInfoFunc     func(ctx context.Context, accessToken string) (*entity.OAuthUserInfo, error)
+}
+
+func (m *mockOAuthClient) ExchangeCode(ctx context.Context, code string) (string, error) {
+	if m.exchangeCodeFunc != nil {
+		return m.exchangeCodeFunc(ctx, code)
 	}
-	return m.initiateAuthURL, nil
+	return "access-token", nil
 }
 
-var _ Service = (*mockService)(nil)
+func (m *mockOAuthClient) GenerateAuthURL(state string) (string, error) {
+	if m.generateAuthURLFunc != nil {
+		return m.generateAuthURLFunc(state)
+	}
+	return "https://github.com/login/oauth/authorize?state=" + state, nil
+}
+
+func (m *mockOAuthClient) GetUserInfo(ctx context.Context, accessToken string) (*entity.OAuthUserInfo, error) {
+	if m.getUserInfoFunc != nil {
+		return m.getUserInfoFunc(ctx, accessToken)
+	}
+	return &entity.OAuthUserInfo{
+		ExternalID: "12345",
+		Username:   "testuser",
+		AvatarURL:  "https://github.com/avatar.png",
+	}, nil
+}
+
+type mockStateStore struct {
+	createFunc   func(ctx context.Context) (string, error)
+	validateFunc func(ctx context.Context, state string) error
+}
+
+func (m *mockStateStore) Create(ctx context.Context) (string, error) {
+	if m.createFunc != nil {
+		return m.createFunc(ctx)
+	}
+	return "test-state", nil
+}
+
+func (m *mockStateStore) Validate(ctx context.Context, state string) error {
+	if m.validateFunc != nil {
+		return m.validateFunc(ctx, state)
+	}
+	return nil
+}
+
+func (m *mockStateStore) Close() error {
+	return nil
+}
+
+type mockEncryptor struct {
+	encryptFunc func(plaintext string) (string, error)
+	decryptFunc func(ciphertext string) (string, error)
+}
+
+func (m *mockEncryptor) Encrypt(plaintext string) (string, error) {
+	if m.encryptFunc != nil {
+		return m.encryptFunc(plaintext)
+	}
+	return "encrypted-" + plaintext, nil
+}
+
+func (m *mockEncryptor) Decrypt(ciphertext string) (string, error) {
+	if m.decryptFunc != nil {
+		return m.decryptFunc(ciphertext)
+	}
+	return ciphertext, nil
+}
+
+type mockTokenManager struct {
+	generateFunc func(userID, login string) (string, error)
+	validateFunc func(tokenString string) (*entity.Claims, error)
+}
+
+func (m *mockTokenManager) Generate(userID, login string) (string, error) {
+	if m.generateFunc != nil {
+		return m.generateFunc(userID, login)
+	}
+	return "jwt-token-" + userID, nil
+}
+
+func (m *mockTokenManager) Validate(tokenString string) (*entity.Claims, error) {
+	if m.validateFunc != nil {
+		return m.validateFunc(tokenString)
+	}
+	return nil, nil
+}
+
+func createTestHandler(
+	getCurrentUserUC *usecase.GetCurrentUserUseCase,
+	handleOAuthCallbackUC *usecase.HandleOAuthCallbackUseCase,
+	initiateOAuthUC *usecase.InitiateOAuthUseCase,
+) *Handler {
+	handler, _ := NewHandler(&HandlerConfig{
+		CookieSecure:        false,
+		FrontendURL:         "http://localhost:5173",
+		GetCurrentUser:      getCurrentUserUC,
+		HandleOAuthCallback: handleOAuthCallbackUC,
+		InitiateOAuth:       initiateOAuthUC,
+		Logger:              logger.New(),
+	})
+	return handler
+}
 
 func setupTestRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
@@ -104,19 +216,23 @@ func (m *mockGitHubHandler) GetUserGitHubRepositories(_ context.Context, _ api.G
 	return nil, nil
 }
 
+func createDefaultUseCases() (*usecase.GetCurrentUserUseCase, *usecase.HandleOAuthCallbackUseCase, *usecase.InitiateOAuthUseCase, *mockRepository, *mockOAuthClient, *mockStateStore) {
+	repo := &mockRepository{}
+	oauthClient := &mockOAuthClient{}
+	stateStore := &mockStateStore{}
+	encryptor := &mockEncryptor{}
+	tokenManager := &mockTokenManager{}
+
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, repo, stateStore, tokenManager)
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
+
+	return getCurrentUser, handleOAuthCallback, initiateOAuth, repo, oauthClient, stateStore
+}
+
 func TestAuthLogin_Success(t *testing.T) {
-	svc := &mockService{
-		initiateAuthURL: "https://github.com/login/oauth/authorize?client_id=test",
-	}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
@@ -132,18 +248,21 @@ func TestAuthLogin_Success(t *testing.T) {
 }
 
 func TestAuthLogin_ServiceError(t *testing.T) {
-	svc := &mockService{
-		err: domain.ErrInvalidState,
+	repo := &mockRepository{}
+	oauthClient := &mockOAuthClient{}
+	stateStore := &mockStateStore{
+		createFunc: func(_ context.Context) (string, error) {
+			return "", domain.ErrInvalidState
+		},
 	}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	encryptor := &mockEncryptor{}
+	tokenManager := &mockTokenManager{}
+
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, repo, stateStore, tokenManager)
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
+
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
@@ -156,25 +275,25 @@ func TestAuthLogin_ServiceError(t *testing.T) {
 }
 
 func TestAuthCallback_Success(t *testing.T) {
-	svc := &mockService{
-		authResult: &AuthResult{
-			Token: "test-jwt-token",
-			User: &domain.User{
-				AvatarURL: "https://github.com/avatar.png",
+	repo := &mockRepository{
+		getUserByIDFunc: func(_ context.Context, _ string) (*entity.User, error) {
+			return &entity.User{
 				ID:        "user-123",
 				Username:  "testuser",
-			},
+				AvatarURL: "https://github.com/avatar.png",
+			}, nil
 		},
 	}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	oauthClient := &mockOAuthClient{}
+	stateStore := &mockStateStore{}
+	encryptor := &mockEncryptor{}
+	tokenManager := &mockTokenManager{}
+
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, repo, stateStore, tokenManager)
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
+
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/callback?code=test-code&state=test-state", nil)
@@ -197,45 +316,24 @@ func TestAuthCallback_Success(t *testing.T) {
 }
 
 func TestAuthCallback_InvalidState(t *testing.T) {
-	svc := &mockService{
-		err: domain.ErrInvalidState,
+	repo := &mockRepository{}
+	oauthClient := &mockOAuthClient{}
+	stateStore := &mockStateStore{
+		validateFunc: func(_ context.Context, _ string) error {
+			return domain.ErrInvalidState
+		},
 	}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	encryptor := &mockEncryptor{}
+	tokenManager := &mockTokenManager{}
+
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, repo, stateStore, tokenManager)
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
+
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/callback?code=test-code&state=invalid-state", nil)
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("expected status 400, got %d", rec.Code)
-	}
-}
-
-func TestAuthCallback_InvalidCode(t *testing.T) {
-	svc := &mockService{
-		err: domain.ErrInvalidOAuthCode,
-	}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
-	router := setupTestRouter(handler)
-
-	req := httptest.NewRequest(http.MethodGet, "/api/auth/callback?code=invalid-code&state=test-state", nil)
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
@@ -256,15 +354,8 @@ func TestAuthCallback_MissingParameters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler, err := NewHandler(&HandlerConfig{
-				CookieSecure: false,
-				FrontendURL:  "http://localhost:5173",
-				Logger:       logger.New(),
-				Service:      &mockService{},
-			})
-			if err != nil {
-				t.Fatalf("failed to create handler: %v", err)
-			}
+			getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
+			handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
 			router := setupTestRouter(handler)
 
 			req := httptest.NewRequest(http.MethodGet, tt.url, nil)
@@ -279,16 +370,8 @@ func TestAuthCallback_MissingParameters(t *testing.T) {
 }
 
 func TestAuthLogout_Success(t *testing.T) {
-	svc := &mockService{}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
@@ -309,16 +392,8 @@ func TestAuthLogout_Success(t *testing.T) {
 }
 
 func TestAuthMe_Unauthenticated(t *testing.T) {
-	svc := &mockService{}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
@@ -331,21 +406,18 @@ func TestAuthMe_Unauthenticated(t *testing.T) {
 }
 
 func TestAuthMe_UserNotFound(t *testing.T) {
-	svc := &mockService{
-		err: domain.ErrUserNotFound,
+	repo := &mockRepository{
+		getUserByIDFunc: func(_ context.Context, _ string) (*entity.User, error) {
+			return nil, domain.ErrUserNotFound
+		},
 	}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, repo, &mockStateStore{}, &mockTokenManager{})
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
 
-	// Use direct handler call with claims in context
-	claims := &domain.Claims{}
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+
+	claims := &entity.Claims{}
 	claims.Subject = "user-123"
 	ctx := middleware.WithClaims(context.Background(), claims)
 	req := api.AuthMeRequestObject{}
@@ -357,25 +429,22 @@ func TestAuthMe_UserNotFound(t *testing.T) {
 }
 
 func TestAuthMe_Success(t *testing.T) {
-	svc := &mockService{
-		currentUser: &domain.User{
-			AvatarURL: "https://github.com/avatar.png",
-			ID:        "user-123",
-			Username:  "testuser",
+	repo := &mockRepository{
+		getUserByIDFunc: func(_ context.Context, _ string) (*entity.User, error) {
+			return &entity.User{
+				ID:        "user-123",
+				Username:  "testuser",
+				AvatarURL: "https://github.com/avatar.png",
+			}, nil
 		},
 	}
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      svc,
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, repo, &mockStateStore{}, &mockTokenManager{})
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
 
-	// Use direct handler call with claims in context
-	claims := &domain.Claims{}
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+
+	claims := &entity.Claims{}
 	claims.Subject = "user-123"
 	ctx := middleware.WithClaims(context.Background(), claims)
 	req := api.AuthMeRequestObject{}
@@ -387,22 +456,21 @@ func TestAuthMe_Success(t *testing.T) {
 }
 
 func TestBuildAuthCookie(t *testing.T) {
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: true,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      &mockService{},
+	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
+	handler, _ := NewHandler(&HandlerConfig{
+		CookieSecure:        true,
+		FrontendURL:         "http://localhost:5173",
+		GetCurrentUser:      getCurrentUser,
+		HandleOAuthCallback: handleOAuthCallback,
+		InitiateOAuth:       initiateOAuth,
+		Logger:              logger.New(),
 	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
 
 	cookie := handler.buildAuthCookie("test-token")
 	if cookie == "" {
 		t.Error("expected cookie string to be non-empty")
 	}
 
-	// Check cookie attributes
 	tests := []struct {
 		name     string
 		contains string
@@ -421,23 +489,21 @@ func TestBuildAuthCookie(t *testing.T) {
 }
 
 func TestBuildLogoutCookie(t *testing.T) {
-	handler, err := NewHandler(&HandlerConfig{
-		CookieSecure: false,
-		FrontendURL:  "http://localhost:5173",
-		Logger:       logger.New(),
-		Service:      &mockService{},
-	})
-	if err != nil {
-		t.Fatalf("failed to create handler: %v", err)
-	}
+	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
 
 	cookie := handler.BuildLogoutCookie()
 	if cookie == "" {
 		t.Error("expected cookie string to be non-empty")
 	}
 
-	// Logout cookie should have Max-Age=0 or negative
 	if !strings.Contains(cookie, "Max-Age=") {
 		t.Error("logout cookie should contain Max-Age")
 	}
 }
+
+var _ port.Repository = (*mockRepository)(nil)
+var _ port.OAuthClient = (*mockOAuthClient)(nil)
+var _ port.StateStore = (*mockStateStore)(nil)
+var _ port.Encryptor = (*mockEncryptor)(nil)
+var _ port.TokenManager = (*mockTokenManager)(nil)

@@ -16,6 +16,8 @@ import (
 	analyzerhandler "github.com/specvital/web/src/backend/modules/analyzer/handler"
 	analyzerusecase "github.com/specvital/web/src/backend/modules/analyzer/usecase"
 	"github.com/specvital/web/src/backend/modules/auth"
+	authadapter "github.com/specvital/web/src/backend/modules/auth/adapter"
+	authusecase "github.com/specvital/web/src/backend/modules/auth/usecase"
 	"github.com/specvital/web/src/backend/modules/github"
 	"github.com/specvital/web/src/backend/modules/user"
 )
@@ -59,19 +61,27 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 
 	authRepo := auth.NewRepository(queries)
 	stateStore := auth.NewStateStore()
-	authService := auth.NewService(&auth.ServiceConfig{
-		Encryptor:    container.Encryptor,
-		GitHubClient: container.GitHubOAuth,
-		JWTManager:   container.JWTManager,
-		Repository:   authRepo,
-		StateStore:   stateStore,
-	})
+
+	getCurrentUserUC := authusecase.NewGetCurrentUserUseCase(authRepo)
+	getUserGitHubTokenUC := authusecase.NewGetUserGitHubTokenUseCase(container.Encryptor, authRepo)
+	tokenProvider := authadapter.NewTokenProviderAdapter(getUserGitHubTokenUC)
+	handleOAuthCallbackUC := authusecase.NewHandleOAuthCallbackUseCase(
+		container.Encryptor,
+		container.GitHubOAuth,
+		authRepo,
+		stateStore,
+		container.JWTManager,
+	)
+	initiateOAuthUC := authusecase.NewInitiateOAuthUseCase(container.GitHubOAuth, stateStore)
+
 	authHandler, err := auth.NewHandler(&auth.HandlerConfig{
-		CookieDomain: container.CookieDomain,
-		CookieSecure: container.SecureCookie,
-		FrontendURL:  container.FrontendURL,
-		Logger:       log,
-		Service:      authService,
+		CookieDomain:        container.CookieDomain,
+		CookieSecure:        container.SecureCookie,
+		FrontendURL:         container.FrontendURL,
+		GetCurrentUser:      getCurrentUserUC,
+		HandleOAuthCallback: handleOAuthCallbackUC,
+		InitiateOAuth:       initiateOAuthUC,
+		Logger:              log,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create auth handler: %w", err)
@@ -101,12 +111,12 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	analyzerQueue := analyzeradapter.NewRiverQueueService(container.River.Client(), analyzerRepo)
 	analyzerGitClient := analyzeradapter.NewGitClientAdapter(container.GitClient)
 
-	analyzeRepositoryUC := analyzerusecase.NewAnalyzeRepositoryUseCase(analyzerGitClient, analyzerQueue, analyzerRepo, authService)
+	analyzeRepositoryUC := analyzerusecase.NewAnalyzeRepositoryUseCase(analyzerGitClient, analyzerQueue, analyzerRepo, tokenProvider)
 	getAnalysisUC := analyzerusecase.NewGetAnalysisUseCase(analyzerQueue, analyzerRepo)
 	listRepositoryCardsUC := analyzerusecase.NewListRepositoryCardsUseCase(analyzerRepo)
-	getUpdateStatusUC := analyzerusecase.NewGetUpdateStatusUseCase(analyzerGitClient, analyzerRepo, authService)
+	getUpdateStatusUC := analyzerusecase.NewGetUpdateStatusUseCase(analyzerGitClient, analyzerRepo, tokenProvider)
 	getRepositoryStatsUC := analyzerusecase.NewGetRepositoryStatsUseCase(analyzerRepo)
-	reanalyzeRepositoryUC := analyzerusecase.NewReanalyzeRepositoryUseCase(analyzerGitClient, analyzerQueue, analyzerRepo, authService)
+	reanalyzeRepositoryUC := analyzerusecase.NewReanalyzeRepositoryUseCase(analyzerGitClient, analyzerQueue, analyzerRepo, tokenProvider)
 
 	analyzerHandler := analyzerhandler.NewHandler(
 		log,
@@ -119,7 +129,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	)
 
 	githubRepo := github.NewRepository(container.DB, queries)
-	githubService := github.NewService(authService, githubRepo, client.NewGitHubClientFactory())
+	githubService := github.NewService(tokenProvider, githubRepo, client.NewGitHubClientFactory())
 	githubHandler, err := github.NewHandler(&github.HandlerConfig{
 		Logger:  log,
 		Service: githubService,

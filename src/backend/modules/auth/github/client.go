@@ -5,10 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/cockroachdb/errors"
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
+
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 )
 
 const (
@@ -26,7 +29,7 @@ type Config struct {
 type Client interface {
 	ExchangeCode(ctx context.Context, code string) (string, error)
 	GenerateAuthURL(state string) (string, error)
-	GetUserInfo(ctx context.Context, accessToken string) (*GitHubUser, error)
+	GetUserInfo(ctx context.Context, accessToken string) (*entity.OAuthUserInfo, error)
 }
 
 type oauthClient struct {
@@ -97,7 +100,7 @@ func (c *oauthClient) ExchangeCode(ctx context.Context, code string) (string, er
 	return token.AccessToken, nil
 }
 
-func (c *oauthClient) GetUserInfo(ctx context.Context, accessToken string) (*GitHubUser, error) {
+func (c *oauthClient) GetUserInfo(ctx context.Context, accessToken string) (*entity.OAuthUserInfo, error) {
 	if accessToken == "" {
 		return nil, errors.Wrap(ErrInvalidGitHubToken, "access token is empty")
 	}
@@ -136,10 +139,10 @@ func (c *oauthClient) GetUserInfo(ctx context.Context, accessToken string) (*Git
 		return nil, errors.Wrap(ErrNetworkFailure, "failed to parse response")
 	}
 
-	return &GitHubUser{
-		AvatarURL: userResp.AvatarURL,
-		Email:     userResp.Email,
-		ID:        userResp.ID,
-		Login:     userResp.Login,
+	return &entity.OAuthUserInfo{
+		AvatarURL:  userResp.AvatarURL,
+		Email:      userResp.Email,
+		ExternalID: strconv.FormatInt(userResp.ID, 10),
+		Username:   userResp.Login,
 	}, nil
 }

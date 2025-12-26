@@ -1,4 +1,4 @@
-package domain
+package entity
 
 import "time"
 
@@ -25,3 +25,10 @@ type OAuthAccount struct {
 }
 
 const ProviderGitHub = "github"
+
+type OAuthUserInfo struct {
+	AvatarURL  string
+	Email      *string
+	ExternalID string
+	Username   string
+}

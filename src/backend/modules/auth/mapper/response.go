@@ -2,15 +2,15 @@ package mapper
 
 import (
 	"github.com/specvital/web/src/backend/internal/api"
-	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 )
 
-func ToUserInfo(user *domain.User) api.UserInfo {
+func ToUserInfo(user *entity.User) api.UserInfo {
 	return api.UserInfo{
 		AvatarURL: user.AvatarURL,
 		ID:        user.ID,
 		Login:     user.Username,
-		Name:      nil, // GitHub display name not stored in domain.User
+		Name:      nil,
 	}
 }
 

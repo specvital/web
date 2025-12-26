@@ -8,20 +8,22 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/specvital/web/src/backend/common/logger"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth"
-	authdomain "github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	"github.com/specvital/web/src/backend/modules/user/domain"
 )
 
 func withTestUserContext(ctx context.Context, userID string) context.Context {
-	claims := &authdomain.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{Subject: userID},
-		Login:            "testuser",
+	claims := &entity.Claims{
+		ExpiresAt: time.Now().Add(time.Hour),
+		IssuedAt:  time.Now(),
+		Issuer:    "specvital",
+		Login:     "testuser",
+		Subject:   userID,
 	}
 	return middleware.WithClaims(ctx, claims)
 }

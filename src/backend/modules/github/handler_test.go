@@ -3,19 +3,21 @@ package github
 import (
 	"context"
 	"testing"
-
-	"github.com/golang-jwt/jwt/v5"
+	"time"
 
 	"github.com/specvital/web/src/backend/common/logger"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/internal/api"
-	authdomain "github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	"github.com/specvital/web/src/backend/modules/github/domain"
 )
 
 func contextWithUserID(userID string) context.Context {
-	claims := &authdomain.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{Subject: userID},
+	claims := &entity.Claims{
+		ExpiresAt: time.Now().Add(time.Hour),
+		IssuedAt:  time.Now(),
+		Issuer:    "specvital",
+		Subject:   userID,
 	}
 	return middleware.WithClaims(context.Background(), claims)
 }

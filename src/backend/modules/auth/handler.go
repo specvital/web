@@ -13,6 +13,7 @@ import (
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/domain"
 	"github.com/specvital/web/src/backend/modules/auth/mapper"
+	"github.com/specvital/web/src/backend/modules/auth/usecase"
 )
 
 const (
@@ -23,19 +24,23 @@ const (
 )
 
 type Handler struct {
-	cookieDomain string
-	cookieSecure bool
-	frontendURL  string
-	logger       *logger.Logger
-	service      Service
+	cookieDomain        string
+	cookieSecure        bool
+	frontendURL         string
+	getCurrentUser      *usecase.GetCurrentUserUseCase
+	handleOAuthCallback *usecase.HandleOAuthCallbackUseCase
+	initiateOAuth       *usecase.InitiateOAuthUseCase
+	logger              *logger.Logger
 }
 
 type HandlerConfig struct {
-	CookieDomain string
-	CookieSecure bool
-	FrontendURL  string
-	Logger       *logger.Logger
-	Service      Service
+	CookieDomain        string
+	CookieSecure        bool
+	FrontendURL         string
+	GetCurrentUser      *usecase.GetCurrentUserUseCase
+	HandleOAuthCallback *usecase.HandleOAuthCallbackUseCase
+	InitiateOAuth       *usecase.InitiateOAuthUseCase
+	Logger              *logger.Logger
 }
 
 var _ api.AuthHandlers = (*Handler)(nil)
@@ -50,20 +55,28 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	if cfg.Logger == nil {
 		return nil, errors.New("logger is required")
 	}
-	if cfg.Service == nil {
-		return nil, errors.New("service is required")
+	if cfg.GetCurrentUser == nil {
+		return nil, errors.New("GetCurrentUser usecase is required")
+	}
+	if cfg.HandleOAuthCallback == nil {
+		return nil, errors.New("HandleOAuthCallback usecase is required")
+	}
+	if cfg.InitiateOAuth == nil {
+		return nil, errors.New("InitiateOAuth usecase is required")
 	}
 	return &Handler{
-		cookieDomain: cfg.CookieDomain,
-		cookieSecure: cfg.CookieSecure,
-		frontendURL:  cfg.FrontendURL,
-		logger:       cfg.Logger,
-		service:      cfg.Service,
+		cookieDomain:        cfg.CookieDomain,
+		cookieSecure:        cfg.CookieSecure,
+		frontendURL:         cfg.FrontendURL,
+		getCurrentUser:      cfg.GetCurrentUser,
+		handleOAuthCallback: cfg.HandleOAuthCallback,
+		initiateOAuth:       cfg.InitiateOAuth,
+		logger:              cfg.Logger,
 	}, nil
 }
 
 func (h *Handler) AuthLogin(ctx context.Context, _ api.AuthLoginRequestObject) (api.AuthLoginResponseObject, error) {
-	authURL, err := h.service.InitiateOAuth(ctx)
+	output, err := h.initiateOAuth.Execute(ctx, usecase.InitiateOAuthInput{})
 	if err != nil {
 		h.logger.Error(ctx, "failed to initiate oauth", "error", err)
 		return api.AuthLogin500ApplicationProblemPlusJSONResponse{
@@ -71,7 +84,7 @@ func (h *Handler) AuthLogin(ctx context.Context, _ api.AuthLoginRequestObject) (
 		}, nil
 	}
 
-	return api.AuthLogin200JSONResponse(mapper.ToLoginResponse(authURL)), nil
+	return api.AuthLogin200JSONResponse(mapper.ToLoginResponse(output.AuthURL)), nil
 }
 
 func (h *Handler) AuthCallback(ctx context.Context, request api.AuthCallbackRequestObject) (api.AuthCallbackResponseObject, error) {
@@ -84,7 +97,10 @@ func (h *Handler) AuthCallback(ctx context.Context, request api.AuthCallbackRequ
 		}, nil
 	}
 
-	result, err := h.service.HandleOAuthCallback(ctx, code, state)
+	result, err := h.handleOAuthCallback.Execute(ctx, usecase.HandleOAuthCallbackInput{
+		Code:  code,
+		State: state,
+	})
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidState) {
 			return api.AuthCallback400ApplicationProblemPlusJSONResponse{
@@ -129,7 +145,7 @@ func (h *Handler) AuthMe(ctx context.Context, _ api.AuthMeRequestObject) (api.Au
 		}, nil
 	}
 
-	user, err := h.service.GetCurrentUser(ctx, userID)
+	output, err := h.getCurrentUser.Execute(ctx, usecase.GetCurrentUserInput{UserID: userID})
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return api.AuthMe401ApplicationProblemPlusJSONResponse{
@@ -143,7 +159,7 @@ func (h *Handler) AuthMe(ctx context.Context, _ api.AuthMeRequestObject) (api.Au
 		}, nil
 	}
 
-	return api.AuthMe200JSONResponse(mapper.ToUserInfo(user)), nil
+	return api.AuthMe200JSONResponse(mapper.ToUserInfo(output.User)), nil
 }
 
 func (h *Handler) buildAuthCookie(token string) string {

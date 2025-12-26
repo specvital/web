@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/specvital/web/src/backend/internal/api"
-	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	"github.com/specvital/web/src/backend/modules/auth/jwt"
 )
 
@@ -15,8 +15,8 @@ type contextKey string
 
 const claimsKey contextKey = "claims"
 
-func GetClaims(ctx context.Context) *domain.Claims {
-	claims, _ := ctx.Value(claimsKey).(*domain.Claims)
+func GetClaims(ctx context.Context) *entity.Claims {
+	claims, _ := ctx.Value(claimsKey).(*entity.Claims)
 	return claims
 }
 
@@ -28,7 +28,7 @@ func GetUserID(ctx context.Context) string {
 	return claims.UserID()
 }
 
-func WithClaims(ctx context.Context, claims *domain.Claims) context.Context {
+func WithClaims(ctx context.Context, claims *entity.Claims) context.Context {
 	return context.WithValue(ctx, claimsKey, claims)
 }
 
@@ -81,7 +81,7 @@ func isAPIRoute(path string) bool {
 	return strings.HasPrefix(path, "/api")
 }
 
-func (m *AuthMiddleware) extractClaims(r *http.Request) (*domain.Claims, error) {
+func (m *AuthMiddleware) extractClaims(r *http.Request) (*entity.Claims, error) {
 	cookie, err := r.Cookie(m.cookieName)
 	if err != nil {
 		return nil, err

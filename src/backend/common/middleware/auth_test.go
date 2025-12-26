@@ -4,10 +4,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-
-	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	authjwt "github.com/specvital/web/src/backend/modules/auth/jwt"
 )
 
@@ -193,11 +192,12 @@ func TestGetClaims_NoClaims(t *testing.T) {
 }
 
 func TestWithClaims(t *testing.T) {
-	claims := &domain.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject: "user-123",
-		},
-		Login: "testuser",
+	claims := &entity.Claims{
+		ExpiresAt: time.Now().Add(time.Hour),
+		IssuedAt:  time.Now(),
+		Issuer:    "specvital",
+		Login:     "testuser",
+		Subject:   "user-123",
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
