@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
+	authadapter "github.com/specvital/web/src/backend/modules/auth/adapter"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
-	authjwt "github.com/specvital/web/src/backend/modules/auth/jwt"
 )
 
 const testSecret = "test-secret-that-is-at-least-32-characters-long"
 
 func TestRequireAuth_ValidToken(t *testing.T) {
-	jwtManager, _ := authjwt.NewManager(testSecret)
+	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	token, _ := jwtManager.Generate("user-123", "testuser")
 
 	m := NewAuthMiddleware(jwtManager, "auth_token")
@@ -39,7 +39,7 @@ func TestRequireAuth_ValidToken(t *testing.T) {
 }
 
 func TestRequireAuth_MissingCookie(t *testing.T) {
-	jwtManager, _ := authjwt.NewManager(testSecret)
+	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	m := NewAuthMiddleware(jwtManager, "auth_token")
 
 	handler := m.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +60,7 @@ func TestRequireAuth_MissingCookie(t *testing.T) {
 }
 
 func TestRequireAuth_InvalidToken(t *testing.T) {
-	jwtManager, _ := authjwt.NewManager(testSecret)
+	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	m := NewAuthMiddleware(jwtManager, "auth_token")
 
 	handler := m.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +82,7 @@ func TestRequireAuth_InvalidToken(t *testing.T) {
 }
 
 func TestOptionalAuth_ValidToken(t *testing.T) {
-	jwtManager, _ := authjwt.NewManager(testSecret)
+	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	token, _ := jwtManager.Generate("user-123", "testuser")
 
 	m := NewAuthMiddleware(jwtManager, "auth_token")
@@ -108,7 +108,7 @@ func TestOptionalAuth_ValidToken(t *testing.T) {
 }
 
 func TestOptionalAuth_MissingCookie(t *testing.T) {
-	jwtManager, _ := authjwt.NewManager(testSecret)
+	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	m := NewAuthMiddleware(jwtManager, "auth_token")
 
 	var capturedUserID string
@@ -131,7 +131,7 @@ func TestOptionalAuth_MissingCookie(t *testing.T) {
 }
 
 func TestOptionalAuth_InvalidToken(t *testing.T) {
-	jwtManager, _ := authjwt.NewManager(testSecret)
+	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	m := NewAuthMiddleware(jwtManager, "auth_token")
 
 	var capturedUserID string
@@ -155,7 +155,7 @@ func TestOptionalAuth_InvalidToken(t *testing.T) {
 }
 
 func TestOptionalAuth_NonAPIRoute_SkipsAuth(t *testing.T) {
-	jwtManager, _ := authjwt.NewManager(testSecret)
+	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	token, _ := jwtManager.Generate("user-123", "testuser")
 
 	m := NewAuthMiddleware(jwtManager, "auth_token")

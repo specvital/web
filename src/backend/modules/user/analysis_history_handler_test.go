@@ -12,8 +12,8 @@ import (
 	"github.com/specvital/web/src/backend/common/logger"
 	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/internal/api"
-	"github.com/specvital/web/src/backend/modules/auth"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
+	authhandler "github.com/specvital/web/src/backend/modules/auth/handler"
 	"github.com/specvital/web/src/backend/modules/user/domain"
 )
 
@@ -45,8 +45,8 @@ func setupAnalysisHistoryTestRouter(handler *AnalysisHistoryHandler) *chi.Mux {
 	apiHandlers := api.NewAPIHandlers(
 		&mockAnalyzerHandler{},
 		handler,
-		auth.NewMockHandler(),
-		auth.NewMockBookmarkHandler(),
+		authhandler.NewMockHandler(),
+		authhandler.NewMockBookmarkHandler(),
 		&mockGitHubHandler{},
 		&mockRepositoryHandler{},
 	)

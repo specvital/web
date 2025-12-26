@@ -15,8 +15,8 @@ import (
 	analyzeradapter "github.com/specvital/web/src/backend/modules/analyzer/adapter"
 	analyzerhandler "github.com/specvital/web/src/backend/modules/analyzer/handler"
 	analyzerusecase "github.com/specvital/web/src/backend/modules/analyzer/usecase"
-	"github.com/specvital/web/src/backend/modules/auth"
 	authadapter "github.com/specvital/web/src/backend/modules/auth/adapter"
+	authhandler "github.com/specvital/web/src/backend/modules/auth/handler"
 	authusecase "github.com/specvital/web/src/backend/modules/auth/usecase"
 	"github.com/specvital/web/src/backend/modules/github"
 	"github.com/specvital/web/src/backend/modules/user"
@@ -45,7 +45,7 @@ func NewApp(ctx context.Context) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init handlers: %w", err)
 	}
-	authMiddleware := middleware.NewAuthMiddleware(container.JWTManager, auth.CookieName)
+	authMiddleware := middleware.NewAuthMiddleware(container.JWTManager, authhandler.CookieName)
 
 	return &App{
 		AuthMiddleware: authMiddleware,
@@ -59,8 +59,8 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 
 	queries := db.New(container.DB)
 
-	authRepo := auth.NewRepository(queries)
-	stateStore := auth.NewStateStore()
+	authRepo := authadapter.NewPostgresRepository(queries)
+	stateStore := authadapter.NewMemoryStateStore()
 
 	getCurrentUserUC := authusecase.NewGetCurrentUserUseCase(authRepo)
 	getUserGitHubTokenUC := authusecase.NewGetUserGitHubTokenUseCase(container.Encryptor, authRepo)
@@ -74,7 +74,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	)
 	initiateOAuthUC := authusecase.NewInitiateOAuthUseCase(container.GitHubOAuth, stateStore)
 
-	authHandler, err := auth.NewHandler(&auth.HandlerConfig{
+	authHandler, err := authhandler.NewHandler(&authhandler.HandlerConfig{
 		CookieDomain:        container.CookieDomain,
 		CookieSecure:        container.SecureCookie,
 		FrontendURL:         container.FrontendURL,

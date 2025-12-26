@@ -1,4 +1,4 @@
-package jwt
+package adapter
 
 import (
 	"time"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/specvital/web/src/backend/modules/auth/domain"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
+	"github.com/specvital/web/src/backend/modules/auth/domain/port"
 )
 
 const (
@@ -15,25 +16,27 @@ const (
 	Issuer        = "specvital"
 )
 
-type Manager struct {
+type JWTTokenManager struct {
 	secret []byte
 	expiry time.Duration
 }
 
-func NewManager(secret string) (*Manager, error) {
+var _ port.TokenManager = (*JWTTokenManager)(nil)
+
+func NewJWTTokenManager(secret string) (*JWTTokenManager, error) {
 	if secret == "" {
 		return nil, errors.New("jwt secret is required")
 	}
 	if len(secret) < 32 {
 		return nil, errors.New("jwt secret must be at least 32 characters")
 	}
-	return &Manager{
+	return &JWTTokenManager{
 		secret: []byte(secret),
 		expiry: DefaultExpiry,
 	}, nil
 }
 
-func (m *Manager) Generate(userID, login string) (string, error) {
+func (m *JWTTokenManager) Generate(userID, login string) (string, error) {
 	if userID == "" {
 		return "", errors.New("user ID is required")
 	}
@@ -42,7 +45,7 @@ func (m *Manager) Generate(userID, login string) (string, error) {
 	}
 
 	now := time.Now()
-	claims := Claims{
+	claims := jwtClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    Issuer,
 			Subject:   userID,
@@ -56,8 +59,8 @@ func (m *Manager) Generate(userID, login string) (string, error) {
 	return token.SignedString(m.secret)
 }
 
-func (m *Manager) Validate(tokenString string) (*entity.Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(t *jwt.Token) (interface{}, error) {
+func (m *JWTTokenManager) Validate(tokenString string) (*entity.Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.Wrapf(domain.ErrInvalidToken, "unexpected signing method: %v", t.Header["alg"])
 		}
@@ -70,24 +73,33 @@ func (m *Manager) Validate(tokenString string) (*entity.Claims, error) {
 		return nil, errors.Wrapf(domain.ErrInvalidToken, "token validation failed: %v", err)
 	}
 
-	jwtClaims, ok := token.Claims.(*Claims)
+	claims, ok := token.Claims.(*jwtClaims)
 	if !ok || !token.Valid {
 		return nil, domain.ErrInvalidToken
 	}
 
-	if jwtClaims.Issuer != Issuer {
+	if claims.Issuer != Issuer {
 		return nil, errors.Wrapf(domain.ErrInvalidToken, "invalid issuer: expected %s", Issuer)
 	}
 
-	if jwtClaims.ExpiresAt == nil || jwtClaims.IssuedAt == nil {
+	if claims.ExpiresAt == nil || claims.IssuedAt == nil {
 		return nil, errors.Wrap(domain.ErrInvalidToken, "missing required time claims")
 	}
 
 	return &entity.Claims{
-		ExpiresAt: jwtClaims.ExpiresAt.Time,
-		IssuedAt:  jwtClaims.IssuedAt.Time,
-		Issuer:    jwtClaims.Issuer,
-		Login:     jwtClaims.Login,
-		Subject:   jwtClaims.Subject,
+		ExpiresAt: claims.ExpiresAt.Time,
+		IssuedAt:  claims.IssuedAt.Time,
+		Issuer:    claims.Issuer,
+		Login:     claims.Login,
+		Subject:   claims.Subject,
 	}, nil
+}
+
+type jwtClaims struct {
+	jwt.RegisteredClaims
+	Login string `json:"login"`
+}
+
+func (c *jwtClaims) UserID() string {
+	return c.Subject
 }

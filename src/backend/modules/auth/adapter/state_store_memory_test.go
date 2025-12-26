@@ -1,4 +1,4 @@
-package auth
+package adapter
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"github.com/specvital/web/src/backend/modules/auth/domain"
 )
 
-func TestStateStore_CreateAndValidate(t *testing.T) {
-	store := NewStateStore()
+func TestMemoryStateStore_CreateAndValidate(t *testing.T) {
+	store := NewMemoryStateStore()
 	ctx := context.Background()
 
 	state, err := store.Create(ctx)
@@ -30,8 +30,8 @@ func TestStateStore_CreateAndValidate(t *testing.T) {
 	}
 }
 
-func TestStateStore_ValidateConsumed(t *testing.T) {
-	store := NewStateStore()
+func TestMemoryStateStore_ValidateConsumed(t *testing.T) {
+	store := NewMemoryStateStore()
 	ctx := context.Background()
 
 	state, err := store.Create(ctx)
@@ -48,8 +48,8 @@ func TestStateStore_ValidateConsumed(t *testing.T) {
 	}
 }
 
-func TestStateStore_ValidateInvalid(t *testing.T) {
-	store := NewStateStore()
+func TestMemoryStateStore_ValidateInvalid(t *testing.T) {
+	store := NewMemoryStateStore()
 	ctx := context.Background()
 
 	if err := store.Validate(ctx, "invalid-state"); err != domain.ErrInvalidState {
@@ -57,8 +57,8 @@ func TestStateStore_ValidateInvalid(t *testing.T) {
 	}
 }
 
-func TestStateStore_ValidateExpired(t *testing.T) {
-	store := NewStateStoreWithTTL(10 * time.Millisecond)
+func TestMemoryStateStore_ValidateExpired(t *testing.T) {
+	store := NewMemoryStateStoreWithTTL(10 * time.Millisecond)
 	ctx := context.Background()
 
 	state, err := store.Create(ctx)
@@ -73,8 +73,8 @@ func TestStateStore_ValidateExpired(t *testing.T) {
 	}
 }
 
-func TestStateStore_UniqueStates(t *testing.T) {
-	store := NewStateStore()
+func TestMemoryStateStore_UniqueStates(t *testing.T) {
+	store := NewMemoryStateStore()
 	ctx := context.Background()
 
 	states := make(map[string]bool)

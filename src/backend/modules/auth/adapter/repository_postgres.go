@@ -1,4 +1,4 @@
-package auth
+package adapter
 
 import (
 	"context"
@@ -14,18 +14,20 @@ import (
 	"github.com/specvital/web/src/backend/modules/auth/domain/port"
 )
 
-type repositoryImpl struct {
+type PostgresRepository struct {
 	queries *db.Queries
 }
 
-func NewRepository(queries *db.Queries) port.Repository {
+var _ port.Repository = (*PostgresRepository)(nil)
+
+func NewPostgresRepository(queries *db.Queries) *PostgresRepository {
 	if queries == nil {
 		panic("queries is required")
 	}
-	return &repositoryImpl{queries: queries}
+	return &PostgresRepository{queries: queries}
 }
 
-func (r *repositoryImpl) CreateUser(ctx context.Context, user *entity.User) (string, error) {
+func (r *PostgresRepository) CreateUser(ctx context.Context, user *entity.User) (string, error) {
 	params := db.CreateUserParams{
 		Username: user.Username,
 	}
@@ -45,7 +47,7 @@ func (r *repositoryImpl) CreateUser(ctx context.Context, user *entity.User) (str
 	return uuidToString(id), nil
 }
 
-func (r *repositoryImpl) GetOAuthAccountByProvider(ctx context.Context, provider, providerUserID string) (*entity.OAuthAccount, error) {
+func (r *PostgresRepository) GetOAuthAccountByProvider(ctx context.Context, provider, providerUserID string) (*entity.OAuthAccount, error) {
 	params := db.GetOAuthAccountByProviderParams{
 		Provider:       db.OauthProvider(provider),
 		ProviderUserID: providerUserID,
@@ -62,7 +64,7 @@ func (r *repositoryImpl) GetOAuthAccountByProvider(ctx context.Context, provider
 	return mapOAuthAccountFromDB(&row), nil
 }
 
-func (r *repositoryImpl) GetOAuthAccountByUserID(ctx context.Context, userID, provider string) (*entity.OAuthAccount, error) {
+func (r *PostgresRepository) GetOAuthAccountByUserID(ctx context.Context, userID, provider string) (*entity.OAuthAccount, error) {
 	uuid, err := stringToUUID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("parse user ID: %w", err)
@@ -84,7 +86,7 @@ func (r *repositoryImpl) GetOAuthAccountByUserID(ctx context.Context, userID, pr
 	return mapOAuthAccountFromDB(&row), nil
 }
 
-func (r *repositoryImpl) GetUserByID(ctx context.Context, id string) (*entity.User, error) {
+func (r *PostgresRepository) GetUserByID(ctx context.Context, id string) (*entity.User, error) {
 	uuid, err := stringToUUID(id)
 	if err != nil {
 		return nil, fmt.Errorf("parse user ID: %w", err)
@@ -101,7 +103,7 @@ func (r *repositoryImpl) GetUserByID(ctx context.Context, id string) (*entity.Us
 	return mapUserFromDB(&row), nil
 }
 
-func (r *repositoryImpl) UpdateLastLogin(ctx context.Context, userID string) error {
+func (r *PostgresRepository) UpdateLastLogin(ctx context.Context, userID string) error {
 	uuid, err := stringToUUID(userID)
 	if err != nil {
 		return fmt.Errorf("parse user ID: %w", err)
@@ -114,7 +116,7 @@ func (r *repositoryImpl) UpdateLastLogin(ctx context.Context, userID string) err
 	return nil
 }
 
-func (r *repositoryImpl) UpsertOAuthAccount(ctx context.Context, account *entity.OAuthAccount) (string, error) {
+func (r *PostgresRepository) UpsertOAuthAccount(ctx context.Context, account *entity.OAuthAccount) (string, error) {
 	userUUID, err := stringToUUID(account.UserID)
 	if err != nil {
 		return "", fmt.Errorf("parse user ID: %w", err)

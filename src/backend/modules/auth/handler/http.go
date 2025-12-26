@@ -1,4 +1,4 @@
-package auth
+package handler
 
 import (
 	"context"
@@ -191,7 +191,6 @@ func (h *Handler) BuildLogoutCookie() string {
 	return cookie.String()
 }
 
-// logoutResponse implements AuthLogoutResponseObject with Set-Cookie header.
 type logoutResponse struct {
 	cookie  string
 	success bool

@@ -1,4 +1,4 @@
-package github
+package adapter
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 
 	pkgerrors "github.com/cockroachdb/errors"
 	"golang.org/x/oauth2"
+
+	"github.com/specvital/web/src/backend/modules/auth/domain"
 )
 
 type testUserInfo struct {
@@ -19,15 +21,15 @@ type testUserInfo struct {
 	Login     string
 }
 
-func TestNewClient(t *testing.T) {
+func TestNewGitHubOAuthClient(t *testing.T) {
 	tests := []struct {
 		name    string
-		config  *Config
+		config  *GitHubOAuthConfig
 		wantErr bool
 	}{
 		{
 			name: "valid config",
-			config: &Config{
+			config: &GitHubOAuthConfig{
 				ClientID:     "test-client-id",
 				ClientSecret: "test-client-secret",
 				RedirectURL:  "http://localhost:8000/callback",
@@ -36,7 +38,7 @@ func TestNewClient(t *testing.T) {
 		},
 		{
 			name: "missing client ID",
-			config: &Config{
+			config: &GitHubOAuthConfig{
 				ClientSecret: "test-client-secret",
 				RedirectURL:  "http://localhost:8000/callback",
 			},
@@ -44,7 +46,7 @@ func TestNewClient(t *testing.T) {
 		},
 		{
 			name: "missing client secret",
-			config: &Config{
+			config: &GitHubOAuthConfig{
 				ClientID:    "test-client-id",
 				RedirectURL: "http://localhost:8000/callback",
 			},
@@ -52,7 +54,7 @@ func TestNewClient(t *testing.T) {
 		},
 		{
 			name: "missing redirect URL",
-			config: &Config{
+			config: &GitHubOAuthConfig{
 				ClientID:     "test-client-id",
 				ClientSecret: "test-client-secret",
 			},
@@ -62,23 +64,23 @@ func TestNewClient(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewClient(tt.config)
+			_, err := NewGitHubOAuthClient(tt.config)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewClient() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewGitHubOAuthClient() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-func TestGenerateAuthURL(t *testing.T) {
-	config := &Config{
+func TestGitHubOAuthClient_GenerateAuthURL(t *testing.T) {
+	config := &GitHubOAuthConfig{
 		ClientID:     "test-client-id",
 		ClientSecret: "test-secret",
 		RedirectURL:  "http://localhost:8000/callback",
 		Scopes:       []string{"user:email"},
 	}
 
-	client, _ := NewClient(config)
+	client, _ := NewGitHubOAuthClient(config)
 	url, err := client.GenerateAuthURL("test-state-123")
 	if err != nil {
 		t.Fatalf("GenerateAuthURL() error = %v", err)
@@ -101,21 +103,21 @@ func TestGenerateAuthURL(t *testing.T) {
 	}
 }
 
-func TestGenerateAuthURL_EmptyState(t *testing.T) {
-	config := &Config{
+func TestGitHubOAuthClient_GenerateAuthURL_EmptyState(t *testing.T) {
+	config := &GitHubOAuthConfig{
 		ClientID:     "test-client-id",
 		ClientSecret: "test-secret",
 		RedirectURL:  "http://localhost:8000/callback",
 	}
 
-	client, _ := NewClient(config)
+	client, _ := NewGitHubOAuthClient(config)
 	_, err := client.GenerateAuthURL("")
 	if !pkgerrors.Is(err, ErrEmptyState) {
 		t.Errorf("GenerateAuthURL() error = %v, wantErr %v", err, ErrEmptyState)
 	}
 }
 
-func TestExchangeCode(t *testing.T) {
+func TestGitHubOAuthClient_ExchangeCode(t *testing.T) {
 	tests := []struct {
 		name        string
 		code        string
@@ -139,7 +141,7 @@ func TestExchangeCode(t *testing.T) {
 			response:    "",
 			statusCode:  200,
 			wantErr:     true,
-			wantErrType: ErrInvalidCode,
+			wantErrType: domain.ErrInvalidCode,
 		},
 		{
 			name:        "bad verification code",
@@ -147,7 +149,7 @@ func TestExchangeCode(t *testing.T) {
 			response:    `{"error":"bad_verification_code","error_description":"The code passed is incorrect or expired."}`,
 			statusCode:  400,
 			wantErr:     true,
-			wantErrType: ErrInvalidCode,
+			wantErrType: domain.ErrInvalidCode,
 		},
 		{
 			name:        "access denied",
@@ -155,19 +157,19 @@ func TestExchangeCode(t *testing.T) {
 			response:    `{"error":"access_denied"}`,
 			statusCode:  403,
 			wantErr:     true,
-			wantErrType: ErrAccessDenied,
+			wantErrType: domain.ErrAccessDenied,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.code == "" {
-				config := &Config{
+				config := &GitHubOAuthConfig{
 					ClientID:     "test-client-id",
 					ClientSecret: "test-secret",
 					RedirectURL:  "http://localhost:8000/callback",
 				}
-				client, _ := NewClient(config)
+				client, _ := NewGitHubOAuthClient(config)
 				_, err := client.ExchangeCode(context.Background(), tt.code)
 
 				if (err != nil) != tt.wantErr {
@@ -187,7 +189,7 @@ func TestExchangeCode(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client := &oauthClient{
+			client := &GitHubOAuthClient{
 				config: &oauth2.Config{
 					ClientID:     "test-client-id",
 					ClientSecret: "test-secret",
@@ -218,7 +220,7 @@ func TestExchangeCode(t *testing.T) {
 	}
 }
 
-func TestGetUserInfo(t *testing.T) {
+func TestGitHubOAuthClient_GetUserInfo(t *testing.T) {
 	email := "test@example.com"
 
 	tests := []struct {
@@ -247,7 +249,7 @@ func TestGetUserInfo(t *testing.T) {
 			response:    "",
 			statusCode:  200,
 			wantErr:     true,
-			wantErrType: ErrInvalidGitHubToken,
+			wantErrType: domain.ErrInvalidGitHubToken,
 		},
 		{
 			name:        "unauthorized",
@@ -255,7 +257,7 @@ func TestGetUserInfo(t *testing.T) {
 			response:    `{"message":"Bad credentials"}`,
 			statusCode:  401,
 			wantErr:     true,
-			wantErrType: ErrInvalidGitHubToken,
+			wantErrType: domain.ErrInvalidGitHubToken,
 		},
 		{
 			name:        "rate limited",
@@ -264,7 +266,7 @@ func TestGetUserInfo(t *testing.T) {
 			statusCode:  403,
 			headers:     map[string]string{"X-RateLimit-Remaining": "0"},
 			wantErr:     true,
-			wantErrType: ErrRateLimited,
+			wantErrType: domain.ErrRateLimited,
 		},
 		{
 			name:        "malformed json response",
@@ -272,7 +274,7 @@ func TestGetUserInfo(t *testing.T) {
 			response:    `{"id": "not-a-number"}`,
 			statusCode:  200,
 			wantErr:     true,
-			wantErrType: ErrNetworkFailure,
+			wantErrType: domain.ErrNetworkFailure,
 		},
 		{
 			name:        "unexpected status code",
@@ -280,19 +282,19 @@ func TestGetUserInfo(t *testing.T) {
 			response:    `{"message":"Internal Server Error"}`,
 			statusCode:  500,
 			wantErr:     true,
-			wantErrType: ErrNetworkFailure,
+			wantErrType: domain.ErrNetworkFailure,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.token == "" {
-				config := &Config{
+				config := &GitHubOAuthConfig{
 					ClientID:     "test-client-id",
 					ClientSecret: "test-secret",
 					RedirectURL:  "http://localhost:8000/callback",
 				}
-				client, _ := NewClient(config)
+				client, _ := NewGitHubOAuthClient(config)
 				_, err := client.GetUserInfo(context.Background(), tt.token)
 
 				if (err != nil) != tt.wantErr {
@@ -315,7 +317,7 @@ func TestGetUserInfo(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client := &oauthClient{
+			client := &GitHubOAuthClient{
 				config: &oauth2.Config{
 					ClientID:     "test-client-id",
 					ClientSecret: "test-secret",
@@ -351,9 +353,9 @@ func TestGetUserInfo(t *testing.T) {
 	}
 }
 
-func (c *oauthClient) getUserInfoWithURL(ctx context.Context, accessToken string, url string) (*testUserInfo, error) {
+func (c *GitHubOAuthClient) getUserInfoWithURL(ctx context.Context, accessToken string, url string) (*testUserInfo, error) {
 	if accessToken == "" {
-		return nil, pkgerrors.Wrap(ErrInvalidGitHubToken, "access token is empty")
+		return nil, pkgerrors.Wrap(domain.ErrInvalidGitHubToken, "access token is empty")
 	}
 
 	token := &oauth2.Token{AccessToken: accessToken}
@@ -361,33 +363,33 @@ func (c *oauthClient) getUserInfoWithURL(ctx context.Context, accessToken string
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, pkgerrors.Wrap(ErrNetworkFailure, "failed to create request")
+		return nil, pkgerrors.Wrap(domain.ErrNetworkFailure, "failed to create request")
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, pkgerrors.Wrap(ErrNetworkFailure, err.Error())
+		return nil, pkgerrors.Wrap(domain.ErrNetworkFailure, err.Error())
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, pkgerrors.Wrap(ErrInvalidGitHubToken, "unauthorized")
+		return nil, pkgerrors.Wrap(domain.ErrInvalidGitHubToken, "unauthorized")
 	}
 	if resp.StatusCode == http.StatusForbidden {
 		if resp.Header.Get("X-RateLimit-Remaining") == "0" {
-			return nil, pkgerrors.Wrap(ErrRateLimited, "rate limit exceeded")
+			return nil, pkgerrors.Wrap(domain.ErrRateLimited, "rate limit exceeded")
 		}
-		return nil, pkgerrors.Wrap(ErrInvalidGitHubToken, "forbidden")
+		return nil, pkgerrors.Wrap(domain.ErrInvalidGitHubToken, "forbidden")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, pkgerrors.Wrapf(ErrNetworkFailure, "unexpected status: %d", resp.StatusCode)
+		return nil, pkgerrors.Wrapf(domain.ErrNetworkFailure, "unexpected status: %d", resp.StatusCode)
 	}
 
-	var userResp userResponse
+	var userResp githubUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&userResp); err != nil {
-		return nil, pkgerrors.Wrap(ErrNetworkFailure, "failed to parse response")
+		return nil, pkgerrors.Wrap(domain.ErrNetworkFailure, "failed to parse response")
 	}
 
 	return &testUserInfo{

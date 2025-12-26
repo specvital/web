@@ -1,4 +1,4 @@
-package jwt
+package adapter
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 
 const testSecret = "test-secret-key-must-be-at-least-32-chars"
 
-func TestNewManager(t *testing.T) {
+func TestNewJWTTokenManager(t *testing.T) {
 	tests := []struct {
 		name    string
 		secret  string
@@ -36,18 +36,18 @@ func TestNewManager(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewManager(tt.secret)
+			_, err := NewJWTTokenManager(tt.secret)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewManager() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewJWTTokenManager() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-func TestManager_GenerateAndValidate(t *testing.T) {
-	m, err := NewManager(testSecret)
+func TestJWTTokenManager_GenerateAndValidate(t *testing.T) {
+	m, err := NewJWTTokenManager(testSecret)
 	if err != nil {
-		t.Fatalf("NewManager() error = %v", err)
+		t.Fatalf("NewJWTTokenManager() error = %v", err)
 	}
 
 	userID := "user-123"
@@ -78,8 +78,8 @@ func TestManager_GenerateAndValidate(t *testing.T) {
 	}
 }
 
-func TestManager_GenerateEmptyInputs(t *testing.T) {
-	m, _ := NewManager(testSecret)
+func TestJWTTokenManager_GenerateEmptyInputs(t *testing.T) {
+	m, _ := NewJWTTokenManager(testSecret)
 
 	tests := []struct {
 		name   string
@@ -101,8 +101,8 @@ func TestManager_GenerateEmptyInputs(t *testing.T) {
 	}
 }
 
-func TestManager_ValidateInvalidToken(t *testing.T) {
-	m, _ := NewManager(testSecret)
+func TestJWTTokenManager_ValidateInvalidToken(t *testing.T) {
+	m, _ := NewJWTTokenManager(testSecret)
 
 	tests := []struct {
 		name    string
@@ -136,10 +136,10 @@ func TestManager_ValidateInvalidToken(t *testing.T) {
 	}
 }
 
-func TestManager_ValidateExpiredToken(t *testing.T) {
-	m, _ := NewManager(testSecret)
+func TestJWTTokenManager_ValidateExpiredToken(t *testing.T) {
+	m, _ := NewJWTTokenManager(testSecret)
 
-	claims := Claims{
+	claims := jwtClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    Issuer,
 			Subject:   "user-123",
@@ -158,10 +158,10 @@ func TestManager_ValidateExpiredToken(t *testing.T) {
 	}
 }
 
-func TestManager_ValidateInvalidIssuer(t *testing.T) {
-	m, _ := NewManager(testSecret)
+func TestJWTTokenManager_ValidateInvalidIssuer(t *testing.T) {
+	m, _ := NewJWTTokenManager(testSecret)
 
-	claims := Claims{
+	claims := jwtClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "other-issuer",
 			Subject:   "user-123",
@@ -181,7 +181,7 @@ func TestManager_ValidateInvalidIssuer(t *testing.T) {
 }
 
 func generateTokenWithSecret(secret string) string {
-	claims := Claims{
+	claims := jwtClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    Issuer,
 			Subject:   "user-123",

@@ -9,8 +9,8 @@ import (
 
 	"github.com/specvital/core/pkg/crypto"
 	"github.com/specvital/web/src/backend/internal/client"
-	"github.com/specvital/web/src/backend/modules/auth/github"
-	"github.com/specvital/web/src/backend/modules/auth/jwt"
+	authadapter "github.com/specvital/web/src/backend/modules/auth/adapter"
+	"github.com/specvital/web/src/backend/modules/auth/domain/port"
 )
 
 type Container struct {
@@ -20,8 +20,8 @@ type Container struct {
 	Encryptor    crypto.Encryptor
 	FrontendURL  string
 	GitClient    client.GitClient
-	GitHubOAuth  github.Client
-	JWTManager   *jwt.Manager
+	GitHubOAuth  port.OAuthClient
+	JWTManager   port.TokenManager
 	SecureCookie bool
 }
 
@@ -77,7 +77,7 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 	}
 	cleanups = append(cleanups, pool.Close)
 
-	jwtManager, err := jwt.NewManager(cfg.JWTSecret)
+	jwtManager, err := authadapter.NewJWTTokenManager(cfg.JWTSecret)
 	if err != nil {
 		cleanup()
 		return nil, fmt.Errorf("jwt: %w", err)
@@ -95,7 +95,7 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 		return nil, fmt.Errorf("encryptor: %w", err)
 	}
 
-	githubClient, err := github.NewClient(&github.Config{
+	githubClient, err := authadapter.NewGitHubOAuthClient(&authadapter.GitHubOAuthConfig{
 		ClientID:     cfg.GitHubOAuthClientID,
 		ClientSecret: cfg.GitHubOAuthClientSecret,
 		RedirectURL:  cfg.GitHubOAuthRedirectURL,

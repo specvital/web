@@ -1,4 +1,4 @@
-package auth
+package adapter
 
 import (
 	"context"
@@ -22,7 +22,7 @@ type stateEntry struct {
 	expiresAt time.Time
 }
 
-type inMemoryStateStore struct {
+type MemoryStateStore struct {
 	mu      sync.RWMutex
 	states  map[string]stateEntry
 	ttl     time.Duration
@@ -30,8 +30,10 @@ type inMemoryStateStore struct {
 	stopped sync.Once
 }
 
-func NewStateStore() port.StateStore {
-	store := &inMemoryStateStore{
+var _ port.StateStore = (*MemoryStateStore)(nil)
+
+func NewMemoryStateStore() *MemoryStateStore {
+	store := &MemoryStateStore{
 		states: make(map[string]stateEntry),
 		ttl:    DefaultStateTTL,
 		stopCh: make(chan struct{}),
@@ -40,8 +42,8 @@ func NewStateStore() port.StateStore {
 	return store
 }
 
-func NewStateStoreWithTTL(ttl time.Duration) port.StateStore {
-	store := &inMemoryStateStore{
+func NewMemoryStateStoreWithTTL(ttl time.Duration) *MemoryStateStore {
+	store := &MemoryStateStore{
 		states: make(map[string]stateEntry),
 		ttl:    ttl,
 		stopCh: make(chan struct{}),
@@ -50,7 +52,7 @@ func NewStateStoreWithTTL(ttl time.Duration) port.StateStore {
 	return store
 }
 
-func (s *inMemoryStateStore) Create(_ context.Context) (string, error) {
+func (s *MemoryStateStore) Create(_ context.Context) (string, error) {
 	token, err := generateSecureToken(StateTokenLength)
 	if err != nil {
 		return "", errors.Wrap(err, "generate state token")
@@ -66,7 +68,7 @@ func (s *inMemoryStateStore) Create(_ context.Context) (string, error) {
 	return token, nil
 }
 
-func (s *inMemoryStateStore) Validate(_ context.Context, state string) error {
+func (s *MemoryStateStore) Validate(_ context.Context, state string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -84,7 +86,7 @@ func (s *inMemoryStateStore) Validate(_ context.Context, state string) error {
 	return nil
 }
 
-func (s *inMemoryStateStore) cleanup() {
+func (s *MemoryStateStore) cleanup() {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 
@@ -105,7 +107,7 @@ func (s *inMemoryStateStore) cleanup() {
 	}
 }
 
-func (s *inMemoryStateStore) Close() error {
+func (s *MemoryStateStore) Close() error {
 	s.stopped.Do(func() {
 		close(s.stopCh)
 	})

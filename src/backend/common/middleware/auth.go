@@ -8,7 +8,7 @@ import (
 
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
-	"github.com/specvital/web/src/backend/modules/auth/jwt"
+	"github.com/specvital/web/src/backend/modules/auth/domain/port"
 )
 
 type contextKey string
@@ -33,14 +33,14 @@ func WithClaims(ctx context.Context, claims *entity.Claims) context.Context {
 }
 
 type AuthMiddleware struct {
-	cookieName string
-	jwtManager *jwt.Manager
+	cookieName   string
+	tokenManager port.TokenManager
 }
 
-func NewAuthMiddleware(jwtManager *jwt.Manager, cookieName string) *AuthMiddleware {
+func NewAuthMiddleware(tokenManager port.TokenManager, cookieName string) *AuthMiddleware {
 	return &AuthMiddleware{
-		cookieName: cookieName,
-		jwtManager: jwtManager,
+		cookieName:   cookieName,
+		tokenManager: tokenManager,
 	}
 }
 
@@ -87,7 +87,7 @@ func (m *AuthMiddleware) extractClaims(r *http.Request) (*entity.Claims, error) 
 		return nil, err
 	}
 
-	claims, err := m.jwtManager.Validate(cookie.Value)
+	claims, err := m.tokenManager.Validate(cookie.Value)
 	if err != nil {
 		return nil, err
 	}

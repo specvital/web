@@ -12,7 +12,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/analyzer/domain/port"
 	"github.com/specvital/web/src/backend/modules/analyzer/handler"
 	"github.com/specvital/web/src/backend/modules/analyzer/usecase"
-	"github.com/specvital/web/src/backend/modules/auth"
+	authhandler "github.com/specvital/web/src/backend/modules/auth/handler"
 	"github.com/specvital/web/src/backend/modules/user"
 )
 
@@ -178,7 +178,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 	)
 
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(h, user.NewMockAnalysisHistoryHandler(), auth.NewMockHandler(), auth.NewMockBookmarkHandler(), NewMockGitHubHandler(), h)
+	apiHandlers := api.NewAPIHandlers(h, user.NewMockAnalysisHistoryHandler(), authhandler.NewMockHandler(), authhandler.NewMockBookmarkHandler(), NewMockGitHubHandler(), h)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 

@@ -1,5 +1,4 @@
-// Package github implements GitHub OAuth 2.0 authentication flow using golang.org/x/oauth2.
-package github
+package adapter
 
 import (
 	"context"
@@ -11,7 +10,9 @@ import (
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
 
+	"github.com/specvital/web/src/backend/modules/auth/domain"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
+	"github.com/specvital/web/src/backend/modules/auth/domain/port"
 )
 
 const (
@@ -19,25 +20,23 @@ const (
 	DefaultScope  = "user:email"
 )
 
-type Config struct {
+type GitHubOAuthConfig struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURL  string
 	Scopes       []string
 }
 
-type Client interface {
-	ExchangeCode(ctx context.Context, code string) (string, error)
-	GenerateAuthURL(state string) (string, error)
-	GetUserInfo(ctx context.Context, accessToken string) (*entity.OAuthUserInfo, error)
-}
-
-type oauthClient struct {
+type GitHubOAuthClient struct {
 	config      *oauth2.Config
-	oauthConfig *Config
+	oauthConfig *GitHubOAuthConfig
 }
 
-func NewClient(config *Config) (Client, error) {
+var _ port.OAuthClient = (*GitHubOAuthClient)(nil)
+
+var ErrEmptyState = errors.New("state parameter is required for CSRF protection")
+
+func NewGitHubOAuthClient(config *GitHubOAuthConfig) (*GitHubOAuthClient, error) {
 	if config.ClientID == "" {
 		return nil, errors.New("github client ID is required")
 	}
@@ -53,7 +52,7 @@ func NewClient(config *Config) (Client, error) {
 		scopes = []string{DefaultScope}
 	}
 
-	return &oauthClient{
+	return &GitHubOAuthClient{
 		config: &oauth2.Config{
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
@@ -65,18 +64,16 @@ func NewClient(config *Config) (Client, error) {
 	}, nil
 }
 
-var ErrEmptyState = errors.New("state parameter is required for CSRF protection")
-
-func (c *oauthClient) GenerateAuthURL(state string) (string, error) {
+func (c *GitHubOAuthClient) GenerateAuthURL(state string) (string, error) {
 	if state == "" {
 		return "", ErrEmptyState
 	}
 	return c.config.AuthCodeURL(state), nil
 }
 
-func (c *oauthClient) ExchangeCode(ctx context.Context, code string) (string, error) {
+func (c *GitHubOAuthClient) ExchangeCode(ctx context.Context, code string) (string, error) {
 	if code == "" {
-		return "", errors.Wrap(ErrInvalidCode, "code is empty")
+		return "", errors.Wrap(domain.ErrInvalidCode, "code is empty")
 	}
 
 	token, err := c.config.Exchange(ctx, code)
@@ -85,24 +82,24 @@ func (c *oauthClient) ExchangeCode(ctx context.Context, code string) (string, er
 		if errors.As(err, &retrieveErr) && retrieveErr.Response != nil {
 			switch retrieveErr.Response.StatusCode {
 			case http.StatusUnauthorized, http.StatusBadRequest:
-				return "", errors.Wrap(ErrInvalidCode, "bad verification code")
+				return "", errors.Wrap(domain.ErrInvalidCode, "bad verification code")
 			case http.StatusForbidden:
-				return "", errors.Wrap(ErrAccessDenied, "access denied")
+				return "", errors.Wrap(domain.ErrAccessDenied, "access denied")
 			}
 		}
-		return "", errors.Wrap(ErrNetworkFailure, err.Error())
+		return "", errors.Wrap(domain.ErrNetworkFailure, err.Error())
 	}
 
 	if token.AccessToken == "" {
-		return "", errors.Wrap(ErrInvalidCode, "empty access token")
+		return "", errors.Wrap(domain.ErrInvalidCode, "empty access token")
 	}
 
 	return token.AccessToken, nil
 }
 
-func (c *oauthClient) GetUserInfo(ctx context.Context, accessToken string) (*entity.OAuthUserInfo, error) {
+func (c *GitHubOAuthClient) GetUserInfo(ctx context.Context, accessToken string) (*entity.OAuthUserInfo, error) {
 	if accessToken == "" {
-		return nil, errors.Wrap(ErrInvalidGitHubToken, "access token is empty")
+		return nil, errors.Wrap(domain.ErrInvalidGitHubToken, "access token is empty")
 	}
 
 	token := &oauth2.Token{AccessToken: accessToken}
@@ -110,33 +107,33 @@ func (c *oauthClient) GetUserInfo(ctx context.Context, accessToken string) (*ent
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, githubUserURL, nil)
 	if err != nil {
-		return nil, errors.Wrap(ErrNetworkFailure, "failed to create request")
+		return nil, errors.Wrap(domain.ErrNetworkFailure, "failed to create request")
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(ErrNetworkFailure, err.Error())
+		return nil, errors.Wrap(domain.ErrNetworkFailure, err.Error())
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, errors.Wrap(ErrInvalidGitHubToken, "unauthorized")
+		return nil, errors.Wrap(domain.ErrInvalidGitHubToken, "unauthorized")
 	}
 	if resp.StatusCode == http.StatusForbidden {
 		if resp.Header.Get("X-RateLimit-Remaining") == "0" {
-			return nil, errors.Wrap(ErrRateLimited, "rate limit exceeded")
+			return nil, errors.Wrap(domain.ErrRateLimited, "rate limit exceeded")
 		}
-		return nil, errors.Wrap(ErrInvalidGitHubToken, "forbidden")
+		return nil, errors.Wrap(domain.ErrInvalidGitHubToken, "forbidden")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrapf(ErrNetworkFailure, "unexpected status: %d", resp.StatusCode)
+		return nil, errors.Wrapf(domain.ErrNetworkFailure, "unexpected status: %d", resp.StatusCode)
 	}
 
-	var userResp userResponse
+	var userResp githubUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&userResp); err != nil {
-		return nil, errors.Wrap(ErrNetworkFailure, "failed to parse response")
+		return nil, errors.Wrap(domain.ErrNetworkFailure, "failed to parse response")
 	}
 
 	return &entity.OAuthUserInfo{
@@ -145,4 +142,11 @@ func (c *oauthClient) GetUserInfo(ctx context.Context, accessToken string) (*ent
 		ExternalID: strconv.FormatInt(userResp.ID, 10),
 		Username:   userResp.Login,
 	}, nil
+}
+
+type githubUserResponse struct {
+	AvatarURL string  `json:"avatar_url"`
+	Email     *string `json:"email"`
+	ID        int64   `json:"id"`
+	Login     string  `json:"login"`
 }
