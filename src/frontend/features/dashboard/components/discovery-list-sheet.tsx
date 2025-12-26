@@ -14,9 +14,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { GitHubRepository } from "@/lib/api/types";
+import type { GitHubRepository, OrganizationAccessStatus } from "@/lib/api/types";
+
+import { OrgConnectionBanner } from "./org-connection-banner";
 
 type DiscoveryListSheetProps = {
+  accessStatus?: OrganizationAccessStatus;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   repositories: GitHubRepository[];
@@ -24,6 +27,7 @@ type DiscoveryListSheetProps = {
 };
 
 export const DiscoveryListSheet = ({
+  accessStatus,
   isOpen,
   onOpenChange,
   repositories,
@@ -62,6 +66,10 @@ export const DiscoveryListSheet = ({
         </SheetHeader>
 
         <div className="space-y-4">
+          {accessStatus && accessStatus !== "accessible" && (
+            <OrgConnectionBanner accessStatus={accessStatus} orgLogin={title} />
+          )}
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input

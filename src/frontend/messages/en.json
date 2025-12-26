@@ -187,6 +187,26 @@
       "refreshError": "Failed to refresh",
       "refreshOrgSuccess": "Refreshed {org} from GitHub",
       "refreshOrgError": "Failed to refresh {org}"
+    },
+    "githubApp": {
+      "restrictedTitle": "Connection Required",
+      "restrictedDescription": "To access repositories in this organization, you need to install the SpecVital GitHub App.",
+      "pendingTitle": "Connection Suspended",
+      "pendingDescription": "The GitHub App installation for this organization has been suspended. Please reinstall to continue accessing repositories.",
+      "connectButton": "Connect {org}",
+      "connect": "Connect",
+      "connectToAccess": "Connect to access repositories",
+      "statusRestricted": "Not Connected",
+      "statusPending": "Suspended",
+      "installDialogTitle": "Connect {org}",
+      "installDialogDescription": "Install the SpecVital GitHub App to access organization repositories.",
+      "installDialogBenefits": "Benefits of connecting:",
+      "installDialogBenefit1": "Access private repositories",
+      "installDialogBenefit2": "Analyze all organization projects",
+      "installDialogBenefit3": "Read-only access (no write permissions)",
+      "installButton": "Install GitHub App",
+      "installError": "Failed to get install URL",
+      "cancel": "Cancel"
     }
   }
 }

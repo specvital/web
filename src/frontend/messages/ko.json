@@ -187,6 +187,26 @@
       "refreshError": "새로고침 실패",
       "refreshOrgSuccess": "{org} GitHub에서 새로고침 완료",
       "refreshOrgError": "{org} 새로고침 실패"
+    },
+    "githubApp": {
+      "restrictedTitle": "연결 필요",
+      "restrictedDescription": "이 조직의 저장소에 접근하려면 SpecVital GitHub 앱을 설치해야 합니다.",
+      "pendingTitle": "연결 일시 중단",
+      "pendingDescription": "이 조직의 GitHub 앱 설치가 일시 중단되었습니다. 저장소 접근을 계속하려면 다시 설치해 주세요.",
+      "connectButton": "{org} 연결",
+      "connect": "연결",
+      "connectToAccess": "저장소 접근을 위해 연결하세요",
+      "statusRestricted": "미연결",
+      "statusPending": "일시 중단",
+      "installDialogTitle": "{org} 연결",
+      "installDialogDescription": "조직 저장소에 접근하려면 SpecVital GitHub 앱을 설치하세요.",
+      "installDialogBenefits": "연결 시 혜택:",
+      "installDialogBenefit1": "비공개 저장소 접근",
+      "installDialogBenefit2": "모든 조직 프로젝트 분석",
+      "installDialogBenefit3": "읽기 전용 접근 (쓰기 권한 없음)",
+      "installButton": "GitHub 앱 설치",
+      "installError": "설치 URL을 가져오지 못했습니다",
+      "cancel": "취소"
     }
   }
 }

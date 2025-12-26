@@ -59,3 +59,10 @@ export type GitHubOrganization = components["schemas"]["GitHubOrganization"];
 export type GitHubOrganizationsResponse = components["schemas"]["GitHubOrganizationsResponse"];
 export type GitHubRepository = components["schemas"]["GitHubRepository"];
 export type GitHubRepositoriesResponse = components["schemas"]["GitHubRepositoriesResponse"];
+export type OrganizationAccessStatus = components["schemas"]["OrganizationAccessStatus"];
+
+// GitHub App types
+export type GitHubAppInstallation = components["schemas"]["GitHubAppInstallation"];
+export type GitHubAppInstallationsResponse =
+  components["schemas"]["GitHubAppInstallationsResponse"];
+export type GitHubAppInstallUrlResponse = components["schemas"]["GitHubAppInstallUrlResponse"];

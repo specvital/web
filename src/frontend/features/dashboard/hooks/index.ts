@@ -1,6 +1,7 @@
 export { useAllOrgRepos } from "./use-all-org-repos";
 export { bookmarkKeys, useBookmarkedRepositories } from "./use-bookmarked-repositories";
 export { useAddBookmark, useRemoveBookmark } from "./use-bookmark-mutation";
+export { useGitHubAppInstallUrl } from "./use-github-app-install-url";
 export { myAnalysesKeys, useMyAnalyses } from "./use-my-analyses";
 export { myRepositoriesKeys, useMyRepositories } from "./use-my-repositories";
 export { organizationReposKeys, useOrganizationRepos } from "./use-organization-repos";

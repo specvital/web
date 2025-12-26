@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import type {
   GitHubOrganization,
   GitHubRepository,
+  OrganizationAccessStatus,
   RepositoryCard as RepositoryCardType,
 } from "@/lib/api/types";
 
@@ -16,6 +17,7 @@ import { DiscoveryListSheet } from "./discovery-list-sheet";
 import { OrganizationPicker } from "./organization-picker";
 
 type SheetState = {
+  accessStatus?: OrganizationAccessStatus;
   isOpen: boolean;
   repositories: GitHubRepository[];
   title: string;
@@ -57,6 +59,7 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
   });
 
   const [sheetState, setSheetState] = useState<SheetState>({
+    accessStatus: undefined,
     isOpen: false,
     repositories: [],
     title: "",
@@ -81,6 +84,7 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
 
   const handlePersonalClick = () => {
     setSheetState({
+      accessStatus: undefined,
       isOpen: true,
       repositories: unanalyzedPersonalRepos,
       title: t("myRepos"),
@@ -93,6 +97,7 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
       const data = orgData[org.login];
       if (data && data.unanalyzedCount > 0) {
         setSheetState({
+          accessStatus: org.accessStatus,
           isOpen: true,
           repositories: data.unanalyzedRepos,
           title: org.login,
@@ -108,6 +113,7 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
     setOrgPickerState({ isOpen: false });
     if (data) {
       setSheetState({
+        accessStatus: org.accessStatus,
         isOpen: true,
         repositories: data.unanalyzedRepos,
         title: org.login,
@@ -161,6 +167,7 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
       </div>
 
       <DiscoveryListSheet
+        accessStatus={sheetState.accessStatus}
         isOpen={sheetState.isOpen}
         onOpenChange={handleSheetOpenChange}
         repositories={sheetState.repositories}

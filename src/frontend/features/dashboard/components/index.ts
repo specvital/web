@@ -8,6 +8,8 @@ export { DiscoveryListSheet } from "./discovery-list-sheet";
 export { DiscoverySection } from "./discovery-section";
 export { EmptyState } from "./empty-state";
 export { EmptyStateVariant } from "./empty-state-variant";
+export { OrgConnectionBanner } from "./org-connection-banner";
+export { OrgInstallDialog } from "./org-install-dialog";
 export { OrganizationPicker } from "./organization-picker";
 export { OwnershipFilter } from "./ownership-filter";
 export { RepositoryCard } from "./repository-card";

@@ -1,5 +1,7 @@
 export { addBookmark, fetchBookmarkedRepositories, removeBookmark } from "./bookmarks";
 export {
+  fetchGitHubAppInstallations,
+  fetchGitHubAppInstallUrl,
   fetchOrganizationRepositories,
   fetchUserGitHubOrganizations,
   fetchUserGitHubRepositories,
