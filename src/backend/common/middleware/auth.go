@@ -87,7 +87,7 @@ func (m *AuthMiddleware) extractClaims(r *http.Request) (*entity.Claims, error) 
 		return nil, err
 	}
 
-	claims, err := m.tokenManager.Validate(cookie.Value)
+	claims, err := m.tokenManager.ValidateAccessToken(cookie.Value)
 	if err != nil {
 		return nil, err
 	}

@@ -92,7 +92,7 @@ func (uc *HandleOAuthCallbackUseCase) Execute(ctx context.Context, input HandleO
 		return nil, fmt.Errorf("update last login: %w", err)
 	}
 
-	jwtToken, err := uc.tokenManager.Generate(user.ID, user.Username)
+	jwtToken, err := uc.tokenManager.GenerateAccessToken(user.ID, user.Username)
 	if err != nil {
 		return nil, fmt.Errorf("generate jwt: %w", err)
 	}

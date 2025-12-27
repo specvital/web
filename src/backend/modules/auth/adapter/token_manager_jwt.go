@@ -1,6 +1,9 @@
 package adapter
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -12,13 +15,13 @@ import (
 )
 
 const (
-	DefaultExpiry = 7 * 24 * time.Hour // 7 days
-	Issuer        = "specvital"
+	Issuer            = "specvital"
+	RefreshTokenBytes = 32
 )
 
 type JWTTokenManager struct {
-	secret []byte
-	expiry time.Duration
+	accessExpiry time.Duration
+	secret       []byte
 }
 
 var _ port.TokenManager = (*JWTTokenManager)(nil)
@@ -31,12 +34,12 @@ func NewJWTTokenManager(secret string) (*JWTTokenManager, error) {
 		return nil, errors.New("jwt secret must be at least 32 characters")
 	}
 	return &JWTTokenManager{
-		secret: []byte(secret),
-		expiry: DefaultExpiry,
+		accessExpiry: domain.AccessTokenExpiry,
+		secret:       []byte(secret),
 	}, nil
 }
 
-func (m *JWTTokenManager) Generate(userID, login string) (string, error) {
+func (m *JWTTokenManager) GenerateAccessToken(userID, login string) (string, error) {
 	if userID == "" {
 		return "", errors.New("user ID is required")
 	}
@@ -50,7 +53,7 @@ func (m *JWTTokenManager) Generate(userID, login string) (string, error) {
 			Issuer:    Issuer,
 			Subject:   userID,
 			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(m.expiry)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(m.accessExpiry)),
 		},
 		Login: login,
 	}
@@ -59,7 +62,27 @@ func (m *JWTTokenManager) Generate(userID, login string) (string, error) {
 	return token.SignedString(m.secret)
 }
 
-func (m *JWTTokenManager) Validate(tokenString string) (*entity.Claims, error) {
+func (m *JWTTokenManager) GenerateRefreshToken() (*port.RefreshTokenResult, error) {
+	tokenBytes := make([]byte, RefreshTokenBytes)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return nil, errors.Wrap(err, "generate random bytes")
+	}
+
+	token := base64.RawURLEncoding.EncodeToString(tokenBytes)
+	tokenHash := m.HashToken(token)
+
+	return &port.RefreshTokenResult{
+		Token:     token,
+		TokenHash: tokenHash,
+	}, nil
+}
+
+func (m *JWTTokenManager) HashToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return base64.RawURLEncoding.EncodeToString(hash[:])
+}
+
+func (m *JWTTokenManager) ValidateAccessToken(tokenString string) (*entity.Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.Wrapf(domain.ErrInvalidToken, "unexpected signing method: %v", t.Header["alg"])

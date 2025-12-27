@@ -14,7 +14,7 @@ const testSecret = "test-secret-that-is-at-least-32-characters-long"
 
 func TestRequireAuth_ValidToken(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
-	token, _ := jwtManager.Generate("user-123", "testuser")
+	token, _ := jwtManager.GenerateAccessToken("user-123", "testuser")
 
 	m := NewAuthMiddleware(jwtManager, "auth_token")
 
@@ -83,7 +83,7 @@ func TestRequireAuth_InvalidToken(t *testing.T) {
 
 func TestOptionalAuth_ValidToken(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
-	token, _ := jwtManager.Generate("user-123", "testuser")
+	token, _ := jwtManager.GenerateAccessToken("user-123", "testuser")
 
 	m := NewAuthMiddleware(jwtManager, "auth_token")
 
@@ -156,7 +156,7 @@ func TestOptionalAuth_InvalidToken(t *testing.T) {
 
 func TestOptionalAuth_NonAPIRoute_SkipsAuth(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
-	token, _ := jwtManager.Generate("user-123", "testuser")
+	token, _ := jwtManager.GenerateAccessToken("user-123", "testuser")
 
 	m := NewAuthMiddleware(jwtManager, "auth_token")
 

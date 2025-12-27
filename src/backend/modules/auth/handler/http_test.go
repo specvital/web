@@ -132,20 +132,39 @@ func (m *mockEncryptor) Decrypt(ciphertext string) (string, error) {
 }
 
 type mockTokenManager struct {
-	generateFunc func(userID, login string) (string, error)
-	validateFunc func(tokenString string) (*entity.Claims, error)
+	generateAccessTokenFunc  func(userID, login string) (string, error)
+	generateRefreshTokenFunc func() (*port.RefreshTokenResult, error)
+	hashTokenFunc            func(token string) string
+	validateAccessTokenFunc  func(tokenString string) (*entity.Claims, error)
 }
 
-func (m *mockTokenManager) Generate(userID, login string) (string, error) {
-	if m.generateFunc != nil {
-		return m.generateFunc(userID, login)
+func (m *mockTokenManager) GenerateAccessToken(userID, login string) (string, error) {
+	if m.generateAccessTokenFunc != nil {
+		return m.generateAccessTokenFunc(userID, login)
 	}
-	return "jwt-token-" + userID, nil
+	return "access-token-" + userID, nil
 }
 
-func (m *mockTokenManager) Validate(tokenString string) (*entity.Claims, error) {
-	if m.validateFunc != nil {
-		return m.validateFunc(tokenString)
+func (m *mockTokenManager) GenerateRefreshToken() (*port.RefreshTokenResult, error) {
+	if m.generateRefreshTokenFunc != nil {
+		return m.generateRefreshTokenFunc()
+	}
+	return &port.RefreshTokenResult{
+		Token:     "mock-refresh-token",
+		TokenHash: "mock-refresh-hash",
+	}, nil
+}
+
+func (m *mockTokenManager) HashToken(token string) string {
+	if m.hashTokenFunc != nil {
+		return m.hashTokenFunc(token)
+	}
+	return "hashed-" + token
+}
+
+func (m *mockTokenManager) ValidateAccessToken(tokenString string) (*entity.Claims, error) {
+	if m.validateAccessTokenFunc != nil {
+		return m.validateAccessTokenFunc(tokenString)
 	}
 	return nil, nil
 }

@@ -44,7 +44,7 @@ func TestNewJWTTokenManager(t *testing.T) {
 	}
 }
 
-func TestJWTTokenManager_GenerateAndValidate(t *testing.T) {
+func TestJWTTokenManager_GenerateAccessToken(t *testing.T) {
 	m, err := NewJWTTokenManager(testSecret)
 	if err != nil {
 		t.Fatalf("NewJWTTokenManager() error = %v", err)
@@ -53,18 +53,18 @@ func TestJWTTokenManager_GenerateAndValidate(t *testing.T) {
 	userID := "user-123"
 	login := "testuser"
 
-	token, err := m.Generate(userID, login)
+	token, err := m.GenerateAccessToken(userID, login)
 	if err != nil {
-		t.Fatalf("Generate() error = %v", err)
+		t.Fatalf("GenerateAccessToken() error = %v", err)
 	}
 
 	if token == "" {
-		t.Error("Generate() returned empty token")
+		t.Error("GenerateAccessToken() returned empty token")
 	}
 
-	claims, err := m.Validate(token)
+	claims, err := m.ValidateAccessToken(token)
 	if err != nil {
-		t.Fatalf("Validate() error = %v", err)
+		t.Fatalf("ValidateAccessToken() error = %v", err)
 	}
 
 	if claims.UserID() != userID {
@@ -76,15 +76,20 @@ func TestJWTTokenManager_GenerateAndValidate(t *testing.T) {
 	if claims.Issuer != Issuer {
 		t.Errorf("claims.Issuer = %v, want %v", claims.Issuer, Issuer)
 	}
+
+	expectedExpiry := time.Now().Add(domain.AccessTokenExpiry)
+	if claims.ExpiresAt.Before(expectedExpiry.Add(-time.Minute)) || claims.ExpiresAt.After(expectedExpiry.Add(time.Minute)) {
+		t.Errorf("claims.ExpiresAt = %v, expected around %v", claims.ExpiresAt, expectedExpiry)
+	}
 }
 
-func TestJWTTokenManager_GenerateEmptyInputs(t *testing.T) {
+func TestJWTTokenManager_GenerateAccessToken_EmptyInputs(t *testing.T) {
 	m, _ := NewJWTTokenManager(testSecret)
 
 	tests := []struct {
+		login  string
 		name   string
 		userID string
-		login  string
 	}{
 		{name: "empty userID", userID: "", login: "testuser"},
 		{name: "empty login", userID: "user-123", login: ""},
@@ -93,15 +98,15 @@ func TestJWTTokenManager_GenerateEmptyInputs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := m.Generate(tt.userID, tt.login)
+			_, err := m.GenerateAccessToken(tt.userID, tt.login)
 			if err == nil {
-				t.Errorf("Generate() should return error for %s", tt.name)
+				t.Errorf("GenerateAccessToken() should return error for %s", tt.name)
 			}
 		})
 	}
 }
 
-func TestJWTTokenManager_ValidateInvalidToken(t *testing.T) {
+func TestJWTTokenManager_ValidateAccessToken_InvalidToken(t *testing.T) {
 	m, _ := NewJWTTokenManager(testSecret)
 
 	tests := []struct {
@@ -128,15 +133,15 @@ func TestJWTTokenManager_ValidateInvalidToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := m.Validate(tt.token)
+			_, err := m.ValidateAccessToken(tt.token)
 			if err == nil {
-				t.Error("Validate() expected error, got nil")
+				t.Error("ValidateAccessToken() expected error, got nil")
 			}
 		})
 	}
 }
 
-func TestJWTTokenManager_ValidateExpiredToken(t *testing.T) {
+func TestJWTTokenManager_ValidateAccessToken_ExpiredToken(t *testing.T) {
 	m, _ := NewJWTTokenManager(testSecret)
 
 	claims := jwtClaims{
@@ -152,13 +157,13 @@ func TestJWTTokenManager_ValidateExpiredToken(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, _ := token.SignedString([]byte(testSecret))
 
-	_, err := m.Validate(tokenString)
+	_, err := m.ValidateAccessToken(tokenString)
 	if err != domain.ErrTokenExpired {
-		t.Errorf("Validate() error = %v, want %v", err, domain.ErrTokenExpired)
+		t.Errorf("ValidateAccessToken() error = %v, want %v", err, domain.ErrTokenExpired)
 	}
 }
 
-func TestJWTTokenManager_ValidateInvalidIssuer(t *testing.T) {
+func TestJWTTokenManager_ValidateAccessToken_InvalidIssuer(t *testing.T) {
 	m, _ := NewJWTTokenManager(testSecret)
 
 	claims := jwtClaims{
@@ -174,9 +179,88 @@ func TestJWTTokenManager_ValidateInvalidIssuer(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, _ := token.SignedString([]byte(testSecret))
 
-	_, err := m.Validate(tokenString)
+	_, err := m.ValidateAccessToken(tokenString)
 	if err == nil {
-		t.Error("Validate() should reject token with invalid issuer")
+		t.Error("ValidateAccessToken() should reject token with invalid issuer")
+	}
+}
+
+func TestJWTTokenManager_GenerateRefreshToken(t *testing.T) {
+	m, err := NewJWTTokenManager(testSecret)
+	if err != nil {
+		t.Fatalf("NewJWTTokenManager() error = %v", err)
+	}
+
+	result, err := m.GenerateRefreshToken()
+	if err != nil {
+		t.Fatalf("GenerateRefreshToken() error = %v", err)
+	}
+
+	if result.Token == "" {
+		t.Error("GenerateRefreshToken() returned empty token")
+	}
+
+	if result.TokenHash == "" {
+		t.Error("GenerateRefreshToken() returned empty hash")
+	}
+
+	if result.Token == result.TokenHash {
+		t.Error("token and hash should be different")
+	}
+
+	recomputedHash := m.HashToken(result.Token)
+	if recomputedHash != result.TokenHash {
+		t.Errorf("hash mismatch: got %v, want %v", recomputedHash, result.TokenHash)
+	}
+}
+
+func TestJWTTokenManager_GenerateRefreshToken_Uniqueness(t *testing.T) {
+	m, _ := NewJWTTokenManager(testSecret)
+
+	tokens := make(map[string]bool)
+	hashes := make(map[string]bool)
+
+	for i := 0; i < 100; i++ {
+		result, err := m.GenerateRefreshToken()
+		if err != nil {
+			t.Fatalf("GenerateRefreshToken() error = %v", err)
+		}
+
+		if tokens[result.Token] {
+			t.Errorf("duplicate token generated: %s", result.Token)
+		}
+		tokens[result.Token] = true
+
+		if hashes[result.TokenHash] {
+			t.Errorf("duplicate hash generated: %s", result.TokenHash)
+		}
+		hashes[result.TokenHash] = true
+	}
+}
+
+func TestJWTTokenManager_HashToken(t *testing.T) {
+	m, _ := NewJWTTokenManager(testSecret)
+
+	token := "test-refresh-token-value"
+	hash1 := m.HashToken(token)
+	hash2 := m.HashToken(token)
+
+	if hash1 != hash2 {
+		t.Errorf("same token should produce same hash: %v != %v", hash1, hash2)
+	}
+
+	differentHash := m.HashToken("different-token")
+	if hash1 == differentHash {
+		t.Error("different tokens should produce different hashes")
+	}
+}
+
+func TestJWTTokenManager_HashToken_Empty(t *testing.T) {
+	m, _ := NewJWTTokenManager(testSecret)
+
+	hash := m.HashToken("")
+	if hash == "" {
+		t.Error("empty token should still produce a hash")
 	}
 }
 
