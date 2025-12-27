@@ -28,7 +28,7 @@ export const DiscoveryCard = ({
   const t = useTranslations("dashboard.discovery");
   const isPersonal = type === "personal";
   const Icon = isPersonal ? FolderGit2 : Building2;
-  const isDisabled = isLoading || count === 0;
+  const isDisabled = isLoading || (isPersonal && count === 0);
 
   const handleRefreshClick = (e: React.MouseEvent) => {
     e.stopPropagation();

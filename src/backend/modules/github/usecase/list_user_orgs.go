@@ -54,7 +54,46 @@ func (uc *ListUserOrgsUseCase) Execute(ctx context.Context, input ListUserOrgsIn
 		return nil, fmt.Errorf("unexpected result type: %T", result)
 	}
 
+	orgs = uc.mergeWithInstallationOrgs(ctx, input.UserID, orgs)
 	return uc.enrichWithAccessStatus(ctx, orgs), nil
+}
+
+func (uc *ListUserOrgsUseCase) mergeWithInstallationOrgs(ctx context.Context, userID string, oauthOrgs []entity.Organization) []entity.Organization {
+	installationOrgs, err := uc.installationLookup.ListOrganizationsByUserID(ctx, userID)
+	if err != nil {
+		slog.WarnContext(ctx, "failed to list installation orgs, using OAuth orgs only",
+			"error", err,
+			"userID", userID)
+		return oauthOrgs
+	}
+
+	if len(installationOrgs) == 0 {
+		return oauthOrgs
+	}
+
+	existingIDs := make(map[int64]bool, len(oauthOrgs))
+	for _, org := range oauthOrgs {
+		existingIDs[org.ID] = true
+	}
+
+	for _, instOrg := range installationOrgs {
+		if existingIDs[instOrg.AccountID] {
+			continue
+		}
+
+		avatarURL := ""
+		if instOrg.AccountAvatarURL != nil {
+			avatarURL = *instOrg.AccountAvatarURL
+		}
+
+		oauthOrgs = append(oauthOrgs, entity.Organization{
+			AvatarURL: avatarURL,
+			ID:        instOrg.AccountID,
+			Login:     instOrg.AccountLogin,
+		})
+	}
+
+	return oauthOrgs
 }
 
 func (uc *ListUserOrgsUseCase) enrichWithAccessStatus(ctx context.Context, orgs []entity.Organization) []entity.Organization {

@@ -93,6 +93,19 @@ func (r *PostgresRepository) ListByUserID(ctx context.Context, userID string) ([
 	return installations, nil
 }
 
+func (r *PostgresRepository) ListOrganizations(ctx context.Context) ([]entity.Installation, error) {
+	rows, err := r.queries.ListGitHubAppOrganizationInstallations(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	installations := make([]entity.Installation, 0, len(rows))
+	for _, row := range rows {
+		installations = append(installations, *toEntity(row))
+	}
+	return installations, nil
+}
+
 func (r *PostgresRepository) UpdateSuspended(ctx context.Context, installationID int64, suspendedAt *time.Time) error {
 	var pgSuspendedAt pgtype.Timestamptz
 	if suspendedAt != nil {

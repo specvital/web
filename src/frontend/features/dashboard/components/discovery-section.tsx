@@ -92,18 +92,23 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
   };
 
   const handleOrgClick = () => {
-    if (orgs.length === 1) {
+    if (orgs.length === 0) {
+      setSheetState({
+        accessStatus: "restricted",
+        isOpen: true,
+        repositories: [],
+        title: t("orgRepos"),
+      });
+    } else if (orgs.length === 1) {
       const org = orgs[0];
       const data = orgData[org.login];
-      if (data && data.unanalyzedCount > 0) {
-        setSheetState({
-          accessStatus: org.accessStatus,
-          isOpen: true,
-          repositories: data.unanalyzedRepos,
-          title: org.login,
-        });
-      }
-    } else if (orgs.length > 1) {
+      setSheetState({
+        accessStatus: org.accessStatus,
+        isOpen: true,
+        repositories: data?.unanalyzedRepos ?? [],
+        title: org.login,
+      });
+    } else {
       setOrgPickerState({ isOpen: true });
     }
   };

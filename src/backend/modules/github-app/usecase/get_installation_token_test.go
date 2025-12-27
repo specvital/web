@@ -57,6 +57,10 @@ func (m *mockInstallationRepository) ListByUserID(ctx context.Context, userID st
 	return nil, nil
 }
 
+func (m *mockInstallationRepository) ListOrganizations(ctx context.Context) ([]entity.Installation, error) {
+	return nil, nil
+}
+
 func (m *mockInstallationRepository) UpdateSuspended(ctx context.Context, installationID int64, suspendedAt *time.Time) error {
 	return nil
 }

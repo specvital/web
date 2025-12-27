@@ -10,8 +10,9 @@ import (
 )
 
 type mockInstallationLookup struct {
-	installations map[int64]*port.InstallationInfo
-	err           error
+	installations    map[int64]*port.InstallationInfo
+	orgInstallations []port.OrganizationInstallationInfo
+	err              error
 }
 
 func (m *mockInstallationLookup) GetInstallationByAccountID(_ context.Context, accountID int64) (*port.InstallationInfo, error) {
@@ -38,6 +39,13 @@ func (m *mockInstallationLookup) GetInstallationsByAccountIDs(_ context.Context,
 		}
 	}
 	return result, nil
+}
+
+func (m *mockInstallationLookup) ListOrganizationsByUserID(_ context.Context, _ string) ([]port.OrganizationInstallationInfo, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.orgInstallations, nil
 }
 
 func TestListUserOrgsUseCase_AccessStatus_NoInstallation(t *testing.T) {

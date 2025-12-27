@@ -60,6 +60,24 @@ func (a *InstallationLookupAdapter) GetInstallationsByAccountIDs(ctx context.Con
 	return result, nil
 }
 
+func (a *InstallationLookupAdapter) ListOrganizationsByUserID(ctx context.Context, _ string) ([]port.OrganizationInstallationInfo, error) {
+	installations, err := a.repository.ListOrganizations(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	orgs := make([]port.OrganizationInstallationInfo, 0, len(installations))
+	for _, inst := range installations {
+		orgs = append(orgs, port.OrganizationInstallationInfo{
+			AccountAvatarURL: inst.AccountAvatarURL,
+			AccountID:        inst.AccountID,
+			AccountLogin:     inst.AccountLogin,
+			IsSuspended:      inst.IsSuspended(),
+		})
+	}
+	return orgs, nil
+}
+
 type InstallationTokenProviderAdapter struct {
 	usecase *ghappusecase.GetInstallationTokenUseCase
 }

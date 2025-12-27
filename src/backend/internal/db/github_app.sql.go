@@ -141,6 +141,43 @@ func (q *Queries) ListGitHubAppInstallationsByUserID(ctx context.Context, userID
 	return items, nil
 }
 
+const listGitHubAppOrganizationInstallations = `-- name: ListGitHubAppOrganizationInstallations :many
+SELECT id, installation_id, account_type, account_id, account_login, account_avatar_url, installer_user_id, suspended_at, created_at, updated_at FROM github_app_installations
+WHERE account_type = 'organization'
+ORDER BY account_login
+`
+
+func (q *Queries) ListGitHubAppOrganizationInstallations(ctx context.Context) ([]GithubAppInstallation, error) {
+	rows, err := q.db.Query(ctx, listGitHubAppOrganizationInstallations)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GithubAppInstallation
+	for rows.Next() {
+		var i GithubAppInstallation
+		if err := rows.Scan(
+			&i.ID,
+			&i.InstallationID,
+			&i.AccountType,
+			&i.AccountID,
+			&i.AccountLogin,
+			&i.AccountAvatarUrl,
+			&i.InstallerUserID,
+			&i.SuspendedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateGitHubAppInstallationSuspended = `-- name: UpdateGitHubAppInstallationSuspended :exec
 UPDATE github_app_installations
 SET suspended_at = $1, updated_at = now()

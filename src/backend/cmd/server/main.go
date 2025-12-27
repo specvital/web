@@ -83,16 +83,16 @@ func newRouter(origins []string, registrars []server.RouteRegistrar, apiHandler 
 		authRouter.Use(middleware.RateLimit(authLimiter))
 	})
 
-	if webhookHandler != nil {
-		r.Post("/api/webhooks/github-app", webhookHandler.HandleGitHubAppWebhookRaw)
-	}
-
 	for _, reg := range registrars {
 		reg.RegisterRoutes(r)
 	}
 
 	strictHandler := api.NewStrictHandler(apiHandler, nil)
 	api.HandlerFromMux(strictHandler, r)
+
+	if webhookHandler != nil {
+		r.Post("/api/webhooks/github-app", webhookHandler.HandleGitHubAppWebhookRaw)
+	}
 
 	return r
 }

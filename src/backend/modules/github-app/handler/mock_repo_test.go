@@ -59,6 +59,16 @@ func (r *mockRepo) ListByUserID(_ context.Context, _ string) ([]entity.Installat
 	return nil, nil
 }
 
+func (r *mockRepo) ListOrganizations(_ context.Context) ([]entity.Installation, error) {
+	var result []entity.Installation
+	for _, inst := range r.installations {
+		if inst.AccountType == entity.AccountTypeOrganization {
+			result = append(result, *inst)
+		}
+	}
+	return result, nil
+}
+
 func (r *mockRepo) UpdateSuspended(_ context.Context, installationID int64, suspendedAt *time.Time) error {
 	if inst, ok := r.installations[installationID]; ok {
 		inst.SuspendedAt = suspendedAt

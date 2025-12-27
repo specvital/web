@@ -53,3 +53,8 @@ WHERE installation_id = @installation_id;
 SELECT * FROM github_app_installations
 WHERE account_id = ANY(@account_ids::bigint[])
 ORDER BY account_id;
+
+-- name: ListGitHubAppOrganizationInstallations :many
+SELECT * FROM github_app_installations
+WHERE account_type = 'organization'
+ORDER BY account_login;

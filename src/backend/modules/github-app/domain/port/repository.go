@@ -13,6 +13,7 @@ type InstallationRepository interface {
 	GetByInstallationID(ctx context.Context, installationID int64) (*entity.Installation, error)
 	ListByAccountIDs(ctx context.Context, accountIDs []int64) ([]entity.Installation, error)
 	ListByUserID(ctx context.Context, userID string) ([]entity.Installation, error)
+	ListOrganizations(ctx context.Context) ([]entity.Installation, error)
 	UpdateSuspended(ctx context.Context, installationID int64, suspendedAt *time.Time) error
 	Upsert(ctx context.Context, installation *entity.Installation) error
 }
