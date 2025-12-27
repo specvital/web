@@ -102,13 +102,35 @@ modules/[name]/
 
 ## Authentication
 
+Hybrid Token Architecture (Access + Refresh Token)
+
 ```
-GitHub OAuth → JWT token → httpOnly cookie (set by frontend)
+GitHub OAuth → Access Token (15min JWT) + Refresh Token (7d, DB-stored)
+                     ↓                           ↓
+              httpOnly cookie              httpOnly cookie (Strict)
+              (Lax, stateless)             (stateful, rotation)
 ```
 
-- OAuth config: `internal/infra/oauth.go`
-- JWT handling: `modules/auth/jwt/`
+### Token Flow
+
+1. **Login**: OAuth callback issues both tokens, refresh token stored in DB
+2. **API Request**: Middleware validates access token (stateless JWT check)
+3. **Token Expiry**: Frontend auto-refreshes via `/api/auth/refresh` on 401
+4. **Logout**: Both tokens cleared, refresh token revoked in DB
+
+### Security Features
+
+- **Token Rotation**: New refresh token on each use
+- **Reuse Detection**: Family-based revocation on token replay attack
+- **Hash Storage**: Only refresh token hash stored in DB
+
+### Key Files
+
+- Token generation: `modules/auth/adapter/token_manager_jwt.go`
+- Refresh logic: `modules/auth/usecase/refresh_token.go`
+- Cookie handling: `modules/auth/handler/http.go`
 - Middleware: `common/middleware/auth.go`
+- OAuth config: `internal/infra/oauth.go`
 
 ## Async Processing
 

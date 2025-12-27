@@ -70,14 +70,6 @@ ON CONFLICT (provider, provider_user_id) DO UPDATE SET
     updated_at = now()
 RETURNING id;
 
--- name: GetUserTokenVersion :one
-SELECT token_version FROM users WHERE id = $1;
-
--- name: IncrementUserTokenVersion :execrows
-UPDATE users
-SET token_version = token_version + 1, updated_at = now()
-WHERE id = $1;
-
 -- name: CreateRefreshToken :one
 INSERT INTO refresh_tokens (user_id, token_hash, family_id, expires_at, replaces)
 VALUES ($1, $2, $3, $4, $5)

@@ -259,31 +259,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDR
 	return i, err
 }
 
-const getUserTokenVersion = `-- name: GetUserTokenVersion :one
-SELECT token_version FROM users WHERE id = $1
-`
-
-func (q *Queries) GetUserTokenVersion(ctx context.Context, id pgtype.UUID) (int32, error) {
-	row := q.db.QueryRow(ctx, getUserTokenVersion, id)
-	var token_version int32
-	err := row.Scan(&token_version)
-	return token_version, err
-}
-
-const incrementUserTokenVersion = `-- name: IncrementUserTokenVersion :execrows
-UPDATE users
-SET token_version = token_version + 1, updated_at = now()
-WHERE id = $1
-`
-
-func (q *Queries) IncrementUserTokenVersion(ctx context.Context, id pgtype.UUID) (int64, error) {
-	result, err := q.db.Exec(ctx, incrementUserTokenVersion, id)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
 const revokeRefreshToken = `-- name: RevokeRefreshToken :execrows
 UPDATE refresh_tokens
 SET revoked_at = now()

@@ -4,7 +4,6 @@ import "github.com/cockroachdb/errors"
 
 var (
 	ErrAccessDenied         = errors.New("access denied by user")
-	ErrCodebaseNotFound     = errors.New("codebase not found")
 	ErrInvalidCode          = errors.New("invalid authorization code")
 	ErrInvalidGitHubToken   = errors.New("invalid or expired github access token")
 	ErrInvalidOAuthCode     = errors.New("invalid oauth code")
@@ -15,7 +14,6 @@ var (
 	ErrRateLimited          = errors.New("github api rate limit exceeded")
 	ErrRefreshTokenExpired  = errors.New("refresh token expired")
 	ErrRefreshTokenNotFound = errors.New("refresh token not found")
-	ErrRefreshTokenRevoked  = errors.New("refresh token revoked")
 	ErrTokenExpired         = errors.New("token expired")
 	ErrTokenReuseDetected   = errors.New("refresh token reuse detected")
 	ErrUserNotFound         = errors.New("user not found")

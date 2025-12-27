@@ -14,8 +14,3 @@ type RefreshTokenRepository interface {
 	RevokeUserTokens(ctx context.Context, userID string) error
 	RotateToken(ctx context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error)
 }
-
-type UserTokenVersionRepository interface {
-	GetTokenVersion(ctx context.Context, userID string) (int32, error)
-	IncrementTokenVersion(ctx context.Context, userID string) error
-}

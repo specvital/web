@@ -88,6 +88,17 @@ const response = await apiFetch(`/api/analyze/${owner}/${repo}`);
 const data = await parseJsonResponse<AnalysisResponse>(response);
 ```
 
+### Token Auto-Refresh
+
+Client-side API calls auto-refresh on 401:
+
+1. Access token expires (15min)
+2. Interceptor calls `/api/auth/refresh`
+3. New token pair set via cookies
+4. Original request retried
+
+Key file: `lib/api/token-refresh.ts`
+
 ## Environment Variables
 
 | Variable              | Purpose     | Default               |
