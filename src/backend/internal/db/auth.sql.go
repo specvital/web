@@ -11,6 +11,45 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createRefreshToken = `-- name: CreateRefreshToken :one
+INSERT INTO refresh_tokens (user_id, token_hash, family_id, expires_at, replaces)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, user_id, family_id, created_at
+`
+
+type CreateRefreshTokenParams struct {
+	UserID    pgtype.UUID        `json:"user_id"`
+	TokenHash string             `json:"token_hash"`
+	FamilyID  pgtype.UUID        `json:"family_id"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	Replaces  pgtype.UUID        `json:"replaces"`
+}
+
+type CreateRefreshTokenRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	FamilyID  pgtype.UUID        `json:"family_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (CreateRefreshTokenRow, error) {
+	row := q.db.QueryRow(ctx, createRefreshToken,
+		arg.UserID,
+		arg.TokenHash,
+		arg.FamilyID,
+		arg.ExpiresAt,
+		arg.Replaces,
+	)
+	var i CreateRefreshTokenRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.FamilyID,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (email, username, avatar_url)
 VALUES ($1, $2, $3)
@@ -28,6 +67,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (pgtype.
 	var id pgtype.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const deleteExpiredRefreshTokens = `-- name: DeleteExpiredRefreshTokens :exec
+DELETE FROM refresh_tokens
+WHERE expires_at < now() - INTERVAL '7 days'
+`
+
+func (q *Queries) DeleteExpiredRefreshTokens(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteExpiredRefreshTokens)
+	return err
 }
 
 const getOAuthAccountByProvider = `-- name: GetOAuthAccountByProvider :one
@@ -104,6 +153,36 @@ func (q *Queries) GetOAuthAccountByUserID(ctx context.Context, arg GetOAuthAccou
 	return i, err
 }
 
+const getRefreshTokenByHash = `-- name: GetRefreshTokenByHash :one
+SELECT
+    id,
+    user_id,
+    token_hash,
+    family_id,
+    expires_at,
+    created_at,
+    revoked_at,
+    replaces
+FROM refresh_tokens
+WHERE token_hash = $1
+`
+
+func (q *Queries) GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error) {
+	row := q.db.QueryRow(ctx, getRefreshTokenByHash, tokenHash)
+	var i RefreshToken
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TokenHash,
+		&i.FamilyID,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.RevokedAt,
+		&i.Replaces,
+	)
+	return i, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
     id,
@@ -117,9 +196,19 @@ FROM users
 WHERE email = $1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email pgtype.Text) (User, error) {
+type GetUserByEmailRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	Email       pgtype.Text        `json:"email"`
+	Username    string             `json:"username"`
+	AvatarUrl   pgtype.Text        `json:"avatar_url"`
+	LastLoginAt pgtype.Timestamptz `json:"last_login_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email pgtype.Text) (GetUserByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i User
+	var i GetUserByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
@@ -145,9 +234,19 @@ FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error) {
+type GetUserByIDRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	Email       pgtype.Text        `json:"email"`
+	Username    string             `json:"username"`
+	AvatarUrl   pgtype.Text        `json:"avatar_url"`
+	LastLoginAt pgtype.Timestamptz `json:"last_login_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDRow, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
-	var i User
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
@@ -158,6 +257,67 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getUserTokenVersion = `-- name: GetUserTokenVersion :one
+SELECT token_version FROM users WHERE id = $1
+`
+
+func (q *Queries) GetUserTokenVersion(ctx context.Context, id pgtype.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, getUserTokenVersion, id)
+	var token_version int32
+	err := row.Scan(&token_version)
+	return token_version, err
+}
+
+const incrementUserTokenVersion = `-- name: IncrementUserTokenVersion :execrows
+UPDATE users
+SET token_version = token_version + 1, updated_at = now()
+WHERE id = $1
+`
+
+func (q *Queries) IncrementUserTokenVersion(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, incrementUserTokenVersion, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const revokeRefreshToken = `-- name: RevokeRefreshToken :execrows
+UPDATE refresh_tokens
+SET revoked_at = now()
+WHERE id = $1 AND revoked_at IS NULL
+`
+
+func (q *Queries) RevokeRefreshToken(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, revokeRefreshToken, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const revokeRefreshTokenFamily = `-- name: RevokeRefreshTokenFamily :exec
+UPDATE refresh_tokens
+SET revoked_at = now()
+WHERE family_id = $1 AND revoked_at IS NULL
+`
+
+func (q *Queries) RevokeRefreshTokenFamily(ctx context.Context, familyID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, revokeRefreshTokenFamily, familyID)
+	return err
+}
+
+const revokeUserRefreshTokens = `-- name: RevokeUserRefreshTokens :exec
+UPDATE refresh_tokens
+SET revoked_at = now()
+WHERE user_id = $1 AND revoked_at IS NULL
+`
+
+func (q *Queries) RevokeUserRefreshTokens(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, revokeUserRefreshTokens, userID)
+	return err
 }
 
 const updateLastLogin = `-- name: UpdateLastLogin :exec

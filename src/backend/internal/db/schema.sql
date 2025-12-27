@@ -206,6 +206,22 @@ CREATE TABLE public.oauth_accounts (
 
 
 --
+-- Name: refresh_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.refresh_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    token_hash text NOT NULL,
+    family_id uuid NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    revoked_at timestamp with time zone,
+    replaces uuid
+);
+
+
+--
 -- Name: river_client; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -425,7 +441,8 @@ CREATE TABLE public.users (
     avatar_url text,
     last_login_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    token_version integer DEFAULT 1 NOT NULL
 );
 
 
@@ -482,6 +499,14 @@ ALTER TABLE ONLY public.github_organizations
 
 ALTER TABLE ONLY public.oauth_accounts
     ADD CONSTRAINT oauth_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: refresh_tokens refresh_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.refresh_tokens
+    ADD CONSTRAINT refresh_tokens_pkey PRIMARY KEY (id);
 
 
 --
@@ -570,6 +595,14 @@ ALTER TABLE ONLY public.github_organizations
 
 ALTER TABLE ONLY public.oauth_accounts
     ADD CONSTRAINT uq_oauth_provider_user UNIQUE (provider, provider_user_id);
+
+
+--
+-- Name: refresh_tokens uq_refresh_tokens_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.refresh_tokens
+    ADD CONSTRAINT uq_refresh_tokens_hash UNIQUE (token_hash);
 
 
 --
@@ -712,6 +745,27 @@ CREATE INDEX idx_oauth_accounts_user_id ON public.oauth_accounts USING btree (us
 --
 
 CREATE INDEX idx_oauth_accounts_user_provider ON public.oauth_accounts USING btree (user_id, provider);
+
+
+--
+-- Name: idx_refresh_tokens_expires; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_refresh_tokens_expires ON public.refresh_tokens USING btree (expires_at) WHERE (revoked_at IS NULL);
+
+
+--
+-- Name: idx_refresh_tokens_family_active; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_refresh_tokens_family_active ON public.refresh_tokens USING btree (family_id, created_at) WHERE (revoked_at IS NULL);
+
+
+--
+-- Name: idx_refresh_tokens_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_refresh_tokens_user ON public.refresh_tokens USING btree (user_id);
 
 
 --
@@ -897,6 +951,22 @@ ALTER TABLE ONLY public.github_app_installations
 
 ALTER TABLE ONLY public.oauth_accounts
     ADD CONSTRAINT fk_oauth_accounts_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: refresh_tokens fk_refresh_tokens_replaces; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.refresh_tokens
+    ADD CONSTRAINT fk_refresh_tokens_replaces FOREIGN KEY (replaces) REFERENCES public.refresh_tokens(id) ON DELETE SET NULL;
+
+
+--
+-- Name: refresh_tokens fk_refresh_tokens_user; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.refresh_tokens
+    ADD CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

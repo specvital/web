@@ -309,6 +309,17 @@ type OauthAccount struct {
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
+type RefreshToken struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	TokenHash string             `json:"token_hash"`
+	FamilyID  pgtype.UUID        `json:"family_id"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	Replaces  pgtype.UUID        `json:"replaces"`
+}
+
 type RiverClient struct {
 	ID        string             `json:"id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
@@ -386,13 +397,14 @@ type TestSuite struct {
 }
 
 type User struct {
-	ID          pgtype.UUID        `json:"id"`
-	Email       pgtype.Text        `json:"email"`
-	Username    string             `json:"username"`
-	AvatarUrl   pgtype.Text        `json:"avatar_url"`
-	LastLoginAt pgtype.Timestamptz `json:"last_login_at"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID           pgtype.UUID        `json:"id"`
+	Email        pgtype.Text        `json:"email"`
+	Username     string             `json:"username"`
+	AvatarUrl    pgtype.Text        `json:"avatar_url"`
+	LastLoginAt  pgtype.Timestamptz `json:"last_login_at"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	TokenVersion int32              `json:"token_version"`
 }
 
 type UserAnalysisHistory struct {

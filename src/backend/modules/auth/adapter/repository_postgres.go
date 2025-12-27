@@ -169,7 +169,7 @@ func mapOAuthAccountFromDB(row *db.OauthAccount) *entity.OAuthAccount {
 	return account
 }
 
-func mapUserFromDB(row *db.User) *entity.User {
+func mapUserFromDB(row *db.GetUserByIDRow) *entity.User {
 	user := &entity.User{
 		CreatedAt: row.CreatedAt.Time,
 		ID:        uuidToString(row.ID),
