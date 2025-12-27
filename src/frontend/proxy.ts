@@ -6,7 +6,9 @@ import { defaultLocale, type Locale, locales } from "@/i18n/config";
 import { routing } from "@/i18n/routing";
 
 const AUTH_COOKIE_NAME = "auth_token";
+const REFRESH_COOKIE_NAME = "refresh_token";
 const JWT_MIN_LENGTH = 20;
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -55,20 +57,70 @@ const hasValidAuthCookie = (request: NextRequest): boolean => {
   return true;
 };
 
-const proxy = (request: NextRequest) => {
-  const { pathname } = request.nextUrl;
-  const hasAuth = hasValidAuthCookie(request);
+const verifyAuthToken = async (request: NextRequest): Promise<boolean> => {
+  const authCookie = request.cookies.get(AUTH_COOKIE_NAME);
+  const refreshCookie = request.cookies.get(REFRESH_COOKIE_NAME);
 
-  if (isHomePage(pathname) && hasAuth) {
-    const locale = getLocaleFromRequest(request, pathname);
-    const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
-    return NextResponse.redirect(dashboardUrl, 307);
+  if (!authCookie?.value) {
+    return false;
   }
 
-  if (isDashboardRoute(pathname) && !hasAuth) {
-    const locale = getLocaleFromRequest(request, pathname);
-    const homeUrl = new URL(`/${locale}`, request.url);
-    return NextResponse.redirect(homeUrl, 307);
+  const cookieHeader = [
+    `${AUTH_COOKIE_NAME}=${authCookie.value}`,
+    refreshCookie?.value ? `${REFRESH_COOKIE_NAME}=${refreshCookie.value}` : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      headers: {
+        Accept: "application/json",
+        Cookie: cookieHeader,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
+const createRedirectWithCookieClear = (url: URL): NextResponse => {
+  const response = NextResponse.redirect(url, 307);
+  response.cookies.delete(AUTH_COOKIE_NAME);
+  response.cookies.delete(REFRESH_COOKIE_NAME);
+  return response;
+};
+
+const proxy = async (request: NextRequest) => {
+  const { pathname } = request.nextUrl;
+  const hasCookie = hasValidAuthCookie(request);
+  const locale = getLocaleFromRequest(request, pathname);
+
+  // Dashboard route: verify token with backend
+  if (isDashboardRoute(pathname)) {
+    if (!hasCookie) {
+      const homeUrl = new URL(`/${locale}`, request.url);
+      return NextResponse.redirect(homeUrl, 307);
+    }
+
+    const isValid = await verifyAuthToken(request);
+    if (!isValid) {
+      const homeUrl = new URL(`/${locale}`, request.url);
+      return createRedirectWithCookieClear(homeUrl);
+    }
+  }
+
+  // Home page: redirect to dashboard if has valid cookie format
+  if (isHomePage(pathname) && hasCookie) {
+    const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
+    return NextResponse.redirect(dashboardUrl, 307);
   }
 
   return intlMiddleware(request);
