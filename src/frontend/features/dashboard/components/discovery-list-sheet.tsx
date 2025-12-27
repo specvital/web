@@ -2,7 +2,7 @@
 
 import { ExternalLink, Lock, Search } from "lucide-react";
 import Link from "next/link";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useNow, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export const DiscoveryListSheet = ({
 }: DiscoveryListSheetProps) => {
   const t = useTranslations("dashboard.discovery");
   const format = useFormatter();
+  const now = useNow({ updateInterval: 1000 * 60 });
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredRepos = useMemo(() => {
@@ -97,7 +98,7 @@ export const DiscoveryListSheet = ({
                     )}
                     {repo.pushedAt && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        {t("lastPush")}: {format.relativeTime(new Date(repo.pushedAt))}
+                        {t("lastPush")}: {format.relativeTime(new Date(repo.pushedAt), now)}
                       </p>
                     )}
                   </div>
