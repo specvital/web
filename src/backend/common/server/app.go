@@ -54,7 +54,11 @@ func NewApp(ctx context.Context) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init handlers: %w", err)
 	}
-	authMiddleware := middleware.NewAuthMiddleware(container.JWTManager, authhandler.CookieName)
+	authMiddleware := middleware.NewAuthMiddleware(
+		container.JWTManager,
+		authhandler.AccessCookieName,
+		authhandler.RefreshCookieName,
+	)
 
 	return &App{
 		AuthMiddleware: authMiddleware,
@@ -69,6 +73,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	queries := db.New(container.DB)
 
 	authRepo := authadapter.NewPostgresRepository(queries)
+	refreshTokenRepo := authadapter.NewRefreshTokenPostgresRepository(container.DB, queries)
 	stateStore := authadapter.NewMemoryStateStore()
 
 	getCurrentUserUC := authusecase.NewGetCurrentUserUseCase(authRepo)
@@ -77,11 +82,13 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	handleOAuthCallbackUC := authusecase.NewHandleOAuthCallbackUseCase(
 		container.Encryptor,
 		container.GitHubOAuth,
+		refreshTokenRepo,
 		authRepo,
 		stateStore,
 		container.JWTManager,
 	)
 	initiateOAuthUC := authusecase.NewInitiateOAuthUseCase(container.GitHubOAuth, stateStore)
+	refreshTokenUC := authusecase.NewRefreshTokenUseCase(refreshTokenRepo, authRepo, container.JWTManager)
 
 	authHandler, err := authhandler.NewHandler(&authhandler.HandlerConfig{
 		CookieDomain:        container.CookieDomain,
@@ -91,6 +98,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		HandleOAuthCallback: handleOAuthCallbackUC,
 		InitiateOAuth:       initiateOAuthUC,
 		Logger:              log,
+		RefreshToken:        refreshTokenUC,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create auth handler: %w", err)

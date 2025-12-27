@@ -121,9 +121,32 @@ export interface paths {
         put?: never;
         /**
          * Logout and clear authentication
-         * @description Clears the authentication cookie
+         * @description Clears authentication cookies and revokes refresh token in database
          */
         post: operations["authLogout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh authentication tokens
+         * @description Exchanges a valid refresh token for a new access/refresh token pair.
+         *     The old refresh token is invalidated (rotation).
+         *     If a revoked token is used, the entire token family is invalidated (reuse detection).
+         *
+         */
+        post: operations["authRefresh"];
         delete?: never;
         options?: never;
         head?: never;
@@ -639,6 +662,10 @@ export interface components {
             /** @description Logout operation result */
             success: boolean;
         };
+        RefreshResponse: {
+            /** @description Token refresh operation result */
+            success: boolean;
+        };
         BookmarkedRepositoriesResponse: {
             /** @description Bookmarked repositories */
             data: components["schemas"]["RepositoryCard"][];
@@ -1148,6 +1175,30 @@ export interface operations {
                     "application/json": components["schemas"]["LogoutResponse"];
                 };
             };
+            500: components["responses"]["InternalError"];
+        };
+    };
+    authRefresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tokens refreshed successfully */
+            200: {
+                headers: {
+                    /** @description New access and refresh tokens as HTTP-only cookies */
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefreshResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalError"];
         };
     };

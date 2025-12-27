@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-	"github.com/google/uuid"
 
 	"github.com/specvital/web/src/backend/modules/auth/domain"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
@@ -76,10 +75,6 @@ func (uc *RefreshTokenUseCase) Execute(ctx context.Context, input RefreshTokenIn
 		return nil, fmt.Errorf("get user: %w", err)
 	}
 
-	if err := uc.refreshTokenRepo.Revoke(ctx, storedToken.ID); err != nil {
-		return nil, fmt.Errorf("revoke old token: %w", err)
-	}
-
 	newRefreshTokenResult, err := uc.tokenManager.GenerateRefreshToken()
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
@@ -95,8 +90,8 @@ func (uc *RefreshTokenUseCase) Execute(ctx context.Context, input RefreshTokenIn
 		UserID:    storedToken.UserID,
 	}
 
-	if _, err := uc.refreshTokenRepo.Create(ctx, newStoredToken); err != nil {
-		return nil, fmt.Errorf("create refresh token: %w", err)
+	if _, err := uc.refreshTokenRepo.RotateToken(ctx, storedToken.ID, newStoredToken); err != nil {
+		return nil, fmt.Errorf("rotate refresh token: %w", err)
 	}
 
 	accessToken, err := uc.tokenManager.GenerateAccessToken(user.ID, user.Username)
@@ -125,44 +120,23 @@ func (uc *RefreshTokenUseCase) validateToken(ctx context.Context, token *entity.
 	return nil
 }
 
-type CreateRefreshTokenInput struct {
-	FamilyID string
-	UserID   string
-}
-
-type CreateRefreshTokenOutput struct {
-	RefreshToken string
-}
-
-func (uc *RefreshTokenUseCase) CreateInitialToken(ctx context.Context, input CreateRefreshTokenInput) (*CreateRefreshTokenOutput, error) {
-	if input.UserID == "" {
-		return nil, errors.New("user ID is required")
+func (uc *RefreshTokenUseCase) RevokeToken(ctx context.Context, rawToken string) error {
+	if rawToken == "" {
+		return nil
 	}
 
-	familyID := input.FamilyID
-	if familyID == "" {
-		familyID = uuid.New().String()
-	}
-
-	refreshTokenResult, err := uc.tokenManager.GenerateRefreshToken()
+	tokenHash := uc.tokenManager.HashToken(rawToken)
+	storedToken, err := uc.refreshTokenRepo.GetByHash(ctx, tokenHash)
 	if err != nil {
-		return nil, fmt.Errorf("generate refresh token: %w", err)
+		if errors.Is(err, domain.ErrRefreshTokenNotFound) {
+			return nil
+		}
+		return fmt.Errorf("get refresh token: %w", err)
 	}
 
-	now := time.Now()
-	newToken := &entity.RefreshToken{
-		CreatedAt: now,
-		ExpiresAt: now.Add(domain.RefreshTokenExpiry),
-		FamilyID:  familyID,
-		TokenHash: refreshTokenResult.TokenHash,
-		UserID:    input.UserID,
+	if err := uc.refreshTokenRepo.Revoke(ctx, storedToken.ID); err != nil {
+		return fmt.Errorf("revoke refresh token: %w", err)
 	}
 
-	if _, err := uc.refreshTokenRepo.Create(ctx, newToken); err != nil {
-		return nil, fmt.Errorf("create refresh token: %w", err)
-	}
-
-	return &CreateRefreshTokenOutput{
-		RefreshToken: refreshTokenResult.Token,
-	}, nil
+	return nil
 }

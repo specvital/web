@@ -17,10 +17,14 @@ import (
 )
 
 const (
-	CookieName     = "auth_token"
-	CookieMaxAge   = 7 * 24 * 60 * 60 // 7 days in seconds
-	CookiePath     = "/"
-	CookieSameSite = http.SameSiteLaxMode
+	AccessCookieName  = "auth_token"
+	RefreshCookieName = "refresh_token"
+	CookiePath        = "/"
+)
+
+var (
+	AccessCookieMaxAge  = int(domain.AccessTokenExpiry.Seconds())
+	RefreshCookieMaxAge = int(domain.RefreshTokenExpiry.Seconds())
 )
 
 type Handler struct {
@@ -31,6 +35,7 @@ type Handler struct {
 	handleOAuthCallback *usecase.HandleOAuthCallbackUseCase
 	initiateOAuth       *usecase.InitiateOAuthUseCase
 	logger              *logger.Logger
+	refreshToken        *usecase.RefreshTokenUseCase
 }
 
 type HandlerConfig struct {
@@ -41,6 +46,7 @@ type HandlerConfig struct {
 	HandleOAuthCallback *usecase.HandleOAuthCallbackUseCase
 	InitiateOAuth       *usecase.InitiateOAuthUseCase
 	Logger              *logger.Logger
+	RefreshToken        *usecase.RefreshTokenUseCase
 }
 
 var _ api.AuthHandlers = (*Handler)(nil)
@@ -64,6 +70,9 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	if cfg.InitiateOAuth == nil {
 		return nil, errors.New("InitiateOAuth usecase is required")
 	}
+	if cfg.RefreshToken == nil {
+		return nil, errors.New("RefreshToken usecase is required")
+	}
 	return &Handler{
 		cookieDomain:        cfg.CookieDomain,
 		cookieSecure:        cfg.CookieSecure,
@@ -72,6 +81,7 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 		handleOAuthCallback: cfg.HandleOAuthCallback,
 		initiateOAuth:       cfg.InitiateOAuth,
 		logger:              cfg.Logger,
+		refreshToken:        cfg.RefreshToken,
 	}, nil
 }
 
@@ -119,21 +129,62 @@ func (h *Handler) AuthCallback(ctx context.Context, request api.AuthCallbackRequ
 		}, nil
 	}
 
-	cookie := h.buildAuthCookie(result.Token)
+	accessCookie := h.buildAccessCookie(result.AccessToken)
+	refreshCookie := h.buildRefreshCookie(result.RefreshToken)
 
-	return api.AuthCallback302Response{
-		Headers: api.AuthCallback302ResponseHeaders{
-			Location:  h.frontendURL,
-			SetCookie: cookie,
-		},
+	return authCallbackResponse{
+		accessCookie:  accessCookie,
+		frontendURL:   h.frontendURL,
+		refreshCookie: refreshCookie,
 	}, nil
 }
 
-func (h *Handler) AuthLogout(_ context.Context, _ api.AuthLogoutRequestObject) (api.AuthLogoutResponseObject, error) {
-	cookie := h.BuildLogoutCookie()
+func (h *Handler) AuthLogout(ctx context.Context, _ api.AuthLogoutRequestObject) (api.AuthLogoutResponseObject, error) {
+	refreshTokenValue := middleware.GetRefreshToken(ctx)
+	if refreshTokenValue != "" {
+		if err := h.refreshToken.RevokeToken(ctx, refreshTokenValue); err != nil {
+			h.logger.Warn(ctx, "failed to revoke refresh token", "error", err)
+		}
+	}
+
 	return logoutResponse{
-		cookie:  cookie,
-		success: true,
+		accessCookie:  h.buildExpiredCookie(AccessCookieName),
+		refreshCookie: h.buildExpiredCookie(RefreshCookieName),
+		success:       true,
+	}, nil
+}
+
+func (h *Handler) AuthRefresh(ctx context.Context, _ api.AuthRefreshRequestObject) (api.AuthRefreshResponseObject, error) {
+	refreshTokenValue := middleware.GetRefreshToken(ctx)
+	if refreshTokenValue == "" {
+		return api.AuthRefresh401ApplicationProblemPlusJSONResponse{
+			UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("refresh token required"),
+		}, nil
+	}
+
+	output, err := h.refreshToken.Execute(ctx, usecase.RefreshTokenInput{
+		RefreshToken: refreshTokenValue,
+	})
+	if err != nil {
+		if errors.Is(err, domain.ErrRefreshTokenNotFound) ||
+			errors.Is(err, domain.ErrRefreshTokenExpired) ||
+			errors.Is(err, domain.ErrTokenReuseDetected) ||
+			errors.Is(err, domain.ErrUserNotFound) {
+			return api.AuthRefresh401ApplicationProblemPlusJSONResponse{
+				UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("invalid or expired refresh token"),
+			}, nil
+		}
+
+		h.logger.Error(ctx, "failed to refresh token", "error", err)
+		return api.AuthRefresh500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("token refresh failed"),
+		}, nil
+	}
+
+	return refreshResponse{
+		accessCookie:  h.buildAccessCookie(output.AccessToken),
+		refreshCookie: h.buildRefreshCookie(output.RefreshToken),
+		success:       true,
 	}, nil
 }
 
@@ -162,43 +213,92 @@ func (h *Handler) AuthMe(ctx context.Context, _ api.AuthMeRequestObject) (api.Au
 	return api.AuthMe200JSONResponse(mapper.ToUserInfo(output.User)), nil
 }
 
-func (h *Handler) buildAuthCookie(token string) string {
+func (h *Handler) buildAccessCookie(token string) string {
 	cookie := &http.Cookie{
 		Domain:   h.cookieDomain,
 		HttpOnly: true,
-		MaxAge:   CookieMaxAge,
-		Name:     CookieName,
+		MaxAge:   AccessCookieMaxAge,
+		Name:     AccessCookieName,
 		Path:     CookiePath,
-		SameSite: CookieSameSite,
+		SameSite: http.SameSiteLaxMode,
 		Secure:   h.cookieSecure,
 		Value:    token,
 	}
 	return cookie.String()
 }
 
-func (h *Handler) BuildLogoutCookie() string {
+func (h *Handler) buildRefreshCookie(token string) string {
+	cookie := &http.Cookie{
+		Domain:   h.cookieDomain,
+		HttpOnly: true,
+		MaxAge:   RefreshCookieMaxAge,
+		Name:     RefreshCookieName,
+		Path:     CookiePath,
+		SameSite: http.SameSiteStrictMode,
+		Secure:   h.cookieSecure,
+		Value:    token,
+	}
+	return cookie.String()
+}
+
+func (h *Handler) buildExpiredCookie(name string) string {
+	sameSite := http.SameSiteLaxMode
+	if name == RefreshCookieName {
+		sameSite = http.SameSiteStrictMode
+	}
+
 	cookie := &http.Cookie{
 		Domain:   h.cookieDomain,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		MaxAge:   -1,
-		Name:     CookieName,
+		Name:     name,
 		Path:     CookiePath,
-		SameSite: CookieSameSite,
+		SameSite: sameSite,
 		Secure:   h.cookieSecure,
 		Value:    "",
 	}
 	return cookie.String()
 }
 
+type authCallbackResponse struct {
+	accessCookie  string
+	frontendURL   string
+	refreshCookie string
+}
+
+func (r authCallbackResponse) VisitAuthCallbackResponse(w http.ResponseWriter) error {
+	w.Header().Add("Set-Cookie", r.accessCookie)
+	w.Header().Add("Set-Cookie", r.refreshCookie)
+	w.Header().Set("Location", r.frontendURL)
+	w.WriteHeader(http.StatusFound)
+	return nil
+}
+
 type logoutResponse struct {
-	cookie  string
-	success bool
+	accessCookie  string
+	refreshCookie string
+	success       bool
 }
 
 func (r logoutResponse) VisitAuthLogoutResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Set-Cookie", r.cookie)
+	w.Header().Add("Set-Cookie", r.accessCookie)
+	w.Header().Add("Set-Cookie", r.refreshCookie)
 	w.WriteHeader(http.StatusOK)
 	return json.NewEncoder(w).Encode(api.LogoutResponse{Success: r.success})
+}
+
+type refreshResponse struct {
+	accessCookie  string
+	refreshCookie string
+	success       bool
+}
+
+func (r refreshResponse) VisitAuthRefreshResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Add("Set-Cookie", r.accessCookie)
+	w.Header().Add("Set-Cookie", r.refreshCookie)
+	w.WriteHeader(http.StatusOK)
+	return json.NewEncoder(w).Encode(api.RefreshResponse{Success: r.success})
 }

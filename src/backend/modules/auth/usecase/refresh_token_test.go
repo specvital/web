@@ -17,6 +17,7 @@ type mockRefreshTokenRepository struct {
 	revokeFunc           func(ctx context.Context, id string) error
 	revokeFamilyFunc     func(ctx context.Context, familyID string) error
 	revokeUserTokensFunc func(ctx context.Context, userID string) error
+	rotateTokenFunc      func(ctx context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error)
 }
 
 func (m *mockRefreshTokenRepository) Create(ctx context.Context, token *entity.RefreshToken) (string, error) {
@@ -52,6 +53,13 @@ func (m *mockRefreshTokenRepository) RevokeUserTokens(ctx context.Context, userI
 		return m.revokeUserTokensFunc(ctx, userID)
 	}
 	return nil
+}
+
+func (m *mockRefreshTokenRepository) RotateToken(ctx context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error) {
+	if m.rotateTokenFunc != nil {
+		return m.rotateTokenFunc(ctx, oldTokenID, newToken)
+	}
+	return "new-token-id", nil
 }
 
 func TestRefreshTokenUseCase_Execute(t *testing.T) {
@@ -225,79 +233,6 @@ func TestRefreshTokenUseCase_Execute(t *testing.T) {
 	}
 }
 
-func TestRefreshTokenUseCase_CreateInitialToken(t *testing.T) {
-	tests := []struct {
-		name             string
-		input            CreateRefreshTokenInput
-		refreshTokenRepo *mockRefreshTokenRepository
-		tokenManager     *mockTokenManager
-		wantErr          bool
-	}{
-		{
-			name:  "should create initial token successfully",
-			input: CreateRefreshTokenInput{UserID: "user-123"},
-			refreshTokenRepo: &mockRefreshTokenRepository{
-				createFunc: func(_ context.Context, token *entity.RefreshToken) (string, error) {
-					if token.UserID != "user-123" {
-						t.Errorf("expected userID user-123, got %s", token.UserID)
-					}
-					if token.FamilyID == "" {
-						t.Error("expected familyID to be generated")
-					}
-					return "new-token-id", nil
-				},
-			},
-			tokenManager: &mockTokenManager{},
-			wantErr:      false,
-		},
-		{
-			name:  "should use provided familyID",
-			input: CreateRefreshTokenInput{UserID: "user-123", FamilyID: "custom-family"},
-			refreshTokenRepo: &mockRefreshTokenRepository{
-				createFunc: func(_ context.Context, token *entity.RefreshToken) (string, error) {
-					if token.FamilyID != "custom-family" {
-						t.Errorf("expected familyID custom-family, got %s", token.FamilyID)
-					}
-					return "new-token-id", nil
-				},
-			},
-			tokenManager: &mockTokenManager{},
-			wantErr:      false,
-		},
-		{
-			name:             "should return error for empty userID",
-			input:            CreateRefreshTokenInput{UserID: ""},
-			refreshTokenRepo: &mockRefreshTokenRepository{},
-			tokenManager:     &mockTokenManager{},
-			wantErr:          true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uc := NewRefreshTokenUseCase(tt.refreshTokenRepo, &mockRepository{}, tt.tokenManager)
-
-			output, err := uc.CreateInitialToken(context.Background(), tt.input)
-
-			if tt.wantErr {
-				if err == nil {
-					t.Error("expected error, got nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-				return
-			}
-
-			if output.RefreshToken == "" {
-				t.Error("expected refresh token, got empty")
-			}
-		})
-	}
-}
-
 func TestRefreshTokenUseCase_TokenRotation(t *testing.T) {
 	now := time.Now()
 	originalToken := &entity.RefreshToken{
@@ -309,19 +244,16 @@ func TestRefreshTokenUseCase_TokenRotation(t *testing.T) {
 		UserID:    "user-123",
 	}
 
-	var revokedID string
-	var createdToken *entity.RefreshToken
+	var rotatedOldID string
+	var rotatedNewToken *entity.RefreshToken
 
 	refreshTokenRepo := &mockRefreshTokenRepository{
 		getByHashFunc: func(_ context.Context, _ string) (*entity.RefreshToken, error) {
 			return originalToken, nil
 		},
-		revokeFunc: func(_ context.Context, id string) error {
-			revokedID = id
-			return nil
-		},
-		createFunc: func(_ context.Context, token *entity.RefreshToken) (string, error) {
-			createdToken = token
+		rotateTokenFunc: func(_ context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error) {
+			rotatedOldID = oldTokenID
+			rotatedNewToken = newToken
 			return "new-token-id", nil
 		},
 	}
@@ -341,19 +273,19 @@ func TestRefreshTokenUseCase_TokenRotation(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if revokedID != "original-token-id" {
-		t.Errorf("expected original token to be revoked, got %s", revokedID)
+	if rotatedOldID != "original-token-id" {
+		t.Errorf("expected original token to be rotated, got %s", rotatedOldID)
 	}
 
-	if createdToken == nil {
+	if rotatedNewToken == nil {
 		t.Fatal("expected new token to be created")
 	}
 
-	if createdToken.FamilyID != "family-123" {
-		t.Errorf("expected same familyID, got %s", createdToken.FamilyID)
+	if rotatedNewToken.FamilyID != "family-123" {
+		t.Errorf("expected same familyID, got %s", rotatedNewToken.FamilyID)
 	}
 
-	if createdToken.Replaces == nil || *createdToken.Replaces != "original-token-id" {
+	if rotatedNewToken.Replaces == nil || *rotatedNewToken.Replaces != "original-token-id" {
 		t.Error("expected new token to reference original token")
 	}
 }

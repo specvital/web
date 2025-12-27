@@ -48,17 +48,69 @@ func (m *mockTokenManager) ValidateAccessToken(tokenString string) (*entity.Clai
 	return nil, nil
 }
 
+type mockRefreshTokenRepo struct {
+	createFunc          func(ctx context.Context, token *entity.RefreshToken) (string, error)
+	getByHashFunc       func(ctx context.Context, hash string) (*entity.RefreshToken, error)
+	revokeFunc          func(ctx context.Context, id string) error
+	revokeFamilyFunc    func(ctx context.Context, familyID string) error
+	revokeUserTokenFunc func(ctx context.Context, userID string) error
+	rotateTokenFunc     func(ctx context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error)
+}
+
+func (m *mockRefreshTokenRepo) Create(ctx context.Context, token *entity.RefreshToken) (string, error) {
+	if m.createFunc != nil {
+		return m.createFunc(ctx, token)
+	}
+	return "refresh-token-id", nil
+}
+
+func (m *mockRefreshTokenRepo) GetByHash(ctx context.Context, hash string) (*entity.RefreshToken, error) {
+	if m.getByHashFunc != nil {
+		return m.getByHashFunc(ctx, hash)
+	}
+	return nil, nil
+}
+
+func (m *mockRefreshTokenRepo) Revoke(ctx context.Context, id string) error {
+	if m.revokeFunc != nil {
+		return m.revokeFunc(ctx, id)
+	}
+	return nil
+}
+
+func (m *mockRefreshTokenRepo) RevokeFamily(ctx context.Context, familyID string) error {
+	if m.revokeFamilyFunc != nil {
+		return m.revokeFamilyFunc(ctx, familyID)
+	}
+	return nil
+}
+
+func (m *mockRefreshTokenRepo) RevokeUserTokens(ctx context.Context, userID string) error {
+	if m.revokeUserTokenFunc != nil {
+		return m.revokeUserTokenFunc(ctx, userID)
+	}
+	return nil
+}
+
+func (m *mockRefreshTokenRepo) RotateToken(ctx context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error) {
+	if m.rotateTokenFunc != nil {
+		return m.rotateTokenFunc(ctx, oldTokenID, newToken)
+	}
+	return "new-token-id", nil
+}
+
 func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 	tests := []struct {
-		name            string
-		input           HandleOAuthCallbackInput
-		setupEncryptor  func() *mockEncryptor
-		setupOAuth      func() *mockOAuthClient
-		setupRepo       func() *mockRepository
-		setupStateStore func() *mockStateStore
-		setupToken      func() *mockTokenManager
-		wantErr         error
-		wantToken       string
+		name                  string
+		input                 HandleOAuthCallbackInput
+		setupEncryptor        func() *mockEncryptor
+		setupOAuth            func() *mockOAuthClient
+		setupRefreshTokenRepo func() *mockRefreshTokenRepo
+		setupRepo             func() *mockRepository
+		setupStateStore       func() *mockStateStore
+		setupToken            func() *mockTokenManager
+		wantErr               error
+		wantAccessToken       string
 	}{
 		{
 			name: "should handle callback for new user",
@@ -89,6 +141,9 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 						}, nil
 					},
 				}
+			},
+			setupRefreshTokenRepo: func() *mockRefreshTokenRepo {
+				return &mockRefreshTokenRepo{}
 			},
 			setupRepo: func() *mockRepository {
 				return &mockRepository{
@@ -123,8 +178,8 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 					},
 				}
 			},
-			wantErr:   nil,
-			wantToken: "jwt-token-new-user-id",
+			wantErr:         nil,
+			wantAccessToken: "jwt-token-new-user-id",
 		},
 		{
 			name: "should handle callback for existing user",
@@ -152,6 +207,9 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 						}, nil
 					},
 				}
+			},
+			setupRefreshTokenRepo: func() *mockRefreshTokenRepo {
+				return &mockRefreshTokenRepo{}
 			},
 			setupRepo: func() *mockRepository {
 				token := "old-token"
@@ -194,8 +252,8 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 					},
 				}
 			},
-			wantErr:   nil,
-			wantToken: "jwt-token-existing-user-id",
+			wantErr:         nil,
+			wantAccessToken: "jwt-token-existing-user-id",
 		},
 		{
 			name: "should return error for invalid state",
@@ -208,6 +266,9 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 			},
 			setupOAuth: func() *mockOAuthClient {
 				return &mockOAuthClient{}
+			},
+			setupRefreshTokenRepo: func() *mockRefreshTokenRepo {
+				return &mockRefreshTokenRepo{}
 			},
 			setupRepo: func() *mockRepository {
 				return &mockRepository{}
@@ -222,8 +283,8 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 			setupToken: func() *mockTokenManager {
 				return &mockTokenManager{}
 			},
-			wantErr:   domain.ErrInvalidState,
-			wantToken: "",
+			wantErr:         domain.ErrInvalidState,
+			wantAccessToken: "",
 		},
 	}
 
@@ -231,11 +292,12 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			enc := tt.setupEncryptor()
 			oauth := tt.setupOAuth()
+			refreshTokenRepo := tt.setupRefreshTokenRepo()
 			repo := tt.setupRepo()
 			stateStore := tt.setupStateStore()
 			tokenMgr := tt.setupToken()
 
-			uc := NewHandleOAuthCallbackUseCase(enc, oauth, repo, stateStore, tokenMgr)
+			uc := NewHandleOAuthCallbackUseCase(enc, oauth, refreshTokenRepo, repo, stateStore, tokenMgr)
 
 			output, err := uc.Execute(context.Background(), tt.input)
 
@@ -255,8 +317,12 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 				return
 			}
 
-			if output.Token != tt.wantToken {
-				t.Errorf("expected token %q, got %q", tt.wantToken, output.Token)
+			if output.AccessToken != tt.wantAccessToken {
+				t.Errorf("expected access token %q, got %q", tt.wantAccessToken, output.AccessToken)
+			}
+
+			if output.RefreshToken == "" {
+				t.Error("expected refresh token, got empty")
 			}
 
 			if output.User == nil {

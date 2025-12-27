@@ -117,7 +117,7 @@ paths:
     post:
       operationId: authLogout
       summary: Logout and clear authentication
-      description: Clears the authentication cookie
+      description: Clears authentication cookies and revokes refresh token in database
       security:
         - cookieAuth: []
       responses:
@@ -127,6 +127,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LogoutResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/auth/refresh:
+    post:
+      operationId: authRefresh
+      summary: Refresh authentication tokens
+      description: |
+        Exchanges a valid refresh token for a new access/refresh token pair.
+        The old refresh token is invalidated (rotation).
+        If a revoked token is used, the entire token family is invalidated (reuse detection).
+      responses:
+        "200":
+          description: Tokens refreshed successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: New access and refresh tokens as HTTP-only cookies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -959,6 +984,15 @@ components:
         success:
           type: boolean
           description: Logout operation result
+
+    RefreshResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Token refresh operation result
 
     # Repository List Responses
     BookmarkedRepositoriesResponse:

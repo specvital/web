@@ -329,6 +329,12 @@ type RecentRepositoriesResponse struct {
 	Data []RepositoryCard `json:"data"`
 }
 
+// RefreshResponse defines model for RefreshResponse.
+type RefreshResponse struct {
+	// Success Token refresh operation result
+	Success bool `json:"success"`
+}
+
 // RepositoryCard defines model for RepositoryCard.
 type RepositoryCard struct {
 	// FullName Full repository name in owner/name format
@@ -798,6 +804,9 @@ type ServerInterface interface {
 	// Get current user info
 	// (GET /api/auth/me)
 	AuthMe(w http.ResponseWriter, r *http.Request)
+	// Refresh authentication tokens
+	// (POST /api/auth/refresh)
+	AuthRefresh(w http.ResponseWriter, r *http.Request)
 	// Get recently analyzed repositories
 	// (GET /api/repositories/recent)
 	GetRecentRepositories(w http.ResponseWriter, r *http.Request, params GetRecentRepositoriesParams)
@@ -879,6 +888,12 @@ func (_ Unimplemented) AuthLogout(w http.ResponseWriter, r *http.Request) {
 // Get current user info
 // (GET /api/auth/me)
 func (_ Unimplemented) AuthMe(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Refresh authentication tokens
+// (POST /api/auth/refresh)
+func (_ Unimplemented) AuthRefresh(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1137,6 +1152,20 @@ func (siw *ServerInterfaceWrapper) AuthMe(w http.ResponseWriter, r *http.Request
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AuthMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AuthRefresh operation middleware
+func (siw *ServerInterfaceWrapper) AuthRefresh(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AuthRefresh(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1798,6 +1827,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/auth/me", wrapper.AuthMe)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/auth/refresh", wrapper.AuthRefresh)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/repositories/recent", wrapper.GetRecentRepositories)
 	})
 	r.Group(func(r chi.Router) {
@@ -2087,6 +2119,52 @@ type AuthMe500ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response AuthMe500ApplicationProblemPlusJSONResponse) VisitAuthMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AuthRefreshRequestObject struct {
+}
+
+type AuthRefreshResponseObject interface {
+	VisitAuthRefreshResponse(w http.ResponseWriter) error
+}
+
+type AuthRefresh200ResponseHeaders struct {
+	SetCookie string
+}
+
+type AuthRefresh200JSONResponse struct {
+	Body    RefreshResponse
+	Headers AuthRefresh200ResponseHeaders
+}
+
+func (response AuthRefresh200JSONResponse) VisitAuthRefreshResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Set-Cookie", fmt.Sprint(response.Headers.SetCookie))
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type AuthRefresh401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response AuthRefresh401ApplicationProblemPlusJSONResponse) VisitAuthRefreshResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AuthRefresh500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response AuthRefresh500ApplicationProblemPlusJSONResponse) VisitAuthRefreshResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(500)
 
@@ -2815,6 +2893,9 @@ type StrictServerInterface interface {
 	// Get current user info
 	// (GET /api/auth/me)
 	AuthMe(ctx context.Context, request AuthMeRequestObject) (AuthMeResponseObject, error)
+	// Refresh authentication tokens
+	// (POST /api/auth/refresh)
+	AuthRefresh(ctx context.Context, request AuthRefreshRequestObject) (AuthRefreshResponseObject, error)
 	// Get recently analyzed repositories
 	// (GET /api/repositories/recent)
 	GetRecentRepositories(ctx context.Context, request GetRecentRepositoriesRequestObject) (GetRecentRepositoriesResponseObject, error)
@@ -3033,6 +3114,30 @@ func (sh *strictHandler) AuthMe(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AuthMeResponseObject); ok {
 		if err := validResponse.VisitAuthMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AuthRefresh operation middleware
+func (sh *strictHandler) AuthRefresh(w http.ResponseWriter, r *http.Request) {
+	var request AuthRefreshRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AuthRefresh(ctx, request.(AuthRefreshRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AuthRefresh")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AuthRefreshResponseObject); ok {
+		if err := validResponse.VisitAuthRefreshResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

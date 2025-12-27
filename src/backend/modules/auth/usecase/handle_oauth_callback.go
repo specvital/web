@@ -3,8 +3,10 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/google/uuid"
 
 	"github.com/specvital/web/src/backend/modules/auth/domain"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
@@ -17,21 +19,24 @@ type HandleOAuthCallbackInput struct {
 }
 
 type HandleOAuthCallbackOutput struct {
-	Token string
-	User  *entity.User
+	AccessToken  string
+	RefreshToken string
+	User         *entity.User
 }
 
 type HandleOAuthCallbackUseCase struct {
-	encryptor    port.Encryptor
-	oauthClient  port.OAuthClient
-	repository   port.Repository
-	stateStore   port.StateStore
-	tokenManager port.TokenManager
+	encryptor        port.Encryptor
+	oauthClient      port.OAuthClient
+	refreshTokenRepo port.RefreshTokenRepository
+	repository       port.Repository
+	stateStore       port.StateStore
+	tokenManager     port.TokenManager
 }
 
 func NewHandleOAuthCallbackUseCase(
 	encryptor port.Encryptor,
 	oauthClient port.OAuthClient,
+	refreshTokenRepo port.RefreshTokenRepository,
 	repository port.Repository,
 	stateStore port.StateStore,
 	tokenManager port.TokenManager,
@@ -41,6 +46,9 @@ func NewHandleOAuthCallbackUseCase(
 	}
 	if oauthClient == nil {
 		panic("oauthClient is required")
+	}
+	if refreshTokenRepo == nil {
+		panic("refreshTokenRepo is required")
 	}
 	if repository == nil {
 		panic("repository is required")
@@ -52,11 +60,12 @@ func NewHandleOAuthCallbackUseCase(
 		panic("tokenManager is required")
 	}
 	return &HandleOAuthCallbackUseCase{
-		encryptor:    encryptor,
-		oauthClient:  oauthClient,
-		repository:   repository,
-		stateStore:   stateStore,
-		tokenManager: tokenManager,
+		encryptor:        encryptor,
+		oauthClient:      oauthClient,
+		refreshTokenRepo: refreshTokenRepo,
+		repository:       repository,
+		stateStore:       stateStore,
+		tokenManager:     tokenManager,
 	}
 }
 
@@ -97,9 +106,28 @@ func (uc *HandleOAuthCallbackUseCase) Execute(ctx context.Context, input HandleO
 		return nil, fmt.Errorf("generate jwt: %w", err)
 	}
 
+	refreshTokenResult, err := uc.tokenManager.GenerateRefreshToken()
+	if err != nil {
+		return nil, fmt.Errorf("generate refresh token: %w", err)
+	}
+
+	now := time.Now()
+	refreshToken := &entity.RefreshToken{
+		CreatedAt: now,
+		ExpiresAt: now.Add(domain.RefreshTokenExpiry),
+		FamilyID:  uuid.New().String(),
+		TokenHash: refreshTokenResult.TokenHash,
+		UserID:    user.ID,
+	}
+
+	if _, err := uc.refreshTokenRepo.Create(ctx, refreshToken); err != nil {
+		return nil, fmt.Errorf("create refresh token: %w", err)
+	}
+
 	return &HandleOAuthCallbackOutput{
-		Token: jwtToken,
-		User:  user,
+		AccessToken:  jwtToken,
+		RefreshToken: refreshTokenResult.Token,
+		User:         user,
 	}, nil
 }
 

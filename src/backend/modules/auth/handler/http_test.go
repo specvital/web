@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -169,10 +170,62 @@ func (m *mockTokenManager) ValidateAccessToken(tokenString string) (*entity.Clai
 	return nil, nil
 }
 
+type mockRefreshTokenRepo struct {
+	createFunc          func(ctx context.Context, token *entity.RefreshToken) (string, error)
+	getByHashFunc       func(ctx context.Context, hash string) (*entity.RefreshToken, error)
+	revokeFunc          func(ctx context.Context, id string) error
+	revokeFamilyFunc    func(ctx context.Context, familyID string) error
+	revokeUserTokenFunc func(ctx context.Context, userID string) error
+	rotateTokenFunc     func(ctx context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error)
+}
+
+func (m *mockRefreshTokenRepo) Create(ctx context.Context, token *entity.RefreshToken) (string, error) {
+	if m.createFunc != nil {
+		return m.createFunc(ctx, token)
+	}
+	return "refresh-token-id", nil
+}
+
+func (m *mockRefreshTokenRepo) GetByHash(ctx context.Context, hash string) (*entity.RefreshToken, error) {
+	if m.getByHashFunc != nil {
+		return m.getByHashFunc(ctx, hash)
+	}
+	return nil, nil
+}
+
+func (m *mockRefreshTokenRepo) Revoke(ctx context.Context, id string) error {
+	if m.revokeFunc != nil {
+		return m.revokeFunc(ctx, id)
+	}
+	return nil
+}
+
+func (m *mockRefreshTokenRepo) RevokeFamily(ctx context.Context, familyID string) error {
+	if m.revokeFamilyFunc != nil {
+		return m.revokeFamilyFunc(ctx, familyID)
+	}
+	return nil
+}
+
+func (m *mockRefreshTokenRepo) RevokeUserTokens(ctx context.Context, userID string) error {
+	if m.revokeUserTokenFunc != nil {
+		return m.revokeUserTokenFunc(ctx, userID)
+	}
+	return nil
+}
+
+func (m *mockRefreshTokenRepo) RotateToken(ctx context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error) {
+	if m.rotateTokenFunc != nil {
+		return m.rotateTokenFunc(ctx, oldTokenID, newToken)
+	}
+	return "new-token-id", nil
+}
+
 func createTestHandler(
 	getCurrentUserUC *usecase.GetCurrentUserUseCase,
 	handleOAuthCallbackUC *usecase.HandleOAuthCallbackUseCase,
 	initiateOAuthUC *usecase.InitiateOAuthUseCase,
+	refreshTokenUC *usecase.RefreshTokenUseCase,
 ) *Handler {
 	handler, _ := NewHandler(&HandlerConfig{
 		CookieSecure:        false,
@@ -181,6 +234,7 @@ func createTestHandler(
 		HandleOAuthCallback: handleOAuthCallbackUC,
 		InitiateOAuth:       initiateOAuthUC,
 		Logger:              logger.New(),
+		RefreshToken:        refreshTokenUC,
 	})
 	return handler
 }
@@ -245,23 +299,25 @@ func (m *mockGitHubAppHandler) GetUserGitHubAppInstallations(_ context.Context, 
 	return api.GetUserGitHubAppInstallations200JSONResponse{Data: []api.GitHubAppInstallation{}}, nil
 }
 
-func createDefaultUseCases() (*usecase.GetCurrentUserUseCase, *usecase.HandleOAuthCallbackUseCase, *usecase.InitiateOAuthUseCase, *mockRepository, *mockOAuthClient, *mockStateStore) {
+func createDefaultUseCases() (*usecase.GetCurrentUserUseCase, *usecase.HandleOAuthCallbackUseCase, *usecase.InitiateOAuthUseCase, *usecase.RefreshTokenUseCase, *mockRepository, *mockOAuthClient, *mockStateStore, *mockRefreshTokenRepo) {
 	repo := &mockRepository{}
+	refreshTokenRepo := &mockRefreshTokenRepo{}
 	oauthClient := &mockOAuthClient{}
 	stateStore := &mockStateStore{}
 	encryptor := &mockEncryptor{}
 	tokenManager := &mockTokenManager{}
 
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, repo, stateStore, tokenManager)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, tokenManager)
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
+	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, tokenManager)
 
-	return getCurrentUser, handleOAuthCallback, initiateOAuth, repo, oauthClient, stateStore
+	return getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken, repo, oauthClient, stateStore, refreshTokenRepo
 }
 
 func TestAuthLogin_Success(t *testing.T) {
-	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+	getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken, _, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
@@ -278,6 +334,7 @@ func TestAuthLogin_Success(t *testing.T) {
 
 func TestAuthLogin_ServiceError(t *testing.T) {
 	repo := &mockRepository{}
+	refreshTokenRepo := &mockRefreshTokenRepo{}
 	oauthClient := &mockOAuthClient{}
 	stateStore := &mockStateStore{
 		createFunc: func(_ context.Context) (string, error) {
@@ -288,10 +345,11 @@ func TestAuthLogin_ServiceError(t *testing.T) {
 	tokenManager := &mockTokenManager{}
 
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, repo, stateStore, tokenManager)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, tokenManager)
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
+	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, tokenManager)
 
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
@@ -313,16 +371,18 @@ func TestAuthCallback_Success(t *testing.T) {
 			}, nil
 		},
 	}
+	refreshTokenRepo := &mockRefreshTokenRepo{}
 	oauthClient := &mockOAuthClient{}
 	stateStore := &mockStateStore{}
 	encryptor := &mockEncryptor{}
 	tokenManager := &mockTokenManager{}
 
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, repo, stateStore, tokenManager)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, tokenManager)
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
+	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, tokenManager)
 
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/callback?code=test-code&state=test-state", nil)
@@ -346,6 +406,7 @@ func TestAuthCallback_Success(t *testing.T) {
 
 func TestAuthCallback_InvalidState(t *testing.T) {
 	repo := &mockRepository{}
+	refreshTokenRepo := &mockRefreshTokenRepo{}
 	oauthClient := &mockOAuthClient{}
 	stateStore := &mockStateStore{
 		validateFunc: func(_ context.Context, _ string) error {
@@ -356,10 +417,11 @@ func TestAuthCallback_InvalidState(t *testing.T) {
 	tokenManager := &mockTokenManager{}
 
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, repo, stateStore, tokenManager)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, tokenManager)
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
+	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, tokenManager)
 
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/callback?code=test-code&state=invalid-state", nil)
@@ -383,8 +445,8 @@ func TestAuthCallback_MissingParameters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
-			handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+			getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken, _, _, _, _ := createDefaultUseCases()
+			handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 			router := setupTestRouter(handler)
 
 			req := httptest.NewRequest(http.MethodGet, tt.url, nil)
@@ -399,8 +461,8 @@ func TestAuthCallback_MissingParameters(t *testing.T) {
 }
 
 func TestAuthLogout_Success(t *testing.T) {
-	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+	getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken, _, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
@@ -421,8 +483,8 @@ func TestAuthLogout_Success(t *testing.T) {
 }
 
 func TestAuthMe_Unauthenticated(t *testing.T) {
-	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+	getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken, _, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 	router := setupTestRouter(handler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
@@ -440,11 +502,13 @@ func TestAuthMe_UserNotFound(t *testing.T) {
 			return nil, domain.ErrUserNotFound
 		},
 	}
+	refreshTokenRepo := &mockRefreshTokenRepo{}
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, repo, &mockStateStore{}, &mockTokenManager{})
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
+	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{})
 
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 
 	claims := &entity.Claims{}
 	claims.Subject = "user-123"
@@ -467,11 +531,13 @@ func TestAuthMe_Success(t *testing.T) {
 			}, nil
 		},
 	}
+	refreshTokenRepo := &mockRefreshTokenRepo{}
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, repo, &mockStateStore{}, &mockTokenManager{})
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
+	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{})
 
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 
 	claims := &entity.Claims{}
 	claims.Subject = "user-123"
@@ -484,8 +550,8 @@ func TestAuthMe_Success(t *testing.T) {
 	}
 }
 
-func TestBuildAuthCookie(t *testing.T) {
-	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
+func TestBuildAccessCookie(t *testing.T) {
+	getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken, _, _, _, _ := createDefaultUseCases()
 	handler, _ := NewHandler(&HandlerConfig{
 		CookieSecure:        true,
 		FrontendURL:         "http://localhost:5173",
@@ -493,9 +559,10 @@ func TestBuildAuthCookie(t *testing.T) {
 		HandleOAuthCallback: handleOAuthCallback,
 		InitiateOAuth:       initiateOAuth,
 		Logger:              logger.New(),
+		RefreshToken:        refreshToken,
 	})
 
-	cookie := handler.buildAuthCookie("test-token")
+	cookie := handler.buildAccessCookie("test-token")
 	if cookie == "" {
 		t.Error("expected cookie string to be non-empty")
 	}
@@ -517,17 +584,139 @@ func TestBuildAuthCookie(t *testing.T) {
 	}
 }
 
-func TestBuildLogoutCookie(t *testing.T) {
-	getCurrentUser, handleOAuthCallback, initiateOAuth, _, _, _ := createDefaultUseCases()
-	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth)
+func TestBuildExpiredCookie(t *testing.T) {
+	getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken, _, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
 
-	cookie := handler.BuildLogoutCookie()
+	cookie := handler.buildExpiredCookie(AccessCookieName)
 	if cookie == "" {
 		t.Error("expected cookie string to be non-empty")
 	}
 
 	if !strings.Contains(cookie, "Max-Age=") {
 		t.Error("logout cookie should contain Max-Age")
+	}
+}
+
+func TestAuthRefresh_Success(t *testing.T) {
+	now := time.Now()
+	repo := &mockRepository{
+		getUserByIDFunc: func(_ context.Context, _ string) (*entity.User, error) {
+			return &entity.User{ID: "user-123", Username: "testuser"}, nil
+		},
+	}
+	refreshTokenRepo := &mockRefreshTokenRepo{
+		getByHashFunc: func(_ context.Context, _ string) (*entity.RefreshToken, error) {
+			return &entity.RefreshToken{
+				ID:        "token-123",
+				UserID:    "user-123",
+				FamilyID:  "family-123",
+				TokenHash: "hashed-valid-refresh-token",
+				CreatedAt: now.Add(-time.Hour),
+				ExpiresAt: now.Add(6 * 24 * time.Hour),
+			}, nil
+		},
+	}
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
+	refreshTokenUC := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{
+		hashTokenFunc: func(token string) string {
+			return "hashed-" + token
+		},
+	})
+
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshTokenUC)
+
+	ctx := middleware.WithRefreshToken(context.Background(), "valid-refresh-token")
+	req := api.AuthRefreshRequestObject{}
+
+	resp, err := handler.AuthRefresh(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, ok := resp.(refreshResponse); !ok {
+		t.Errorf("expected refreshResponse, got %T", resp)
+	}
+}
+
+func TestAuthRefresh_MissingToken(t *testing.T) {
+	getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken, _, _, _, _ := createDefaultUseCases()
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshToken)
+
+	ctx := context.Background()
+	req := api.AuthRefreshRequestObject{}
+
+	resp, err := handler.AuthRefresh(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, ok := resp.(api.AuthRefresh401ApplicationProblemPlusJSONResponse); !ok {
+		t.Errorf("expected 401 response, got %T", resp)
+	}
+}
+
+func TestAuthRefresh_ExpiredToken(t *testing.T) {
+	repo := &mockRepository{}
+	refreshTokenRepo := &mockRefreshTokenRepo{
+		getByHashFunc: func(_ context.Context, _ string) (*entity.RefreshToken, error) {
+			return nil, domain.ErrRefreshTokenExpired
+		},
+	}
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
+	refreshTokenUC := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{
+		hashTokenFunc: func(token string) string {
+			return "hashed-" + token
+		},
+	})
+
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshTokenUC)
+
+	ctx := middleware.WithRefreshToken(context.Background(), "expired-token")
+	req := api.AuthRefreshRequestObject{}
+
+	resp, err := handler.AuthRefresh(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, ok := resp.(api.AuthRefresh401ApplicationProblemPlusJSONResponse); !ok {
+		t.Errorf("expected 401 response, got %T", resp)
+	}
+}
+
+func TestAuthRefresh_TokenReuseDetected(t *testing.T) {
+	repo := &mockRepository{}
+	refreshTokenRepo := &mockRefreshTokenRepo{
+		getByHashFunc: func(_ context.Context, _ string) (*entity.RefreshToken, error) {
+			return nil, domain.ErrTokenReuseDetected
+		},
+	}
+	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
+	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
+	refreshTokenUC := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{
+		hashTokenFunc: func(token string) string {
+			return "hashed-" + token
+		},
+	})
+
+	handler := createTestHandler(getCurrentUser, handleOAuthCallback, initiateOAuth, refreshTokenUC)
+
+	ctx := middleware.WithRefreshToken(context.Background(), "reused-token")
+	req := api.AuthRefreshRequestObject{}
+
+	resp, err := handler.AuthRefresh(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, ok := resp.(api.AuthRefresh401ApplicationProblemPlusJSONResponse); !ok {
+		t.Errorf("expected 401 response, got %T", resp)
 	}
 }
 

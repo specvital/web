@@ -39,6 +39,12 @@ func (h *MockHandler) AuthMe(_ context.Context, _ api.AuthMeRequestObject) (api.
 	}, nil
 }
 
+func (h *MockHandler) AuthRefresh(_ context.Context, _ api.AuthRefreshRequestObject) (api.AuthRefreshResponseObject, error) {
+	return api.AuthRefresh500ApplicationProblemPlusJSONResponse{
+		InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("mock: not implemented"),
+	}, nil
+}
+
 // MockBookmarkHandler is a test double for bookmark endpoints.
 type MockBookmarkHandler struct{}
 

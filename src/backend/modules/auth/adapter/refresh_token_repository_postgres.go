@@ -7,6 +7,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/specvital/web/src/backend/internal/db"
 	"github.com/specvital/web/src/backend/modules/auth/domain"
@@ -15,16 +16,20 @@ import (
 )
 
 type RefreshTokenPostgresRepository struct {
+	pool    *pgxpool.Pool
 	queries *db.Queries
 }
 
 var _ port.RefreshTokenRepository = (*RefreshTokenPostgresRepository)(nil)
 
-func NewRefreshTokenPostgresRepository(queries *db.Queries) *RefreshTokenPostgresRepository {
+func NewRefreshTokenPostgresRepository(pool *pgxpool.Pool, queries *db.Queries) *RefreshTokenPostgresRepository {
+	if pool == nil {
+		panic("pool is required")
+	}
 	if queries == nil {
 		panic("queries is required")
 	}
-	return &RefreshTokenPostgresRepository{queries: queries}
+	return &RefreshTokenPostgresRepository{pool: pool, queries: queries}
 }
 
 func (r *RefreshTokenPostgresRepository) Create(ctx context.Context, token *entity.RefreshToken) (string, error) {
@@ -127,6 +132,82 @@ func (r *RefreshTokenPostgresRepository) RevokeUserTokens(ctx context.Context, u
 	}
 
 	return nil
+}
+
+func (r *RefreshTokenPostgresRepository) RotateToken(ctx context.Context, oldTokenID string, newToken *entity.RefreshToken) (string, error) {
+	if oldTokenID == "" {
+		return "", errors.New("old token ID is required")
+	}
+	if newToken == nil {
+		return "", errors.New("new token is required")
+	}
+
+	var newTokenID string
+	err := r.withTx(ctx, func(qtx *db.Queries) error {
+		oldUUID, err := stringToUUID(oldTokenID)
+		if err != nil {
+			return fmt.Errorf("parse old token ID: %w", err)
+		}
+
+		rowsAffected, err := qtx.RevokeRefreshToken(ctx, oldUUID)
+		if err != nil {
+			return fmt.Errorf("revoke old token: %w", err)
+		}
+		if rowsAffected == 0 {
+			return domain.ErrRefreshTokenNotFound
+		}
+
+		userUUID, err := stringToUUID(newToken.UserID)
+		if err != nil {
+			return fmt.Errorf("parse user ID: %w", err)
+		}
+		familyUUID, err := stringToUUID(newToken.FamilyID)
+		if err != nil {
+			return fmt.Errorf("parse family ID: %w", err)
+		}
+
+		params := db.CreateRefreshTokenParams{
+			UserID:    userUUID,
+			TokenHash: newToken.TokenHash,
+			FamilyID:  familyUUID,
+			ExpiresAt: pgtype.Timestamptz{Time: newToken.ExpiresAt, Valid: true},
+		}
+
+		if newToken.Replaces != nil {
+			replacesUUID, err := stringToUUID(*newToken.Replaces)
+			if err != nil {
+				return fmt.Errorf("parse replaces ID: %w", err)
+			}
+			params.Replaces = replacesUUID
+		}
+
+		row, err := qtx.CreateRefreshToken(ctx, params)
+		if err != nil {
+			return fmt.Errorf("create new token: %w", err)
+		}
+
+		newTokenID = uuidToString(row.ID)
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return newTokenID, nil
+}
+
+func (r *RefreshTokenPostgresRepository) withTx(ctx context.Context, fn func(*db.Queries) error) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if err := fn(r.queries.WithTx(tx)); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func mapRefreshTokenFromDB(row *db.RefreshToken) *entity.RefreshToken {

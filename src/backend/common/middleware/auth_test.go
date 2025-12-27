@@ -16,7 +16,7 @@ func TestRequireAuth_ValidToken(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	token, _ := jwtManager.GenerateAccessToken("user-123", "testuser")
 
-	m := NewAuthMiddleware(jwtManager, "auth_token")
+	m := NewAuthMiddleware(jwtManager, "auth_token", "refresh_token")
 
 	var capturedUserID string
 	handler := m.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +40,7 @@ func TestRequireAuth_ValidToken(t *testing.T) {
 
 func TestRequireAuth_MissingCookie(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
-	m := NewAuthMiddleware(jwtManager, "auth_token")
+	m := NewAuthMiddleware(jwtManager, "auth_token", "refresh_token")
 
 	handler := m.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("handler should not be called")
@@ -61,7 +61,7 @@ func TestRequireAuth_MissingCookie(t *testing.T) {
 
 func TestRequireAuth_InvalidToken(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
-	m := NewAuthMiddleware(jwtManager, "auth_token")
+	m := NewAuthMiddleware(jwtManager, "auth_token", "refresh_token")
 
 	handler := m.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("handler should not be called")
@@ -85,7 +85,7 @@ func TestOptionalAuth_ValidToken(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	token, _ := jwtManager.GenerateAccessToken("user-123", "testuser")
 
-	m := NewAuthMiddleware(jwtManager, "auth_token")
+	m := NewAuthMiddleware(jwtManager, "auth_token", "refresh_token")
 
 	var capturedUserID string
 	handler := m.OptionalAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +109,7 @@ func TestOptionalAuth_ValidToken(t *testing.T) {
 
 func TestOptionalAuth_MissingCookie(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
-	m := NewAuthMiddleware(jwtManager, "auth_token")
+	m := NewAuthMiddleware(jwtManager, "auth_token", "refresh_token")
 
 	var capturedUserID string
 	handler := m.OptionalAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +132,7 @@ func TestOptionalAuth_MissingCookie(t *testing.T) {
 
 func TestOptionalAuth_InvalidToken(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
-	m := NewAuthMiddleware(jwtManager, "auth_token")
+	m := NewAuthMiddleware(jwtManager, "auth_token", "refresh_token")
 
 	var capturedUserID string
 	handler := m.OptionalAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -158,7 +158,7 @@ func TestOptionalAuth_NonAPIRoute_SkipsAuth(t *testing.T) {
 	jwtManager, _ := authadapter.NewJWTTokenManager(testSecret)
 	token, _ := jwtManager.GenerateAccessToken("user-123", "testuser")
 
-	m := NewAuthMiddleware(jwtManager, "auth_token")
+	m := NewAuthMiddleware(jwtManager, "auth_token", "refresh_token")
 
 	var capturedUserID string
 	handler := m.OptionalAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -13,11 +13,19 @@ import (
 
 type contextKey string
 
-const claimsKey contextKey = "claims"
+const (
+	claimsKey       contextKey = "claims"
+	refreshTokenKey contextKey = "refresh_token"
+)
 
 func GetClaims(ctx context.Context) *entity.Claims {
 	claims, _ := ctx.Value(claimsKey).(*entity.Claims)
 	return claims
+}
+
+func GetRefreshToken(ctx context.Context) string {
+	token, _ := ctx.Value(refreshTokenKey).(string)
+	return token
 }
 
 func GetUserID(ctx context.Context) string {
@@ -32,45 +40,62 @@ func WithClaims(ctx context.Context, claims *entity.Claims) context.Context {
 	return context.WithValue(ctx, claimsKey, claims)
 }
 
-type AuthMiddleware struct {
-	cookieName   string
-	tokenManager port.TokenManager
+func WithRefreshToken(ctx context.Context, token string) context.Context {
+	return context.WithValue(ctx, refreshTokenKey, token)
 }
 
-func NewAuthMiddleware(tokenManager port.TokenManager, cookieName string) *AuthMiddleware {
+type AuthMiddleware struct {
+	accessCookieName  string
+	refreshCookieName string
+	tokenManager      port.TokenManager
+}
+
+func NewAuthMiddleware(tokenManager port.TokenManager, accessCookieName, refreshCookieName string) *AuthMiddleware {
 	return &AuthMiddleware{
-		cookieName:   cookieName,
-		tokenManager: tokenManager,
+		accessCookieName:  accessCookieName,
+		refreshCookieName: refreshCookieName,
+		tokenManager:      tokenManager,
 	}
 }
 
 func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		if refreshCookie, err := r.Cookie(m.refreshCookieName); err == nil {
+			ctx = WithRefreshToken(ctx, refreshCookie.Value)
+		}
+
 		claims, err := m.extractClaims(r)
 		if err != nil {
 			writeUnauthorized(w, "authentication required")
 			return
 		}
 
-		ctx := WithClaims(r.Context(), claims)
+		ctx = WithClaims(ctx, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
 func (m *AuthMiddleware) OptionalAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip auth parsing for non-API routes (health, docs, etc.)
 		if !isAPIRoute(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
+		ctx := r.Context()
+
 		claims, err := m.extractClaims(r)
 		if err == nil && claims != nil {
-			r = r.WithContext(WithClaims(r.Context(), claims))
+			ctx = WithClaims(ctx, claims)
 		}
 
-		next.ServeHTTP(w, r)
+		if refreshCookie, err := r.Cookie(m.refreshCookieName); err == nil {
+			ctx = WithRefreshToken(ctx, refreshCookie.Value)
+		}
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -82,7 +107,7 @@ func isAPIRoute(path string) bool {
 }
 
 func (m *AuthMiddleware) extractClaims(r *http.Request) (*entity.Claims, error) {
-	cookie, err := r.Cookie(m.cookieName)
+	cookie, err := r.Cookie(m.accessCookieName)
 	if err != nil {
 		return nil, err
 	}

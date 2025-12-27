@@ -19,6 +19,7 @@ type AuthHandlers interface {
 	AuthLogin(ctx context.Context, request AuthLoginRequestObject) (AuthLoginResponseObject, error)
 	AuthLogout(ctx context.Context, request AuthLogoutRequestObject) (AuthLogoutResponseObject, error)
 	AuthMe(ctx context.Context, request AuthMeRequestObject) (AuthMeResponseObject, error)
+	AuthRefresh(ctx context.Context, request AuthRefreshRequestObject) (AuthRefreshResponseObject, error)
 }
 
 type BookmarkHandlers interface {
@@ -106,6 +107,10 @@ func (h *APIHandlers) AuthLogout(ctx context.Context, request AuthLogoutRequestO
 
 func (h *APIHandlers) AuthMe(ctx context.Context, request AuthMeRequestObject) (AuthMeResponseObject, error) {
 	return h.auth.AuthMe(ctx, request)
+}
+
+func (h *APIHandlers) AuthRefresh(ctx context.Context, request AuthRefreshRequestObject) (AuthRefreshResponseObject, error) {
+	return h.auth.AuthRefresh(ctx, request)
 }
 
 func (h *APIHandlers) AddBookmark(ctx context.Context, request AddBookmarkRequestObject) (AddBookmarkResponseObject, error) {
