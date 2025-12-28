@@ -1,7 +1,6 @@
 export {
   BookmarkedSection,
   DashboardContent,
-  DashboardHeader,
   EmptyState,
   RepositoryCard,
   RepositoryList,

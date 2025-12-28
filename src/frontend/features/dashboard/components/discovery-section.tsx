@@ -142,17 +142,20 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
   const isOrgRefreshing = isRefreshingOrgs;
 
   return (
-    <section aria-labelledby="discovery-heading" className="mt-8">
-      <div className="flex items-center gap-2 mb-4">
+    <section
+      aria-labelledby="discovery-heading"
+      className="mt-12 rounded-lg border bg-muted/50 p-6"
+    >
+      <div className="mb-4 flex items-center gap-2">
         <Sparkles className="size-5 text-amber-500" />
         <h2 className="text-lg font-semibold" id="discovery-heading">
           {t("title")}
         </h2>
       </div>
 
-      <p className="text-sm text-muted-foreground mb-4">{t("description")}</p>
+      <p className="mb-4 text-sm text-muted-foreground">{t("description")}</p>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <DiscoveryCard
           count={unanalyzedPersonalCount}
           isLoading={isLoadingMyRepos}

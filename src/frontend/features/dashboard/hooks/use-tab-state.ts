@@ -2,7 +2,7 @@
 
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 
-const TAB_VALUES = ["bookmarked", "my-analyses"] as const;
+const TAB_VALUES = ["bookmarked", "my-analyses", "all"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 const tabParser = parseAsStringLiteral(TAB_VALUES).withDefault("bookmarked");

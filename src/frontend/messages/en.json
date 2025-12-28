@@ -109,6 +109,7 @@
     "allRepositories": "All Repositories",
     "bookmarked": "Bookmarked",
     "tabs": {
+      "all": "All",
       "bookmarked": "Bookmarked",
       "myAnalyses": "My Analyses"
     },
