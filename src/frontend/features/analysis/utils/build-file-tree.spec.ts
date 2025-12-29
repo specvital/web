@@ -64,7 +64,7 @@ describe("buildFileTree", () => {
       expect(fileNode?.type).toBe("file");
       expect(fileNode?.path).toBe("src/auth/login.spec.ts");
       expect(fileNode?.testCount).toBe(2);
-      expect(fileNode?.suite).toBeDefined();
+      expect(fileNode?.suites).toHaveLength(1);
     });
   });
 
@@ -174,6 +174,41 @@ describe("buildFileTree", () => {
       expect(result).toHaveLength(2);
       expect(result[0]?.name).toBe("src");
       expect(result[1]?.name).toBe("tests");
+    });
+  });
+
+  describe("suite merging", () => {
+    it("should merge suites with the same file path", () => {
+      const suites = [
+        createTestSuite({
+          filePath: "src/auth/login.spec.ts",
+          suiteName: "LoginService",
+          tests: [createTestCase({ line: 10 }), createTestCase({ line: 20 })],
+        }),
+        createTestSuite({
+          filePath: "src/auth/login.spec.ts",
+          suiteName: "AuthService",
+          tests: [createTestCase({ line: 30 })],
+        }),
+      ];
+      const result = buildFileTree(suites);
+
+      const fileNode = result[0]?.children[0]?.children[0];
+      expect(fileNode?.suites).toHaveLength(2);
+      expect(fileNode?.testCount).toBe(3);
+    });
+
+    it("should not merge suites with different file paths", () => {
+      const suites = [
+        createTestSuite({ filePath: "src/auth/login.spec.ts", suiteName: "Login" }),
+        createTestSuite({ filePath: "src/auth/logout.spec.ts", suiteName: "Logout" }),
+      ];
+      const result = buildFileTree(suites);
+
+      const authDir = result[0]?.children[0];
+      expect(authDir?.children).toHaveLength(2);
+      expect(authDir?.children[0]?.suites).toHaveLength(1);
+      expect(authDir?.children[1]?.suites).toHaveLength(1);
     });
   });
 

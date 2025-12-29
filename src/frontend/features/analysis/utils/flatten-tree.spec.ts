@@ -7,6 +7,7 @@ const createFileNode = (name: string, path: string): FileTreeNode => ({
   children: [],
   name,
   path,
+  suites: [],
   testCount: 1,
   type: "file",
 });
@@ -19,6 +20,7 @@ const createDirectoryNode = (
   children,
   name,
   path,
+  suites: [],
   testCount: children.reduce((sum, c) => sum + c.testCount, 0),
   type: "directory",
 });

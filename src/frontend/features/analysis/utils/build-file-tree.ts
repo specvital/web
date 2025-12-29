@@ -26,7 +26,7 @@ const createFileNode = (suite: TestSuite): FileTreeNode => ({
   children: [],
   name: getFileName(suite.filePath),
   path: suite.filePath,
-  suite,
+  suites: [suite],
   testCount: suite.tests.length,
   type: "file",
 });
@@ -44,6 +44,7 @@ const ensureDirectoryPath = (root: FileTreeNode, pathParts: string[]): FileTreeN
         children: [],
         name: part,
         path: currentPath,
+        suites: [],
         testCount: 0,
         type: "directory",
       };
@@ -85,6 +86,7 @@ export const buildFileTree = (suites: TestSuite[]): FileTreeNode[] => {
     children: [],
     name: "",
     path: "",
+    suites: [],
     testCount: 0,
     type: "directory",
   };
@@ -92,7 +94,17 @@ export const buildFileTree = (suites: TestSuite[]): FileTreeNode[] => {
   for (const suite of suites) {
     const dirParts = getDirectoryPath(suite.filePath);
     const parentDir = ensureDirectoryPath(root, dirParts);
-    parentDir.children.push(createFileNode(suite));
+
+    const existingFile = parentDir.children.find(
+      (c) => c.type === "file" && c.path === suite.filePath
+    );
+
+    if (existingFile) {
+      existingFile.suites.push(suite);
+      existingFile.testCount += suite.tests.length;
+    } else {
+      parentDir.children.push(createFileNode(suite));
+    }
   }
 
   updateTestCounts(root);

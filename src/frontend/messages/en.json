@@ -60,6 +60,10 @@
       "statusXfail": "Expected Fail",
       "resultSummary": "{filtered} of {total} tests"
     },
+    "viewMode": {
+      "list": "List view",
+      "tree": "Tree view"
+    },
     "status": {
       "loading": "Loading...",
       "loadingTitle": "Preparing",

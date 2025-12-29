@@ -60,6 +60,10 @@
       "statusXfail": "예상 실패",
       "resultSummary": "{total}개 중 {filtered}개 테스트"
     },
+    "viewMode": {
+      "list": "목록 보기",
+      "tree": "트리 보기"
+    },
     "status": {
       "loading": "로딩 중...",
       "loadingTitle": "준비 중",

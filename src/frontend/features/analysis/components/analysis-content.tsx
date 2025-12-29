@@ -12,7 +12,9 @@ import { FilterEmptyState } from "./filter-empty-state";
 import { ShareButton } from "./share-button";
 import { StatsCard } from "./stats-card";
 import { TestList } from "./test-list";
+import { TreeView } from "./tree-view";
 import { useFilterState } from "../hooks/use-filter-state";
+import { useViewMode } from "../hooks/use-view-mode";
 import { filterSuites } from "../utils/filter-suites";
 
 type AnalysisContentProps = {
@@ -22,6 +24,7 @@ type AnalysisContentProps = {
 export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const t = useTranslations("analyze");
   const { frameworks, query, setFrameworks, setQuery, setStatuses, statuses } = useFilterState();
+  const { setViewMode, viewMode } = useViewMode();
 
   const availableFrameworks = useMemo(
     () => result.summary.frameworks.map((f) => f.framework),
@@ -90,10 +93,18 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
             onFrameworksChange={setFrameworks}
             onQueryChange={setQuery}
             onStatusesChange={setStatuses}
+            onViewModeChange={setViewMode}
             query={query}
             statuses={statuses}
+            viewMode={viewMode}
           />
-          {hasFilter && !hasResults ? <FilterEmptyState /> : <TestList suites={filteredSuites} />}
+          {hasFilter && !hasResults ? (
+            <FilterEmptyState />
+          ) : viewMode === "tree" ? (
+            <TreeView suites={filteredSuites} />
+          ) : (
+            <TestList suites={filteredSuites} />
+          )}
         </section>
       </div>
     </main>

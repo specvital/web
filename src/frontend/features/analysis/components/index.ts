@@ -14,3 +14,6 @@ export { TestItem } from "./test-item";
 export { TestList } from "./test-list";
 export { TestListSkeleton } from "./test-list-skeleton";
 export { TestSuiteAccordion } from "./test-suite-accordion";
+export { TreeNode } from "./tree-node";
+export { TreeView } from "./tree-view";
+export { ViewModeToggle } from "./view-mode-toggle";

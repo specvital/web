@@ -7,6 +7,8 @@ import type { TestStatus } from "@/lib/api";
 import { FrameworkFilter } from "./framework-filter";
 import { SearchInput } from "./search-input";
 import { StatusFilter } from "./status-filter";
+import { ViewModeToggle } from "./view-mode-toggle";
+import type { ViewMode } from "../types";
 
 type FilterBarProps = {
   availableFrameworks: string[];
@@ -14,8 +16,10 @@ type FilterBarProps = {
   onFrameworksChange: (value: string[]) => void;
   onQueryChange: (value: string) => void;
   onStatusesChange: (value: TestStatus[]) => void;
+  onViewModeChange: (value: ViewMode) => void;
   query: string;
   statuses: TestStatus[];
+  viewMode: ViewMode;
 };
 
 type FilterSummaryProps = {
@@ -44,8 +48,10 @@ export const FilterBar = ({
   onFrameworksChange,
   onQueryChange,
   onStatusesChange,
+  onViewModeChange,
   query,
   statuses,
+  viewMode,
 }: FilterBarProps) => {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -59,6 +65,7 @@ export const FilterBar = ({
           onChange={onFrameworksChange}
           value={frameworks}
         />
+        <ViewModeToggle onChange={onViewModeChange} value={viewMode} />
       </div>
     </div>
   );

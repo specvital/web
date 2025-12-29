@@ -6,7 +6,7 @@ export type FileTreeNode = {
   children: FileTreeNode[];
   name: string;
   path: string;
-  suite?: TestSuite;
+  suites: TestSuite[];
   testCount: number;
   type: FileTreeNodeType;
 };
