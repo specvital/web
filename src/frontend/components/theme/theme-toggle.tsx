@@ -41,9 +41,9 @@ export const ThemeToggle = () => {
 
   if (!mounted) {
     return (
-      <Button disabled size="icon" variant="ghost">
-        <div className="relative size-5">
-          <Sun className="size-5" />
+      <Button disabled size="header-icon" variant="header-action">
+        <div className="relative size-4">
+          <Sun className="size-4" />
         </div>
         <span className="sr-only">Toggle theme</span>
       </Button>
@@ -51,14 +51,19 @@ export const ThemeToggle = () => {
   }
 
   return (
-    <Button aria-label="Toggle theme" onClick={toggleTheme} size="icon" variant="ghost">
-      <div className="relative size-5">
+    <Button
+      aria-label="Toggle theme"
+      onClick={toggleTheme}
+      size="header-icon"
+      variant="header-action"
+    >
+      <div className="relative size-4">
         <Sun
-          className={`absolute size-5 transition-[scale,rotate] duration-300 ${isDark ? "rotate-0 scale-100" : "rotate-90 scale-0"}`}
+          className={`absolute size-4 transition-[scale,rotate] duration-300 ${isDark ? "rotate-0 scale-100" : "rotate-90 scale-0"}`}
           ref={sunRef}
         />
         <Moon
-          className={`absolute size-5 transition-[scale,rotate] duration-300 ${isDark ? "-rotate-90 scale-0" : "rotate-0 scale-100"}`}
+          className={`absolute size-4 transition-[scale,rotate] duration-300 ${isDark ? "-rotate-90 scale-0" : "rotate-0 scale-100"}`}
           ref={moonRef}
         />
       </div>

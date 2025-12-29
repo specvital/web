@@ -39,8 +39,13 @@ export const LanguageSelector = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild id={id}>
-        <Button aria-label={t("selectLanguage")} disabled={isPending} size="sm" variant="ghost">
-          <Globe className="h-4 w-4" />
+        <Button
+          aria-label={t("selectLanguage")}
+          disabled={isPending}
+          size="header-icon"
+          variant="header-action"
+        >
+          <Globe className="size-4" />
           <span className="sr-only">{t("selectLanguage")}</span>
         </Button>
       </DropdownMenuTrigger>

@@ -49,11 +49,16 @@ export const Header = () => {
             <span>{tCommon("appName")}</span>
           </Link>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {!isHomePage && <AnalyzeDialog variant="header" />}
-            <LanguageSelector />
-            <ThemeToggle />
-            <div aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
+            <div className="flex items-center gap-1 rounded-full border border-border bg-transparent p-1 dark:border-transparent dark:bg-secondary">
+              <LanguageSelector />
+              <ThemeToggle />
+            </div>
+            <div
+              aria-hidden="true"
+              className="mx-1.5 h-6 w-px bg-gradient-to-b from-transparent via-border to-transparent"
+            />
             <AuthErrorBoundary fallback={<LoginButton />}>
               <AuthStatus />
             </AuthErrorBoundary>
