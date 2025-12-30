@@ -183,8 +183,10 @@ func (h *Handler) GetRecentRepositories(ctx context.Context, request api.GetRece
 		limit = *request.Params.Limit
 	}
 
+	userID := middleware.GetUserID(ctx)
 	cards, err := h.listRepositoryCards.Execute(ctx, usecase.ListRepositoryCardsInput{
-		Limit: limit,
+		Limit:  limit,
+		UserID: userID,
 	})
 	if err != nil {
 		h.logger.Error(ctx, "failed to get recent repositories", "error", err)

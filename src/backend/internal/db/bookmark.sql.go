@@ -27,6 +27,32 @@ func (q *Queries) AddBookmark(ctx context.Context, arg AddBookmarkParams) error 
 	return err
 }
 
+const getBookmarkedCodebaseIDsByUserID = `-- name: GetBookmarkedCodebaseIDsByUserID :many
+SELECT codebase_id
+FROM user_bookmarks
+WHERE user_id = $1
+`
+
+func (q *Queries) GetBookmarkedCodebaseIDsByUserID(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, getBookmarkedCodebaseIDsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var codebase_id pgtype.UUID
+		if err := rows.Scan(&codebase_id); err != nil {
+			return nil, err
+		}
+		items = append(items, codebase_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCodebaseByOwnerRepo = `-- name: GetCodebaseByOwnerRepo :one
 SELECT id
 FROM codebases

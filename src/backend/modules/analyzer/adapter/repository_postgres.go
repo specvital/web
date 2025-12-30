@@ -45,6 +45,28 @@ func (r *PostgresRepository) FindActiveRiverJobByRepo(ctx context.Context, kind,
 	}, nil
 }
 
+func (r *PostgresRepository) GetBookmarkedCodebaseIDs(ctx context.Context, userID string) ([]string, error) {
+	if userID == "" {
+		return nil, nil
+	}
+
+	uuid, err := stringToUUID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("parse user ID: %w", err)
+	}
+
+	rows, err := r.queries.GetBookmarkedCodebaseIDsByUserID(ctx, uuid)
+	if err != nil {
+		return nil, fmt.Errorf("get bookmarked codebase IDs: %w", err)
+	}
+
+	ids := make([]string, len(rows))
+	for i, row := range rows {
+		ids[i] = uuidToString(row)
+	}
+	return ids, nil
+}
+
 func (r *PostgresRepository) GetCodebaseID(ctx context.Context, owner, repo string) (string, error) {
 	id, err := r.queries.GetCodebaseIDByOwnerRepo(ctx, db.GetCodebaseIDByOwnerRepoParams{
 		Host:  HostGitHub,

@@ -31,7 +31,7 @@ export const useAddBookmark = (): UseAddBookmarkReturn => {
         description: error instanceof Error ? error.message : String(error),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: recentRepositoriesKeys.all });
+      queryClient.invalidateQueries({ exact: false, queryKey: recentRepositoriesKeys.all });
       toast.success("Bookmark added");
     },
   });
@@ -55,7 +55,7 @@ export const useRemoveBookmark = (): UseRemoveBookmarkReturn => {
         description: error instanceof Error ? error.message : String(error),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: recentRepositoriesKeys.all });
+      queryClient.invalidateQueries({ exact: false, queryKey: recentRepositoriesKeys.all });
       toast.success("Bookmark removed");
     },
   });

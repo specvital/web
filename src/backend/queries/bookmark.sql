@@ -35,6 +35,11 @@ LEFT JOIN LATERAL (
 WHERE ub.user_id = $1 AND c.is_stale = false
 ORDER BY ub.created_at DESC;
 
+-- name: GetBookmarkedCodebaseIDsByUserID :many
+SELECT codebase_id
+FROM user_bookmarks
+WHERE user_id = $1;
+
 -- name: GetCodebaseByOwnerRepo :one
 SELECT id
 FROM codebases

@@ -72,6 +72,10 @@ func (m *mockRepository) GetPreviousAnalysis(ctx context.Context, codebaseID, cu
 	return nil, nil
 }
 
+func (m *mockRepository) GetBookmarkedCodebaseIDs(ctx context.Context, userID string) ([]string, error) {
+	return nil, nil
+}
+
 // mockQueueService is a test double for port.QueueService.
 type mockQueueService struct {
 	enqueueCalled     bool

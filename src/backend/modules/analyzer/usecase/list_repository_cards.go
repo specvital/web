@@ -14,7 +14,8 @@ const (
 )
 
 type ListRepositoryCardsInput struct {
-	Limit int
+	Limit  int
+	UserID string
 }
 
 type ListRepositoryCardsUseCase struct {
@@ -40,6 +41,17 @@ func (uc *ListRepositoryCardsUseCase) Execute(ctx context.Context, input ListRep
 		return nil, fmt.Errorf("get recent repositories: %w", err)
 	}
 
+	bookmarkedIDs := make(map[string]bool)
+	if input.UserID != "" {
+		ids, err := uc.repository.GetBookmarkedCodebaseIDs(ctx, input.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("get bookmarked codebase IDs: %w", err)
+		}
+		for _, id := range ids {
+			bookmarkedIDs[id] = true
+		}
+	}
+
 	cards := make([]entity.RepositoryCard, len(repos))
 	for i, r := range repos {
 		var analysis *entity.AnalysisSummary
@@ -61,7 +73,7 @@ func (uc *ListRepositoryCardsUseCase) Execute(ctx context.Context, input ListRep
 		cards[i] = entity.RepositoryCard{
 			FullName:       fmt.Sprintf("%s/%s", r.Owner, r.Name),
 			ID:             r.CodebaseID,
-			IsBookmarked:   false,
+			IsBookmarked:   bookmarkedIDs[r.CodebaseID],
 			LatestAnalysis: analysis,
 			Name:           r.Name,
 			Owner:          r.Owner,
