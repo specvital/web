@@ -1,15 +1,17 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import type {
   GitHubOrganization,
   GitHubRepository,
   OrganizationAccessStatus,
   RepositoryCard as RepositoryCardType,
 } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 import { useAllOrgRepos, useMyRepositories, useOrganizations, useUnanalyzedRepos } from "../hooks";
 import { DiscoveryCard } from "./discovery-card";
@@ -33,6 +35,8 @@ type DiscoverySectionProps = {
 
 export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps) => {
   const t = useTranslations("dashboard.discovery");
+
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const {
     data: myRepos,
@@ -140,38 +144,74 @@ export const DiscoverySection = ({ analyzedRepositories }: DiscoverySectionProps
 
   const isOrgLoading = isLoadingOrgs || isLoadingOrgRepos;
   const isOrgRefreshing = isRefreshingOrgs;
+  const totalCount = unanalyzedPersonalCount + totalUnanalyzedCount;
+  const isLoading = isLoadingMyRepos || isOrgLoading;
+
+  const handleToggle = () => {
+    setIsExpanded((prev) => !prev);
+  };
+
+  if (!isLoading && totalCount === 0) {
+    return null;
+  }
 
   return (
-    <section
-      aria-labelledby="discovery-heading"
-      className="mt-12 rounded-lg border bg-muted/50 p-6"
-    >
-      <div className="mb-4 flex items-center gap-2">
-        <Sparkles className="size-5 text-amber-500" />
-        <h2 className="text-lg font-semibold" id="discovery-heading">
-          {t("title")}
-        </h2>
-      </div>
-
-      <p className="mb-4 text-sm text-muted-foreground">{t("description")}</p>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <DiscoveryCard
-          count={unanalyzedPersonalCount}
-          isLoading={isLoadingMyRepos}
-          isRefreshing={isRefreshingMyRepos}
-          onClick={handlePersonalClick}
-          onRefresh={refreshMyRepos}
-          type="personal"
+    <section aria-labelledby="discovery-heading" className="mt-8 rounded-lg border bg-muted/50">
+      <Button
+        aria-controls="discovery-content"
+        aria-expanded={isExpanded}
+        className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/80"
+        onClick={handleToggle}
+        variant="ghost"
+      >
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-5 text-amber-500" />
+          <h2 className="text-base font-semibold" id="discovery-heading">
+            {t("title")}
+          </h2>
+          <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+            {isLoading ? "..." : totalCount}
+          </span>
+        </div>
+        <ChevronDown
+          className={cn(
+            "size-5 text-muted-foreground transition-transform",
+            isExpanded && "rotate-180"
+          )}
         />
-        <DiscoveryCard
-          count={totalUnanalyzedCount}
-          isLoading={isOrgLoading}
-          isRefreshing={isOrgRefreshing}
-          onClick={handleOrgClick}
-          onRefresh={handleRefreshOrgs}
-          type="organization"
-        />
+      </Button>
+
+      <div
+        className={cn(
+          "grid transition-all duration-200 ease-in-out",
+          isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        )}
+        id="discovery-content"
+      >
+        <div className="overflow-hidden">
+          <div className="space-y-4 px-4 pb-4">
+            <p className="text-sm text-muted-foreground">{t("description")}</p>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <DiscoveryCard
+                count={unanalyzedPersonalCount}
+                isLoading={isLoadingMyRepos}
+                isRefreshing={isRefreshingMyRepos}
+                onClick={handlePersonalClick}
+                onRefresh={refreshMyRepos}
+                type="personal"
+              />
+              <DiscoveryCard
+                count={totalUnanalyzedCount}
+                isLoading={isOrgLoading}
+                isRefreshing={isOrgRefreshing}
+                onClick={handleOrgClick}
+                onRefresh={handleRefreshOrgs}
+                type="organization"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <DiscoveryListSheet
