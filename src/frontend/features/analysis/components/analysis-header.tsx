@@ -21,11 +21,23 @@ export const AnalysisHeader = ({ analyzedAt, commitSha, owner, repo }: AnalysisH
   const t = useTranslations("analyze");
 
   return (
-    <motion.header className="space-y-2" variants={fadeInUp}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold sm:text-2xl truncate min-w-0">
-          {owner}/{repo}
-        </h1>
+    <motion.header variants={fadeInUp}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        {/* 저장소 정보 세트 - 항상 세로로 묶임 */}
+        <div className="space-y-1 min-w-0">
+          <h1 className="text-xl font-bold sm:text-2xl truncate">
+            {owner}/{repo}
+          </h1>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <GitCommit className="h-4 w-4" />
+              {commitSha.slice(0, SHORT_SHA_LENGTH)}
+            </span>
+            <span>{t("analyzedAt", { date: formatAnalysisDate(analyzedAt) })}</span>
+          </div>
+        </div>
+
+        {/* 액션 버튼 세트 */}
         <div className="flex items-center gap-2 shrink-0">
           <ShareButton />
           <Button asChild size="sm" variant="outline">
@@ -39,13 +51,6 @@ export const AnalysisHeader = ({ analyzedAt, commitSha, owner, repo }: AnalysisH
             </a>
           </Button>
         </div>
-      </div>
-      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <GitCommit className="h-4 w-4" />
-          {commitSha.slice(0, SHORT_SHA_LENGTH)}
-        </span>
-        <span>{t("analyzedAt", { date: formatAnalysisDate(analyzedAt) })}</span>
       </div>
     </motion.header>
   );
