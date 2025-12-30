@@ -58,17 +58,19 @@ export const FilterBar = ({
       <div className="flex-1">
         <SearchInput onChange={onQueryChange} value={query} />
       </div>
-      {/* Mobile: full-bleed horizontal scroll area */}
-      <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto scrollbar-hide">
-        <div className="flex items-center gap-2 w-max sm:w-auto">
-          <StatusFilter onChange={onStatusesChange} value={statuses} />
-          <FrameworkFilter
-            availableFrameworks={availableFrameworks}
-            onChange={onFrameworksChange}
-            value={frameworks}
-          />
-          <ViewModeToggle onChange={onViewModeChange} value={viewMode} />
+      {/* Mobile: full-bleed horizontal scroll area with fixed ViewModeToggle */}
+      <div className="flex items-center gap-2">
+        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto scrollbar-hide flex-1 min-w-0">
+          <div className="flex items-center gap-2 w-max">
+            <StatusFilter onChange={onStatusesChange} value={statuses} />
+            <FrameworkFilter
+              availableFrameworks={availableFrameworks}
+              onChange={onFrameworksChange}
+              value={frameworks}
+            />
+          </div>
         </div>
+        <ViewModeToggle onChange={onViewModeChange} value={viewMode} />
       </div>
     </div>
   );
