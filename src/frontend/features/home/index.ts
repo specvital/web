@@ -1,5 +1,6 @@
 export {
   AnalyzeDialog,
+  AnimatedHero,
   SupportedFrameworksDialog,
   TrustBadges,
   TrustBadgesWithDialog,

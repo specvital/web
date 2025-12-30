@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { OAuthErrorHandler } from "@/features/auth";
-import { TrustBadgesWithDialog, UrlInputForm } from "@/features/home";
+import { AnimatedHero, TrustBadgesWithDialog, UrlInputForm } from "@/features/home";
 
 export const dynamic = "force-static";
 
@@ -25,20 +25,20 @@ export const HomePage = async ({ params }: HomePageProps) => {
         <OAuthErrorHandler />
       </Suspense>
 
-      <div className="w-full max-w-2xl space-y-6 text-center">
-        <div className="space-y-2">
+      <AnimatedHero
+        card={
+          <Card className="mx-auto w-full max-w-xl" depth="elevated">
+            <CardContent>
+              <UrlInputForm />
+            </CardContent>
+          </Card>
+        }
+        headline={
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("headline")}</h1>
-          <p className="text-muted-foreground">{t("subheadline")}</p>
-        </div>
-
-        <Card className="mx-auto w-full max-w-xl" depth="elevated">
-          <CardContent>
-            <UrlInputForm />
-          </CardContent>
-        </Card>
-
-        <TrustBadgesWithDialog />
-      </div>
+        }
+        subheadline={<p className="text-muted-foreground">{t("subheadline")}</p>}
+        trustBadges={<TrustBadgesWithDialog />}
+      />
     </main>
   );
 };
