@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRouter } from "@/i18n/navigation";
+import { useMediaQuery } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 import { useDebouncedValidation } from "../hooks/use-debounced-validation";
@@ -17,9 +18,12 @@ import { getInputFeedback, isValidGitHubUrl, parseGitHubUrl } from "../lib";
 export const UrlInputForm = () => {
   const router = useRouter();
   const t = useTranslations("home");
+  const isDesktop = useMediaQuery("(min-width: 640px)");
   const [error, setError] = useState<string | null>(null);
   const [url, setUrl] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  const placeholder = isDesktop ? t("inputPlaceholder") : t("inputPlaceholderShort");
 
   const validationState = useDebouncedValidation(url, isValidGitHubUrl, {
     delay: 500,
@@ -70,7 +74,7 @@ export const UrlInputForm = () => {
       <label className="sr-only" htmlFor="github-url">
         {t("inputLabel")}
       </label>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Github
             aria-hidden="true"
@@ -90,7 +94,7 @@ export const UrlInputForm = () => {
             disabled={isPending}
             id="github-url"
             onChange={handleChange}
-            placeholder={t("inputPlaceholder")}
+            placeholder={placeholder}
             type="text"
             value={url}
           />
@@ -132,7 +136,7 @@ export const UrlInputForm = () => {
         </div>
         <Button
           aria-label={t("analyzeButton")}
-          className="min-w-[120px] h-11 sm:h-10"
+          className="w-full sm:w-auto sm:min-w-[120px] h-11 sm:h-10"
           disabled={isPending}
           size="lg"
           type="submit"

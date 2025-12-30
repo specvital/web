@@ -34,6 +34,7 @@
     "headline": "테스트 현황, 즉시 파악",
     "subheadline": "GitHub URL만 입력하세요. 설정 없이 바로 분석합니다.",
     "inputPlaceholder": "https://github.com/facebook/react",
+    "inputPlaceholderShort": "owner/repo",
     "analyzeButton": "분석 시작",
     "helperText": "",
     "inputLabel": "GitHub 저장소 URL",
