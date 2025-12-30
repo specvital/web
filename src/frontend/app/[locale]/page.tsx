@@ -20,7 +20,7 @@ export const HomePage = async ({ params }: HomePageProps) => {
   const t = await getTranslations("home");
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[radial-gradient(ellipse_80%_50%_at_50%_40%,var(--hero-gradient-center),var(--hero-gradient-edge)_70%)] p-8">
       <Suspense fallback={null}>
         <OAuthErrorHandler />
       </Suspense>
@@ -31,7 +31,7 @@ export const HomePage = async ({ params }: HomePageProps) => {
           <p className="text-muted-foreground">{t("subheadline")}</p>
         </div>
 
-        <Card className="mx-auto w-full max-w-xl">
+        <Card className="mx-auto w-full max-w-xl" depth="elevated">
           <CardContent className="space-y-4">
             <UrlInputForm />
             <TrustBadges />

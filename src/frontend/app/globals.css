@@ -73,6 +73,9 @@
     --status-todo: oklch(0.580 0.130 240);
     --status-xfail: oklch(0.600 0.180 25);
     --radius: 0.625rem;
+    /* Hero gradient colors - subtle sand glow */
+    --hero-gradient-center: oklch(0.95 0.025 90);
+    --hero-gradient-edge: oklch(0.952 0.006 98);
   }
 
   .dark {
@@ -108,6 +111,9 @@
     --status-skipped: oklch(0.750 0.160 80);
     --status-todo: oklch(0.680 0.150 240);
     --status-xfail: oklch(0.680 0.180 25);
+    /* Hero gradient colors - subtle cool glow */
+    --hero-gradient-center: oklch(0.25 0.05 260);
+    --hero-gradient-edge: oklch(0.185 0.010 95);
   }
 }
 
