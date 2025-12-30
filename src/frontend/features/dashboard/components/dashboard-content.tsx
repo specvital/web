@@ -22,12 +22,14 @@ import {
   useRecentRepositories,
   useRemoveBookmark,
   useRepositorySearch,
+  useStarredFilter,
 } from "../hooks";
 import type { SortOption } from "../types";
 import { DiscoveryErrorFallback } from "./discovery-error-fallback";
 import { DiscoverySection } from "./discovery-section";
 import { EmptyStateVariant } from "./empty-state-variant";
 import { RepositoryList } from "./repository-list";
+import { StarredFilterToggle } from "./starred-filter-toggle";
 
 const SORT_OPTIONS: SortOption[] = ["name", "recent", "tests"];
 
@@ -62,7 +64,7 @@ const SearchSortControls = ({
   };
 
   return (
-    <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
       <div className="relative flex-1">
         <Search
           aria-hidden="true"
@@ -78,23 +80,27 @@ const SearchSortControls = ({
         />
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button className="w-full sm:w-auto" variant="outline">
-            <ArrowUpDown aria-hidden="true" />
-            <span>
-              {t("sort.label")}: {sortLabels[sortBy]}
-            </span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuRadioGroup onValueChange={handleSortChange} value={sortBy}>
-            <DropdownMenuRadioItem value="recent">{sortLabels.recent}</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="name">{sortLabels.name}</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="tests">{sortLabels.tests}</DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex gap-2">
+        <StarredFilterToggle />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="w-full sm:w-auto" variant="outline">
+              <ArrowUpDown aria-hidden="true" />
+              <span>
+                {t("sort.label")}: {sortLabels[sortBy]}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuRadioGroup onValueChange={handleSortChange} value={sortBy}>
+              <DropdownMenuRadioItem value="recent">{sortLabels.recent}</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="name">{sortLabels.name}</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="tests">{sortLabels.tests}</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 };
@@ -107,9 +113,14 @@ export const DashboardContent = () => {
   const { addBookmark } = useAddBookmark();
   const { removeBookmark } = useRemoveBookmark();
   const { reanalyze } = useReanalyze();
+  const { isStarredOnly } = useStarredFilter();
 
   const { filteredRepositories, searchQuery, setSearchQuery, setSortBy, sortBy } =
     useRepositorySearch(repositories);
+
+  const displayedRepositories = isStarredOnly
+    ? filteredRepositories.filter((repo) => repo.isBookmarked)
+    : filteredRepositories;
 
   const handleBookmarkToggle = (owner: string, repo: string, isBookmarked: boolean) => {
     if (isBookmarked) {
@@ -128,6 +139,8 @@ export const DashboardContent = () => {
   };
 
   const hasNoRepositories = !isLoading && repositories.length === 0;
+  const hasNoStarredResults =
+    isStarredOnly && displayedRepositories.length === 0 && filteredRepositories.length > 0;
 
   return (
     <div className="space-y-8">
@@ -147,13 +160,15 @@ export const DashboardContent = () => {
         />
       ) : hasNoRepositories ? (
         <EmptyStateVariant action={<AnalyzeDialog variant="empty-state" />} variant="no-repos" />
-      ) : filteredRepositories.length === 0 ? (
+      ) : hasNoStarredResults ? (
+        <EmptyStateVariant variant="no-bookmarks" />
+      ) : displayedRepositories.length === 0 ? (
         <EmptyStateVariant searchQuery={searchQuery} variant="no-search-results" />
       ) : (
         <RepositoryList
           onBookmarkToggle={handleBookmarkToggle}
           onReanalyze={handleReanalyze}
-          repositories={filteredRepositories}
+          repositories={displayedRepositories}
         />
       )}
 

@@ -205,6 +205,9 @@
       "recent": "Recent",
       "tests": "Tests"
     },
+    "filter": {
+      "starredOnly": "Starred Only"
+    },
     "status": {
       "newCommits": "New commits available",
       "unknown": "Status unknown",

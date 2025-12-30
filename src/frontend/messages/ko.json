@@ -205,6 +205,9 @@
       "recent": "최신순",
       "tests": "테스트순"
     },
+    "filter": {
+      "starredOnly": "즐겨찾기만"
+    },
     "status": {
       "newCommits": "새 커밋 있음",
       "unknown": "상태 알 수 없음",

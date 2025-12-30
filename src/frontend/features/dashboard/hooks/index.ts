@@ -11,4 +11,5 @@ export { recentRepositoriesKeys, useRecentRepositories } from "./use-recent-repo
 export { useReanalyze } from "./use-reanalyze";
 export { repositoryStatsKeys, useRepositoryStats } from "./use-repository-stats";
 export { useRepositorySearch } from "./use-repository-search";
+export { useStarredFilter } from "./use-starred-filter";
 export { useUnanalyzedRepos } from "./use-unanalyzed-repos";
