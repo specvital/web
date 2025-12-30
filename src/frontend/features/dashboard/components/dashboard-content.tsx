@@ -65,14 +65,14 @@ const SearchSortControls = ({
 
   return (
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-      <div className="relative flex-1">
+      <div className="relative flex-1 sm:max-w-sm">
         <Search
           aria-hidden="true"
           className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
         />
         <Input
           aria-label={t("searchPlaceholder")}
-          className="pl-9"
+          className="h-11 pl-10 sm:h-9 sm:pl-9"
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t("searchPlaceholder")}
           type="search"
@@ -80,12 +80,12 @@ const SearchSortControls = ({
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex w-full gap-2 sm:w-auto">
         <StarredFilterToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="w-full sm:w-auto" variant="outline">
+            <Button className="h-11 flex-1 sm:h-9 sm:flex-none" variant="outline">
               <ArrowUpDown aria-hidden="true" />
               <span>
                 {t("sort.label")}: {sortLabels[sortBy]}

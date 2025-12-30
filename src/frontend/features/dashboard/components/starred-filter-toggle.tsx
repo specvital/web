@@ -14,12 +14,13 @@ export const StarredFilterToggle = () => {
   return (
     <Toggle
       aria-label={t("starredOnly")}
+      className="h-11 flex-1 sm:h-9 sm:flex-none"
       onPressedChange={toggleStarredFilter}
       pressed={isStarredOnly}
       variant="outline"
     >
       <Star aria-hidden="true" className={isStarredOnly ? "fill-current" : undefined} />
-      <span className="hidden sm:inline">{t("starredOnly")}</span>
+      <span className="sr-only sm:not-sr-only">{t("starredOnly")}</span>
     </Toggle>
   );
 };
