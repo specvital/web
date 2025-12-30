@@ -7,6 +7,7 @@ export {
   fadeInDown,
   fadeInUp,
   scaleIn,
+  slideInUp,
   staggerContainer,
   staggerItem,
 } from "./variants";

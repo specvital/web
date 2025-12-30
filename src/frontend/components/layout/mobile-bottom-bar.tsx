@@ -11,6 +11,7 @@ import {
   Sun,
   User,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -29,6 +30,7 @@ import { AnalyzeDialog } from "@/features/home";
 import { isValidLocale, LANGUAGE_NAMES } from "@/i18n/config";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { slideInUp, useReducedMotion } from "@/lib/motion";
 
 const MobileLanguageSelector = () => {
   const router = useRouter();
@@ -57,7 +59,7 @@ const MobileLanguageSelector = () => {
           className="flex-col gap-0.5"
           disabled={isPending}
           size="mobile-nav"
-          variant="ghost"
+          variant="mobile-nav"
         >
           <Globe className="size-5" />
           <span className="text-[10px] font-normal">{t("language")}</span>
@@ -95,7 +97,7 @@ const MobileThemeToggle = () => {
 
   if (!mounted) {
     return (
-      <Button className="flex-col gap-0.5" disabled size="mobile-nav" variant="ghost">
+      <Button className="flex-col gap-0.5" disabled size="mobile-nav" variant="mobile-nav">
         <Sun className="size-5" />
         <span className="text-[10px] font-normal">{t("theme")}</span>
       </Button>
@@ -108,7 +110,7 @@ const MobileThemeToggle = () => {
       className="flex-col gap-0.5"
       onClick={toggleTheme}
       size="mobile-nav"
-      variant="ghost"
+      variant="mobile-nav"
     >
       {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
       <span className="text-[10px] font-normal">{t("theme")}</span>
@@ -124,7 +126,7 @@ const MobileAuthAction = () => {
 
   if (isLoading) {
     return (
-      <Button className="flex-col gap-0.5" disabled size="mobile-nav" variant="ghost">
+      <Button className="flex-col gap-0.5" disabled size="mobile-nav" variant="mobile-nav">
         <Loader2 className="size-5 animate-spin" />
         <span className="text-[10px] font-normal">{t("account")}</span>
       </Button>
@@ -139,7 +141,7 @@ const MobileAuthAction = () => {
             aria-label={t("account")}
             className="flex-col gap-0.5"
             size="mobile-nav"
-            variant="ghost"
+            variant="mobile-nav"
           >
             {user.avatarUrl ? (
               <img
@@ -179,7 +181,7 @@ const MobileAuthAction = () => {
       disabled={loginPending}
       onClick={login}
       size="mobile-nav"
-      variant="ghost"
+      variant="mobile-nav"
     >
       {loginPending ? <Loader2 className="size-5 animate-spin" /> : <Github className="size-5" />}
       <span className="text-[10px] font-normal">{tAuth("login")}</span>
@@ -190,17 +192,21 @@ const MobileAuthAction = () => {
 export const MobileBottomBar = () => {
   const t = useTranslations("header");
   const pathname = usePathname();
+  const shouldReduceMotion = useReducedMotion();
   const isHomePage = pathname === "/";
 
   return (
-    <nav
+    <motion.nav
+      animate="visible"
       aria-label={t("mobileNavigation")}
       className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-md md:hidden"
+      initial={shouldReduceMotion ? false : "hidden"}
+      variants={shouldReduceMotion ? undefined : slideInUp}
     >
       <div className="flex h-16 items-center justify-around px-2">
         {!isHomePage && (
           <AnalyzeDialog variant="header">
-            <Button className="flex-col gap-0.5" size="mobile-nav" variant="ghost">
+            <Button className="flex-col gap-0.5" size="mobile-nav" variant="mobile-nav">
               <Plus className="size-5" />
               <span className="text-[10px] font-normal">{t("analyze")}</span>
             </Button>
@@ -210,6 +216,6 @@ export const MobileBottomBar = () => {
         <MobileLanguageSelector />
         <MobileAuthAction />
       </div>
-    </nav>
+    </motion.nav>
   );
 };

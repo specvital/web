@@ -66,6 +66,15 @@ export const createStaggerContainer = (staggerDuration = 0.1, delayDuration = 0.
   },
 });
 
+export const slideInUp: Variants = {
+  hidden: { opacity: 0, y: "100%" },
+  visible: {
+    opacity: 1,
+    transition: easeOutTransition,
+    y: 0,
+  },
+};
+
 export const staggerItem: Variants = {
   hidden: { opacity: 0, y: 10 },
   visible: {
