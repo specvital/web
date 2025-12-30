@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-import { Header } from "@/components/layout";
+import { Header, MobileBottomBar } from "@/components/layout";
 import { ThemeProvider } from "@/components/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { isValidLocale, locales } from "@/i18n/config";
@@ -48,7 +48,10 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
             <NextIntlClientProvider messages={messages}>
               <ThemeProvider>
                 <Header />
-                <main id="main-content">{children}</main>
+                <main className="pb-16 md:pb-0" id="main-content">
+                  {children}
+                </main>
+                <MobileBottomBar />
                 <Toaster richColors />
               </ThemeProvider>
             </NextIntlClientProvider>

@@ -7,10 +7,16 @@
     "goHome": "Go home"
   },
   "header": {
+    "account": "Account",
+    "analyze": "Analyze",
     "analyzeAnother": "Analyze Another",
+    "dashboard": "Dashboard",
     "goToHomepage": "Go to homepage",
+    "language": "Language",
+    "mobileNavigation": "Mobile navigation",
     "selectLanguage": "Select language",
     "skipToContent": "Skip to content",
+    "theme": "Theme",
     "toggleTheme": "Toggle theme"
   },
   "analyzeDialog": {

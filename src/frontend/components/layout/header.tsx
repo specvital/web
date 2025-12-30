@@ -47,7 +47,7 @@ export const Header = () => {
             <span>{tCommon("appName")}</span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 md:flex">
             {!isHomePage && <AnalyzeDialog variant="header" />}
             <div className="flex items-center gap-1 rounded-full border border-border bg-transparent p-1 dark:border-transparent dark:bg-secondary">
               <LanguageSelector />

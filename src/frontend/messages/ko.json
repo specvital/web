@@ -7,10 +7,16 @@
     "goHome": "홈으로"
   },
   "header": {
+    "account": "계정",
+    "analyze": "분석",
     "analyzeAnother": "다른 분석",
+    "dashboard": "대시보드",
     "goToHomepage": "홈페이지로 이동",
+    "language": "언어",
+    "mobileNavigation": "모바일 내비게이션",
     "selectLanguage": "언어 선택",
     "skipToContent": "본문으로 바로가기",
+    "theme": "테마",
     "toggleTheme": "테마 전환"
   },
   "analyzeDialog": {
