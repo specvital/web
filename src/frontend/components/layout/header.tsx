@@ -35,10 +35,8 @@ export const Header = () => {
         {tHeader("skipToContent")}
       </a>
       <header
-        className={`sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl backdrop-saturate-150 transition-shadow duration-200 supports-[backdrop-filter]:bg-background/50 ${isScrolled ? "shadow-sm shadow-foreground/5" : ""}`}
+        className={`sticky top-0 z-50 w-full border-b border-border/30 bg-background/80 backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 supports-[backdrop-filter]:bg-background/50 ${isScrolled ? "shadow-[0_1px_3px_0_rgb(0_0_0/0.08)] dark:shadow-[0_1px_3px_0_rgb(0_0_0/0.3)]" : ""}`}
       >
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
         <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4">
           <Link
             aria-label={tHeader("goToHomepage")}
