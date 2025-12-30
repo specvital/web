@@ -58,11 +58,7 @@ export const ShareButton = ({
           </motion.span>
         </AnimatePresence>
       </span>
-      {showLabel && (
-        <span className="hidden sm:inline">
-          {state === "success" ? t("linkCopied") : t("button")}
-        </span>
-      )}
+      {showLabel && <span>{state === "success" ? t("linkCopied") : t("button")}</span>}
     </Button>
   );
 };

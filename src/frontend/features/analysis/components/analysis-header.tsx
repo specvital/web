@@ -28,7 +28,7 @@ export const AnalysisHeader = ({ analyzedAt, commitSha, owner, repo }: AnalysisH
         </h1>
         <div className="flex items-center gap-2 shrink-0">
           <ShareButton />
-          <Button asChild size="sm" variant="ghost">
+          <Button asChild size="sm" variant="outline">
             <a
               href={`https://github.com/${owner}/${repo}`}
               rel="noopener noreferrer"
