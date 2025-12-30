@@ -1,18 +1,15 @@
 "use client";
 
-import { ExternalLink, GitCommit } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
-import { Button } from "@/components/ui/button";
 import type { AnalysisResult } from "@/lib/api";
 import { createStaggerContainer, fadeInUp, useReducedMotion } from "@/lib/motion";
-import { formatAnalysisDate, SHORT_SHA_LENGTH } from "@/lib/utils";
 
+import { AnalysisHeader } from "./analysis-header";
 import { FilterBar, FilterSummary } from "./filter-bar";
 import { FilterEmptyState } from "./filter-empty-state";
-import { ShareButton } from "./share-button";
 import { StatsCard } from "./stats-card";
 import { TestList } from "./test-list";
 import { TreeView } from "./tree-view";
@@ -61,33 +58,12 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
       variants={containerVariants}
     >
       <div className="space-y-6">
-        <motion.header className="space-y-2" variants={itemVariants}>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-xl font-bold sm:text-2xl truncate min-w-0">
-              {result.owner}/{result.repo}
-            </h1>
-            <div className="flex items-center gap-2 shrink-0">
-              <ShareButton />
-              <Button asChild size="sm" variant="ghost">
-                <a
-                  href={`https://github.com/${result.owner}/${result.repo}`}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  {t("viewOnGitHub")}
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <GitCommit className="h-4 w-4" />
-              {result.commitSha.slice(0, SHORT_SHA_LENGTH)}
-            </span>
-            <span>{t("analyzedAt", { date: formatAnalysisDate(result.analyzedAt) })}</span>
-          </div>
-        </motion.header>
+        <AnalysisHeader
+          analyzedAt={result.analyzedAt}
+          commitSha={result.commitSha}
+          owner={result.owner}
+          repo={result.repo}
+        />
 
         <motion.div variants={itemVariants}>
           <StatsCard summary={result.summary} />

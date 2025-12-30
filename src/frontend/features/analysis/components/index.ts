@@ -1,4 +1,5 @@
 export { AnalysisContent } from "./analysis-content";
+export { AnalysisHeader } from "./analysis-header";
 export { AnalysisSkeleton } from "./analysis-skeleton";
 export { EmptyState } from "./empty-state";
 export { FilterBar, FilterSummary } from "./filter-bar";

@@ -1,5 +1,6 @@
 export {
   AnalysisContent,
+  AnalysisHeader,
   AnalysisSkeleton,
   EmptyState,
   FrameworkBadge,

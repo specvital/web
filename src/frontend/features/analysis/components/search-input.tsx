@@ -29,6 +29,12 @@ export const SearchInput = ({ onChange, value }: SearchInputProps) => {
     [onChange]
   );
 
+  useEffect(() => {
+    return () => {
+      debouncedOnChange.cancel();
+    };
+  }, [debouncedOnChange]);
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
