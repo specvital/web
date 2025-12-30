@@ -16,6 +16,7 @@ const buttonVariants = cva(
         "header-icon": "size-8 rounded-lg",
         icon: "size-9",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        "mobile-nav": "size-12 rounded-xl [&_svg:not([class*='size-'])]:size-6",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
       },
       variant: {
