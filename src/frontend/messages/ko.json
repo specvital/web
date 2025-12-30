@@ -152,14 +152,6 @@
     "linkCopiedDescription": "팀원들과 이 분석을 공유하세요"
   },
   "dashboard": {
-    "title": "대시보드",
-    "allRepositories": "전체 리포지토리",
-    "bookmarked": "즐겨찾기",
-    "tabs": {
-      "all": "전체",
-      "bookmarked": "즐겨찾기",
-      "myAnalyses": "내 분석"
-    },
     "card": {
       "addBookmark": "즐겨찾기 추가",
       "analyzeLatest": "최신 커밋 분석",
@@ -174,11 +166,6 @@
       "decreased": "테스트 {count}개 감소",
       "increased": "테스트 {count}개 증가",
       "unchanged": "테스트 변화 없음"
-    },
-    "emptyState": {
-      "cta": "리포지토리 분석하기",
-      "description": "GitHub 리포지토리를 분석하면 여기에 표시됩니다. 분석 기록은 자동으로 저장됩니다.",
-      "title": "아직 리포지토리가 없습니다"
     },
     "emptyStateVariant": {
       "noRepos": {
@@ -213,12 +200,6 @@
       "newCommits": "새 커밋 있음",
       "unknown": "상태 알 수 없음",
       "upToDate": "최신 상태"
-    },
-    "ownership": {
-      "label": "소유권",
-      "all": "전체",
-      "mine": "내 저장소",
-      "organization": "조직"
     },
     "discovery": {
       "title": "새 저장소 발견",

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { validateRepositoryIdentifiers } from "@/lib/validations/github";
 
 import { addBookmark, removeBookmark } from "../api";
-import { bookmarkKeys } from "./use-bookmarked-repositories";
+import { recentRepositoriesKeys } from "./use-recent-repositories";
 
 type UseAddBookmarkReturn = {
   addBookmark: (owner: string, repo: string) => void;
@@ -31,7 +31,7 @@ export const useAddBookmark = (): UseAddBookmarkReturn => {
         description: error instanceof Error ? error.message : String(error),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: bookmarkKeys.all });
+      queryClient.invalidateQueries({ queryKey: recentRepositoriesKeys.all });
       toast.success("Bookmark added");
     },
   });
@@ -55,7 +55,7 @@ export const useRemoveBookmark = (): UseRemoveBookmarkReturn => {
         description: error instanceof Error ? error.message : String(error),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: bookmarkKeys.all });
+      queryClient.invalidateQueries({ queryKey: recentRepositoriesKeys.all });
       toast.success("Bookmark removed");
     },
   });

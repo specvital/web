@@ -1,4 +1,4 @@
-export { addBookmark, fetchBookmarkedRepositories, removeBookmark } from "./bookmarks";
+export { addBookmark, removeBookmark } from "./bookmarks";
 export {
   fetchGitHubAppInstallations,
   fetchGitHubAppInstallUrl,
@@ -6,10 +6,4 @@ export {
   fetchUserGitHubOrganizations,
   fetchUserGitHubRepositories,
 } from "./github";
-export {
-  checkUpdateStatus,
-  fetchRecentRepositories,
-  fetchRepositoryStats,
-  triggerReanalyze,
-} from "./repositories";
-export { fetchUserAnalyzedRepositories } from "./user-analyses";
+export { checkUpdateStatus, fetchRecentRepositories, triggerReanalyze } from "./repositories";

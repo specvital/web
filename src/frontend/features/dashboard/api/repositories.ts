@@ -3,7 +3,6 @@ import type {
   AnalyzingResponse,
   QueuedResponse,
   RecentRepositoriesResponse,
-  RepositoryStatsResponse,
   UpdateStatusResponse,
 } from "@/lib/api/types";
 
@@ -12,11 +11,6 @@ export const fetchRecentRepositories = async (
 ): Promise<RecentRepositoriesResponse> => {
   const params = limit ? `?limit=${limit}` : "";
   const response = await apiFetch(`/api/repositories/recent${params}`);
-  return parseJsonResponse(response);
-};
-
-export const fetchRepositoryStats = async (): Promise<RepositoryStatsResponse> => {
-  const response = await apiFetch("/api/repositories/stats");
   return parseJsonResponse(response);
 };
 
