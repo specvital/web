@@ -7,5 +7,6 @@ export { organizationsKeys, useOrganizations } from "./use-organizations";
 export { recentRepositoriesKeys, useRecentRepositories } from "./use-recent-repositories";
 export { useReanalyze } from "./use-reanalyze";
 export { useRepositorySearch } from "./use-repository-search";
-export { useStarredFilter } from "./use-starred-filter";
 export { useUnanalyzedRepos } from "./use-unanalyzed-repos";
+export { useViewFilter } from "./use-view-filter";
+export type { ViewFilter } from "./use-view-filter";

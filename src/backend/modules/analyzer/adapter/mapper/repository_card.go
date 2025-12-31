@@ -19,6 +19,7 @@ func ToRepositoryCard(card entity.RepositoryCard) api.RepositoryCard {
 	return api.RepositoryCard{
 		FullName:       card.FullName,
 		ID:             card.ID,
+		IsAnalyzedByMe: card.IsAnalyzedByMe,
 		IsBookmarked:   card.IsBookmarked,
 		LatestAnalysis: analysis,
 		Name:           card.Name,

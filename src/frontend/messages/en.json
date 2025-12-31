@@ -194,8 +194,12 @@
       "recent": "Recent",
       "tests": "Tests"
     },
-    "filter": {
-      "starredOnly": "Starred Only"
+    "view": {
+      "label": "View",
+      "all": "All",
+      "mine": "Mine",
+      "starred": "Starred",
+      "community": "Community"
     },
     "status": {
       "newCommits": "New commits available",

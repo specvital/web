@@ -728,6 +728,8 @@ export interface components {
             fullName: string;
             /** @description Whether the repository is bookmarked by the user */
             isBookmarked: boolean;
+            /** @description Whether the repository was analyzed by the current user */
+            isAnalyzedByMe: boolean;
             latestAnalysis?: components["schemas"]["AnalysisSummary"];
             updateStatus: components["schemas"]["UpdateStatus"];
         };

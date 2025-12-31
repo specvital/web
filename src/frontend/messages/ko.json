@@ -194,8 +194,12 @@
       "recent": "최신순",
       "tests": "테스트순"
     },
-    "filter": {
-      "starredOnly": "즐겨찾기만"
+    "view": {
+      "label": "보기",
+      "all": "전체",
+      "mine": "내 분석",
+      "starred": "즐겨찾기",
+      "community": "커뮤니티"
     },
     "status": {
       "newCommits": "새 커밋 있음",

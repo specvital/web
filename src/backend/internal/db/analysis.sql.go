@@ -190,7 +190,11 @@ SELECT
     a.id AS analysis_id,
     a.commit_sha,
     a.completed_at AS analyzed_at,
-    a.total_tests
+    a.total_tests,
+    EXISTS(
+        SELECT 1 FROM user_analysis_history uah
+        WHERE uah.analysis_id = a.id AND uah.user_id = $1::uuid
+    ) AS is_analyzed_by_me
 FROM codebases c
 LEFT JOIN LATERAL (
     SELECT id, commit_sha, completed_at, total_tests
@@ -201,22 +205,28 @@ LEFT JOIN LATERAL (
 ) a ON true
 WHERE c.last_viewed_at IS NOT NULL AND c.is_stale = false
 ORDER BY c.last_viewed_at DESC
-LIMIT $1
+LIMIT $2
 `
 
-type GetRecentRepositoriesRow struct {
-	CodebaseID   pgtype.UUID        `json:"codebase_id"`
-	Owner        string             `json:"owner"`
-	Name         string             `json:"name"`
-	LastViewedAt pgtype.Timestamptz `json:"last_viewed_at"`
-	AnalysisID   pgtype.UUID        `json:"analysis_id"`
-	CommitSha    string             `json:"commit_sha"`
-	AnalyzedAt   pgtype.Timestamptz `json:"analyzed_at"`
-	TotalTests   int32              `json:"total_tests"`
+type GetRecentRepositoriesParams struct {
+	UserID    pgtype.UUID `json:"user_id"`
+	PageLimit int32       `json:"page_limit"`
 }
 
-func (q *Queries) GetRecentRepositories(ctx context.Context, limit int32) ([]GetRecentRepositoriesRow, error) {
-	rows, err := q.db.Query(ctx, getRecentRepositories, limit)
+type GetRecentRepositoriesRow struct {
+	CodebaseID     pgtype.UUID        `json:"codebase_id"`
+	Owner          string             `json:"owner"`
+	Name           string             `json:"name"`
+	LastViewedAt   pgtype.Timestamptz `json:"last_viewed_at"`
+	AnalysisID     pgtype.UUID        `json:"analysis_id"`
+	CommitSha      string             `json:"commit_sha"`
+	AnalyzedAt     pgtype.Timestamptz `json:"analyzed_at"`
+	TotalTests     int32              `json:"total_tests"`
+	IsAnalyzedByMe bool               `json:"is_analyzed_by_me"`
+}
+
+func (q *Queries) GetRecentRepositories(ctx context.Context, arg GetRecentRepositoriesParams) ([]GetRecentRepositoriesRow, error) {
+	rows, err := q.db.Query(ctx, getRecentRepositories, arg.UserID, arg.PageLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -233,6 +243,7 @@ func (q *Queries) GetRecentRepositories(ctx context.Context, limit int32) ([]Get
 			&i.CommitSha,
 			&i.AnalyzedAt,
 			&i.TotalTests,
+			&i.IsAnalyzedByMe,
 		); err != nil {
 			return nil, err
 		}

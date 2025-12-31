@@ -36,7 +36,7 @@ func (uc *ListRepositoryCardsUseCase) Execute(ctx context.Context, input ListRep
 		limit = maxLimit
 	}
 
-	repos, err := uc.repository.GetRecentRepositories(ctx, limit)
+	repos, err := uc.repository.GetRecentRepositories(ctx, input.UserID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("get recent repositories: %w", err)
 	}
@@ -73,6 +73,7 @@ func (uc *ListRepositoryCardsUseCase) Execute(ctx context.Context, input ListRep
 		cards[i] = entity.RepositoryCard{
 			FullName:       fmt.Sprintf("%s/%s", r.Owner, r.Name),
 			ID:             r.CodebaseID,
+			IsAnalyzedByMe: r.IsAnalyzedByMe,
 			IsBookmarked:   bookmarkedIDs[r.CodebaseID],
 			LatestAnalysis: analysis,
 			Name:           r.Name,

@@ -13,7 +13,7 @@ type Repository interface {
 	GetCodebaseID(ctx context.Context, owner, repo string) (string, error)
 	GetLatestCompletedAnalysis(ctx context.Context, owner, repo string) (*CompletedAnalysis, error)
 	GetPreviousAnalysis(ctx context.Context, codebaseID, currentAnalysisID string) (*PreviousAnalysis, error)
-	GetRecentRepositories(ctx context.Context, limit int) ([]RecentRepository, error)
+	GetRecentRepositories(ctx context.Context, userID string, limit int) ([]RecentRepository, error)
 	GetRepositoryStats(ctx context.Context) (*entity.RepositoryStats, error)
 	GetTestSuitesWithCases(ctx context.Context, analysisID string) ([]TestSuiteWithCases, error)
 	UpdateLastViewed(ctx context.Context, owner, repo string) error
@@ -51,13 +51,14 @@ type RiverJobInfo struct {
 }
 
 type RecentRepository struct {
-	AnalysisID string
-	AnalyzedAt time.Time
-	CodebaseID string
-	CommitSHA  string
-	Name       string
-	Owner      string
-	TotalTests int
+	AnalysisID     string
+	AnalyzedAt     time.Time
+	CodebaseID     string
+	CommitSHA      string
+	IsAnalyzedByMe bool
+	Name           string
+	Owner          string
+	TotalTests     int
 }
 
 type PreviousAnalysis struct {

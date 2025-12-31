@@ -1070,6 +1070,7 @@ components:
         - name
         - fullName
         - isBookmarked
+        - isAnalyzedByMe
         - updateStatus
       properties:
         id:
@@ -1091,6 +1092,9 @@ components:
         isBookmarked:
           type: boolean
           description: Whether the repository is bookmarked by the user
+        isAnalyzedByMe:
+          type: boolean
+          description: Whether the repository was analyzed by the current user
         latestAnalysis:
           $ref: "#/components/schemas/AnalysisSummary"
         updateStatus:

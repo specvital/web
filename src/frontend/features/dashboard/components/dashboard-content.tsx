@@ -22,14 +22,14 @@ import {
   useRecentRepositories,
   useRemoveBookmark,
   useRepositorySearch,
-  useStarredFilter,
+  useViewFilter,
 } from "../hooks";
 import type { SortOption } from "../types";
 import { DiscoveryErrorFallback } from "./discovery-error-fallback";
 import { DiscoverySection } from "./discovery-section";
 import { EmptyStateVariant } from "./empty-state-variant";
 import { RepositoryList } from "./repository-list";
-import { StarredFilterToggle } from "./starred-filter-toggle";
+import { ViewFilterDropdown } from "./view-filter-dropdown";
 
 const SORT_OPTIONS: SortOption[] = ["name", "recent", "tests"];
 
@@ -81,7 +81,7 @@ const SearchSortControls = ({
       </div>
 
       <div className="flex w-full gap-2 sm:w-auto">
-        <StarredFilterToggle />
+        <ViewFilterDropdown />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -113,14 +113,24 @@ export const DashboardContent = () => {
   const { addBookmark } = useAddBookmark();
   const { removeBookmark } = useRemoveBookmark();
   const { reanalyze } = useReanalyze();
-  const { isStarredOnly } = useStarredFilter();
+  const { viewFilter } = useViewFilter();
 
   const { filteredRepositories, searchQuery, setSearchQuery, setSortBy, sortBy } =
     useRepositorySearch(repositories);
 
-  const displayedRepositories = isStarredOnly
-    ? filteredRepositories.filter((repo) => repo.isBookmarked)
-    : filteredRepositories;
+  const displayedRepositories = (() => {
+    switch (viewFilter) {
+      case "starred":
+        return filteredRepositories.filter((repo) => repo.isBookmarked);
+      case "mine":
+        return filteredRepositories.filter((repo) => repo.isAnalyzedByMe);
+      case "community":
+        return filteredRepositories.filter((repo) => !repo.isAnalyzedByMe);
+      case "all":
+      default:
+        return filteredRepositories;
+    }
+  })();
 
   const handleBookmarkToggle = (owner: string, repo: string, isBookmarked: boolean) => {
     if (isBookmarked) {
@@ -139,8 +149,10 @@ export const DashboardContent = () => {
   };
 
   const hasNoRepositories = !isLoading && repositories.length === 0;
-  const hasNoStarredResults =
-    isStarredOnly && displayedRepositories.length === 0 && filteredRepositories.length > 0;
+  const hasNoFilterResults =
+    viewFilter === "starred" &&
+    displayedRepositories.length === 0 &&
+    filteredRepositories.length > 0;
 
   return (
     <div className="space-y-8">
@@ -160,7 +172,7 @@ export const DashboardContent = () => {
         />
       ) : hasNoRepositories ? (
         <EmptyStateVariant action={<AnalyzeDialog variant="empty-state" />} variant="no-repos" />
-      ) : hasNoStarredResults ? (
+      ) : hasNoFilterResults ? (
         <EmptyStateVariant variant="no-bookmarks" />
       ) : displayedRepositories.length === 0 ? (
         <EmptyStateVariant searchQuery={searchQuery} variant="no-search-results" />

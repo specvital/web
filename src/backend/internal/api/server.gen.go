@@ -349,6 +349,9 @@ type RepositoryCard struct {
 	// ID Repository ID
 	ID string `json:"id"`
 
+	// IsAnalyzedByMe Whether the repository was analyzed by the current user
+	IsAnalyzedByMe bool `json:"isAnalyzedByMe"`
+
 	// IsBookmarked Whether the repository is bookmarked by the user
 	IsBookmarked   bool             `json:"isBookmarked"`
 	LatestAnalysis *AnalysisSummary `json:"latestAnalysis,omitempty"`

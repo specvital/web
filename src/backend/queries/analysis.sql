@@ -80,7 +80,11 @@ SELECT
     a.id AS analysis_id,
     a.commit_sha,
     a.completed_at AS analyzed_at,
-    a.total_tests
+    a.total_tests,
+    EXISTS(
+        SELECT 1 FROM user_analysis_history uah
+        WHERE uah.analysis_id = a.id AND uah.user_id = sqlc.arg(user_id)::uuid
+    ) AS is_analyzed_by_me
 FROM codebases c
 LEFT JOIN LATERAL (
     SELECT id, commit_sha, completed_at, total_tests
@@ -91,7 +95,7 @@ LEFT JOIN LATERAL (
 ) a ON true
 WHERE c.last_viewed_at IS NOT NULL AND c.is_stale = false
 ORDER BY c.last_viewed_at DESC
-LIMIT $1;
+LIMIT sqlc.arg(page_limit);
 
 -- name: GetRepositoryStats :one
 SELECT

@@ -5,6 +5,7 @@ import "time"
 type RepositoryCard struct {
 	FullName       string
 	ID             string
+	IsAnalyzedByMe bool
 	IsBookmarked   bool
 	LatestAnalysis *AnalysisSummary
 	Name           string
