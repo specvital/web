@@ -12,11 +12,32 @@ type Repository interface {
 	GetBookmarkedCodebaseIDs(ctx context.Context, userID string) ([]string, error)
 	GetCodebaseID(ctx context.Context, owner, repo string) (string, error)
 	GetLatestCompletedAnalysis(ctx context.Context, owner, repo string) (*CompletedAnalysis, error)
+	GetPaginatedRepositories(ctx context.Context, params PaginationParams) ([]PaginatedRepository, error)
 	GetPreviousAnalysis(ctx context.Context, codebaseID, currentAnalysisID string) (*PreviousAnalysis, error)
 	GetRecentRepositories(ctx context.Context, userID string, limit int) ([]RecentRepository, error)
 	GetRepositoryStats(ctx context.Context) (*entity.RepositoryStats, error)
 	GetTestSuitesWithCases(ctx context.Context, analysisID string) ([]TestSuiteWithCases, error)
 	UpdateLastViewed(ctx context.Context, owner, repo string) error
+}
+
+type PaginationParams struct {
+	Cursor    *entity.RepositoryCursor
+	Limit     int
+	SortBy    entity.SortBy
+	SortOrder entity.SortOrder
+	UserID    string
+	View      entity.ViewFilter
+}
+
+type PaginatedRepository struct {
+	AnalysisID     string
+	AnalyzedAt     time.Time
+	CodebaseID     string
+	CommitSHA      string
+	IsAnalyzedByMe bool
+	Name           string
+	Owner          string
+	TotalTests     int
 }
 
 type CompletedAnalysis struct {

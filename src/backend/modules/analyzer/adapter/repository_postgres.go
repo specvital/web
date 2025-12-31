@@ -245,6 +245,11 @@ func (r *PostgresRepository) GetTestSuitesWithCases(ctx context.Context, analysi
 	return suites, nil
 }
 
+func (r *PostgresRepository) GetPaginatedRepositories(ctx context.Context, params port.PaginationParams) ([]port.PaginatedRepository, error) {
+	// TODO: Implementation will be added in Commit 2
+	return nil, nil
+}
+
 func (r *PostgresRepository) UpdateLastViewed(ctx context.Context, owner, repo string) error {
 	if err := r.queries.UpdateCodebaseLastViewed(ctx, db.UpdateCodebaseLastViewedParams{
 		Host:  HostGitHub,

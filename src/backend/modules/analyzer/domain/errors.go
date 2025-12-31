@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("analysis not found")
+	ErrInvalidCursor = errors.New("invalid cursor format")
+	ErrNotFound      = errors.New("analysis not found")
 )
 
 func WrapNotFound(owner, repo string) error {

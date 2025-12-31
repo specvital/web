@@ -76,6 +76,10 @@ func (m *mockRepository) GetBookmarkedCodebaseIDs(ctx context.Context, userID st
 	return nil, nil
 }
 
+func (m *mockRepository) GetPaginatedRepositories(ctx context.Context, params port.PaginationParams) ([]port.PaginatedRepository, error) {
+	return nil, nil
+}
+
 // mockQueueService is a test double for port.QueueService.
 type mockQueueService struct {
 	enqueueCalled     bool
