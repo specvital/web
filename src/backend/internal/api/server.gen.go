@@ -34,6 +34,19 @@ const (
 	Restricted OrganizationAccessStatus = "restricted"
 )
 
+// Defines values for SortByParam.
+const (
+	Name   SortByParam = "name"
+	Recent SortByParam = "recent"
+	Tests  SortByParam = "tests"
+)
+
+// Defines values for SortOrderParam.
+const (
+	Asc  SortOrderParam = "asc"
+	Desc SortOrderParam = "desc"
+)
+
 // Defines values for TestStatus.
 const (
 	Active  TestStatus = "active"
@@ -50,6 +63,13 @@ const (
 	UpToDate   UpdateStatus = "up-to-date"
 )
 
+// Defines values for ViewFilterParam.
+const (
+	ViewFilterParamAll       ViewFilterParam = "all"
+	ViewFilterParamCommunity ViewFilterParam = "community"
+	ViewFilterParamMy        ViewFilterParam = "my"
+)
+
 // Defines values for WebhookAccountType.
 const (
 	WebhookAccountTypeOrganization WebhookAccountType = "Organization"
@@ -58,9 +78,9 @@ const (
 
 // Defines values for GetUserAnalyzedRepositoriesParamsOwnership.
 const (
-	All          GetUserAnalyzedRepositoriesParamsOwnership = "all"
-	Mine         GetUserAnalyzedRepositoriesParamsOwnership = "mine"
-	Organization GetUserAnalyzedRepositoriesParamsOwnership = "organization"
+	GetUserAnalyzedRepositoriesParamsOwnershipAll          GetUserAnalyzedRepositoriesParamsOwnership = "all"
+	GetUserAnalyzedRepositoriesParamsOwnershipMine         GetUserAnalyzedRepositoriesParamsOwnership = "mine"
+	GetUserAnalyzedRepositoriesParamsOwnershipOrganization GetUserAnalyzedRepositoriesParamsOwnership = "organization"
 )
 
 // AnalysisResponse defines model for AnalysisResponse.
@@ -293,6 +313,18 @@ type LogoutResponse struct {
 // - pending: GitHub App installation is suspended
 type OrganizationAccessStatus string
 
+// PaginatedRepositoriesResponse defines model for PaginatedRepositoriesResponse.
+type PaginatedRepositoriesResponse struct {
+	// Data Repositories in the current page
+	Data []RepositoryCard `json:"data"`
+
+	// HasNext Whether more pages are available
+	HasNext bool `json:"hasNext"`
+
+	// NextCursor Cursor for fetching the next page (null if no more pages)
+	NextCursor *string `json:"nextCursor"`
+}
+
 // ProblemDetail defines model for ProblemDetail.
 type ProblemDetail struct {
 	// Detail Human-readable explanation specific to this occurrence
@@ -327,12 +359,6 @@ type RateLimitInfo struct {
 
 	// ResetAt Unix timestamp when the rate limit resets
 	ResetAt int64 `json:"resetAt"`
-}
-
-// RecentRepositoriesResponse defines model for RecentRepositoriesResponse.
-type RecentRepositoriesResponse struct {
-	// Data Recently analyzed repositories
-	Data []RepositoryCard `json:"data"`
 }
 
 // RefreshResponse defines model for RefreshResponse.
@@ -377,6 +403,18 @@ type RepositoryStatsResponse struct {
 	// TotalTests Total number of tests across all repositories
 	TotalTests int `json:"totalTests"`
 }
+
+// SortByParam Field to sort repositories by:
+// - name: Repository name (alphabetical)
+// - recent: Analysis timestamp (most recent first)
+// - tests: Test count (highest first)
+type SortByParam string
+
+// SortOrderParam Sort direction:
+// - asc: Ascending order
+// - desc: Descending order
+// Defaults depend on sortBy (desc for recent/tests, asc for name)
+type SortOrderParam string
 
 // Summary defines model for Summary.
 type Summary struct {
@@ -495,6 +533,12 @@ type UserInfo struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// ViewFilterParam Filter repositories by ownership:
+// - all: All analyzed repositories
+// - my: Only repositories analyzed by the current user
+// - community: Only repositories analyzed by other users
+type ViewFilterParam string
+
 // WebhookAccount defines model for WebhookAccount.
 type WebhookAccount struct {
 	// AvatarURL Account avatar URL
@@ -589,8 +633,20 @@ type AuthCallbackParams struct {
 
 // GetRecentRepositoriesParams defines parameters for GetRecentRepositories.
 type GetRecentRepositoriesParams struct {
-	// Limit Maximum number of repositories to return
+	// Cursor Pagination cursor for next page (opaque string from previous response)
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum number of repositories to return per page
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// SortBy Field to sort by (default is recent)
+	SortBy *SortByParam `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort direction (default depends on sortBy - desc for recent/tests, asc for name)
+	SortOrder *SortOrderParam `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// View Filter repositories by ownership
+	View *ViewFilterParam `form:"view,omitempty" json:"view,omitempty"`
 }
 
 // GetUserAnalyzedRepositoriesParams defines parameters for GetUserAnalyzedRepositories.
@@ -1198,11 +1254,43 @@ func (siw *ServerInterfaceWrapper) GetRecentRepositories(w http.ResponseWriter, 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetRecentRepositoriesParams
 
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "cursor", r.URL.Query(), &params.Cursor)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		return
+	}
+
 	// ------------- Optional query parameter "limit" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sortBy" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortBy", r.URL.Query(), &params.SortBy)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sortBy", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sortOrder" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortOrder", r.URL.Query(), &params.SortOrder)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sortOrder", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "view" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "view", r.URL.Query(), &params.View)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "view", Err: err})
 		return
 	}
 
@@ -2188,11 +2276,22 @@ type GetRecentRepositoriesResponseObject interface {
 	VisitGetRecentRepositoriesResponse(w http.ResponseWriter) error
 }
 
-type GetRecentRepositories200JSONResponse RecentRepositoriesResponse
+type GetRecentRepositories200JSONResponse PaginatedRepositoriesResponse
 
 func (response GetRecentRepositories200JSONResponse) VisitGetRecentRepositoriesResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetRecentRepositories400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response GetRecentRepositories400ApplicationProblemPlusJSONResponse) VisitGetRecentRepositoriesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }

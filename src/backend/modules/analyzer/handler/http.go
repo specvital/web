@@ -14,10 +14,9 @@ import (
 	"github.com/specvital/web/src/backend/internal/client"
 	"github.com/specvital/web/src/backend/modules/analyzer/adapter/mapper"
 	"github.com/specvital/web/src/backend/modules/analyzer/domain"
+	"github.com/specvital/web/src/backend/modules/analyzer/domain/entity"
 	"github.com/specvital/web/src/backend/modules/analyzer/usecase"
 )
-
-const defaultRecentLimit = 10
 
 var validNamePattern = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
@@ -178,26 +177,43 @@ func (h *Handler) GetAnalysisStatus(ctx context.Context, request api.GetAnalysis
 }
 
 func (h *Handler) GetRecentRepositories(ctx context.Context, request api.GetRecentRepositoriesRequestObject) (api.GetRecentRepositoriesResponseObject, error) {
-	limit := defaultRecentLimit
-	if request.Params.Limit != nil {
-		limit = *request.Params.Limit
+	params := request.Params
+	userID := middleware.GetUserID(ctx)
+
+	input := usecase.ListRepositoryCardsPaginatedInput{
+		UserID: userID,
 	}
 
-	userID := middleware.GetUserID(ctx)
-	cards, err := h.listRepositoryCards.Execute(ctx, usecase.ListRepositoryCardsInput{
-		Limit:  limit,
-		UserID: userID,
-	})
+	if params.Cursor != nil {
+		input.Cursor = *params.Cursor
+	}
+	if params.Limit != nil {
+		input.Limit = *params.Limit
+	}
+	if params.SortBy != nil {
+		input.SortBy = entity.ParseSortBy(string(*params.SortBy))
+	}
+	if params.SortOrder != nil {
+		input.SortOrder = entity.ParseSortOrder(string(*params.SortOrder))
+	}
+	if params.View != nil {
+		input.View = entity.ParseViewFilter(string(*params.View))
+	}
+
+	result, err := h.listRepositoryCards.ExecutePaginated(ctx, input)
 	if err != nil {
+		if errors.Is(err, entity.ErrInvalidCursor) {
+			return api.GetRecentRepositories400ApplicationProblemPlusJSONResponse{
+				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid cursor"),
+			}, nil
+		}
 		h.logger.Error(ctx, "failed to get recent repositories", "error", err)
 		return api.GetRecentRepositories500ApplicationProblemPlusJSONResponse{
 			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to get recent repositories"),
 		}, nil
 	}
 
-	return api.GetRecentRepositories200JSONResponse{
-		Data: mapper.ToRepositoryCards(cards),
-	}, nil
+	return api.GetRecentRepositories200JSONResponse(mapper.ToPaginatedRepositoriesResponse(result)), nil
 }
 
 func (h *Handler) GetRepositoryStats(ctx context.Context, _ api.GetRepositoryStatsRequestObject) (api.GetRepositoryStatsResponseObject, error) {

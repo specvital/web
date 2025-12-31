@@ -62,6 +62,14 @@ func ToUpdateStatusResponse(result *entity.UpdateStatusResult) api.UpdateStatusR
 	return resp
 }
 
+func ToPaginatedRepositoriesResponse(result entity.PaginatedRepositoryCards) api.PaginatedRepositoriesResponse {
+	return api.PaginatedRepositoriesResponse{
+		Data:       ToRepositoryCards(result.Data),
+		HasNext:    result.HasNext,
+		NextCursor: result.NextCursor,
+	}
+}
+
 func toAPIUpdateStatus(status entity.UpdateStatus) api.UpdateStatus {
 	switch status {
 	case entity.UpdateStatusNewCommits:

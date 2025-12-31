@@ -246,26 +246,56 @@ paths:
     get:
       operationId: getRecentRepositories
       summary: Get recently analyzed repositories
-      description: Returns list of repositories recently analyzed by the user
+      description: |
+        Returns paginated list of analyzed repositories.
+        Supports cursor-based pagination, sorting, and view filtering.
+        - Default behavior (no params): Returns first 20 items sorted by recent analysis
+        - Backward compatible: Existing clients work without changes
       security:
         - cookieAuth: []
       parameters:
+        - name: cursor
+          in: query
+          required: false
+          description: Pagination cursor for next page (opaque string from previous response)
+          schema:
+            type: string
         - name: limit
           in: query
           required: false
           schema:
             type: integer
-            default: 10
+            default: 20
             minimum: 1
-            maximum: 50
-          description: Maximum number of repositories to return
+            maximum: 100
+          description: Maximum number of repositories to return per page
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SortByParam"
+          description: Field to sort by (default is recent)
+        - name: sortOrder
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SortOrderParam"
+          description: Sort direction (default depends on sortBy - desc for recent/tests, asc for name)
+        - name: view
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ViewFilterParam"
+          description: Filter repositories by ownership
       responses:
         "200":
-          description: Recent repositories retrieved
+          description: Repositories retrieved with pagination info
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RecentRepositoriesResponse"
+                $ref: "#/components/schemas/PaginatedRepositoriesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -1025,6 +1055,62 @@ components:
           items:
             $ref: "#/components/schemas/RepositoryCard"
           description: Recently analyzed repositories
+
+    PaginatedRepositoriesResponse:
+      type: object
+      required:
+        - data
+        - hasNext
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RepositoryCard"
+          description: Repositories in the current page
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for fetching the next page (null if no more pages)
+        hasNext:
+          type: boolean
+          description: Whether more pages are available
+
+    SortByParam:
+      type: string
+      enum:
+        - name
+        - recent
+        - tests
+      default: recent
+      description: |
+        Field to sort repositories by:
+        - name: Repository name (alphabetical)
+        - recent: Analysis timestamp (most recent first)
+        - tests: Test count (highest first)
+
+    SortOrderParam:
+      type: string
+      enum:
+        - asc
+        - desc
+      description: |
+        Sort direction:
+        - asc: Ascending order
+        - desc: Descending order
+        Defaults depend on sortBy (desc for recent/tests, asc for name)
+
+    ViewFilterParam:
+      type: string
+      enum:
+        - all
+        - my
+        - community
+      default: all
+      description: |
+        Filter repositories by ownership:
+        - all: All analyzed repositories
+        - my: Only repositories analyzed by the current user
+        - community: Only repositories analyzed by other users
 
     RepositoryStatsResponse:
       type: object

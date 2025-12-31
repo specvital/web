@@ -222,7 +222,11 @@ export interface paths {
         };
         /**
          * Get recently analyzed repositories
-         * @description Returns list of repositories recently analyzed by the user
+         * @description Returns paginated list of analyzed repositories.
+         *     Supports cursor-based pagination, sorting, and view filtering.
+         *     - Default behavior (no params): Returns first 20 items sorted by recent analysis
+         *     - Backward compatible: Existing clients work without changes
+         *
          */
         get: operations["getRecentRepositories"];
         put?: never;
@@ -685,6 +689,43 @@ export interface components {
             /** @description Recently analyzed repositories */
             data: components["schemas"]["RepositoryCard"][];
         };
+        PaginatedRepositoriesResponse: {
+            /** @description Repositories in the current page */
+            data: components["schemas"]["RepositoryCard"][];
+            /** @description Cursor for fetching the next page (null if no more pages) */
+            nextCursor?: string | null;
+            /** @description Whether more pages are available */
+            hasNext: boolean;
+        };
+        /**
+         * @description Field to sort repositories by:
+         *     - name: Repository name (alphabetical)
+         *     - recent: Analysis timestamp (most recent first)
+         *     - tests: Test count (highest first)
+         *
+         * @default recent
+         * @enum {string}
+         */
+        SortByParam: "name" | "recent" | "tests";
+        /**
+         * @description Sort direction:
+         *     - asc: Ascending order
+         *     - desc: Descending order
+         *     Defaults depend on sortBy (desc for recent/tests, asc for name)
+         *
+         * @enum {string}
+         */
+        SortOrderParam: "asc" | "desc";
+        /**
+         * @description Filter repositories by ownership:
+         *     - all: All analyzed repositories
+         *     - my: Only repositories analyzed by the current user
+         *     - community: Only repositories analyzed by other users
+         *
+         * @default all
+         * @enum {string}
+         */
+        ViewFilterParam: "all" | "my" | "community";
         RepositoryStatsResponse: {
             /**
              * @description Total number of analyzed repositories for the user
@@ -1296,8 +1337,16 @@ export interface operations {
     getRecentRepositories: {
         parameters: {
             query?: {
-                /** @description Maximum number of repositories to return */
+                /** @description Pagination cursor for next page (opaque string from previous response) */
+                cursor?: string;
+                /** @description Maximum number of repositories to return per page */
                 limit?: number;
+                /** @description Field to sort by (default is recent) */
+                sortBy?: components["schemas"]["SortByParam"];
+                /** @description Sort direction (default depends on sortBy - desc for recent/tests, asc for name) */
+                sortOrder?: components["schemas"]["SortOrderParam"];
+                /** @description Filter repositories by ownership */
+                view?: components["schemas"]["ViewFilterParam"];
             };
             header?: never;
             path?: never;
@@ -1305,15 +1354,16 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Recent repositories retrieved */
+            /** @description Repositories retrieved with pagination info */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RecentRepositoriesResponse"];
+                    "application/json": components["schemas"]["PaginatedRepositoriesResponse"];
                 };
             };
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalError"];
         };
