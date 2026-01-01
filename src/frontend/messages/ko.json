@@ -151,6 +151,21 @@
     "linkCopied": "링크 복사됨!",
     "linkCopiedDescription": "팀원들과 이 분석을 공유하세요"
   },
+  "explore": {
+    "title": "탐색",
+    "searchPlaceholder": "저장소 검색...",
+    "sort": {
+      "label": "정렬",
+      "name": "이름순",
+      "recent": "최신순",
+      "tests": "테스트순"
+    }
+  },
+  "navigation": {
+    "ariaLabel": "메인 네비게이션",
+    "dashboard": "대시보드",
+    "explore": "탐색"
+  },
   "dashboard": {
     "title": "대시보드",
     "card": {

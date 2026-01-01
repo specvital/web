@@ -151,6 +151,21 @@
     "linkCopied": "Link copied!",
     "linkCopiedDescription": "Share this analysis with your team"
   },
+  "explore": {
+    "title": "Explore",
+    "searchPlaceholder": "Search repositories...",
+    "sort": {
+      "label": "Sort",
+      "name": "Name",
+      "recent": "Recent",
+      "tests": "Tests"
+    }
+  },
+  "navigation": {
+    "ariaLabel": "Main navigation",
+    "dashboard": "Dashboard",
+    "explore": "Explore"
+  },
   "dashboard": {
     "title": "Dashboard",
     "card": {

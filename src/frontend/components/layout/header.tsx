@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { AuthErrorBoundary } from "@/components/feedback";
+import { NavigationTabs } from "@/components/layout/navigation-tabs";
 import { LanguageSelector, ThemeToggle } from "@/components/theme";
 import { AuthStatus, LoginButton } from "@/features/auth";
 import { AnalyzeDialog } from "@/features/home";
@@ -38,14 +39,17 @@ export const Header = () => {
         className={`sticky top-0 z-50 w-full border-b border-border/30 bg-background/80 backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 supports-[backdrop-filter]:bg-background/50 ${isScrolled ? "shadow-[0_1px_3px_0_rgb(0_0_0/0.08)] dark:shadow-[0_1px_3px_0_rgb(0_0_0/0.3)]" : ""}`}
       >
         <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4">
-          <Link
-            aria-label={tHeader("goToHomepage")}
-            className="flex items-center gap-2.5 text-lg font-semibold transition-all duration-200 hover:opacity-90"
-            href="/"
-          >
-            <Image alt={tCommon("appName")} height={28} src="/logo.png" width={28} />
-            <span>{tCommon("appName")}</span>
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link
+              aria-label={tHeader("goToHomepage")}
+              className="flex items-center gap-2.5 text-lg font-semibold transition-all duration-200 hover:opacity-90"
+              href="/"
+            >
+              <Image alt={tCommon("appName")} height={28} src="/logo.png" width={28} />
+              <span>{tCommon("appName")}</span>
+            </Link>
+            {!isHomePage && <NavigationTabs />}
+          </div>
 
           <div className="hidden items-center gap-2 md:flex">
             {!isHomePage && <AnalyzeDialog variant="header" />}
