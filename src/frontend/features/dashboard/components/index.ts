@@ -1,3 +1,4 @@
+export { AttentionZone } from "./attention-zone";
 export { DashboardContent } from "./dashboard-content";
 export { DiscoveryCard } from "./discovery-card";
 export { DiscoveryErrorFallback } from "./discovery-error-fallback";
@@ -13,6 +14,7 @@ export { RepositoryCard } from "./repository-card";
 export { RepositoryGrid } from "./repository-grid";
 export { RepositoryList } from "./repository-list";
 export { RepositorySkeleton } from "./repository-skeleton";
+export { SeverityBadge } from "./severity-badge";
 export { SummarySection } from "./summary-section";
 export { TestDeltaBadge } from "./test-delta-badge";
 export { UpdateStatusBadge } from "./update-status-badge";

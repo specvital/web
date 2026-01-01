@@ -29,6 +29,7 @@ import {
   useViewFilter,
 } from "../hooks";
 import type { SortOption } from "../types";
+import { AttentionZone } from "./attention-zone";
 import { DiscoveryErrorFallback } from "./discovery-error-fallback";
 import { DiscoverySection } from "./discovery-section";
 import { EmptyStateVariant } from "./empty-state-variant";
@@ -251,6 +252,8 @@ export const DashboardContent = () => {
   return (
     <div className="space-y-8">
       <SummarySection />
+
+      <AttentionZone onReanalyze={handleReanalyze} repositories={repositories} />
 
       <SearchSortControls
         hasNextPage={hasNextPage && viewFilter !== "starred"}
