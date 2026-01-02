@@ -6,6 +6,7 @@ export { DiscoveryListSheet } from "./discovery-list-sheet";
 export { DiscoverySection } from "./discovery-section";
 export { EmptyStateVariant } from "./empty-state-variant";
 export { FilterBar } from "./filter-bar";
+export { InfiniteScrollLoader } from "./infinite-scroll-loader";
 export { LoadMoreButton } from "./load-more-button";
 export { OrgConnectionBanner } from "./org-connection-banner";
 export { OrgInstallDialog } from "./org-install-dialog";

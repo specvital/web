@@ -3,6 +3,7 @@ export { fetchPaginatedRepositories } from "./api";
 export {
   DashboardContent,
   EmptyStateVariant,
+  InfiniteScrollLoader,
   LoadMoreButton,
   PaginationStatus,
   RepositoryCard,

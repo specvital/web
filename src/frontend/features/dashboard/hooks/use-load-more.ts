@@ -5,6 +5,7 @@ import { useInView } from "react-intersection-observer";
 
 type UseLoadMoreOptions = {
   fetchNextPage: () => void;
+  hasError?: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   rootMargin?: string;
@@ -17,9 +18,10 @@ type UseLoadMoreReturn = {
 
 export const useLoadMore = ({
   fetchNextPage,
+  hasError = false,
   hasNextPage,
   isFetchingNextPage,
-  rootMargin = "100px",
+  rootMargin = "200px",
   threshold = 0.1,
 }: UseLoadMoreOptions): UseLoadMoreReturn => {
   const { inView, ref } = useInView({
@@ -28,10 +30,10 @@ export const useLoadMore = ({
   });
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
+    if (inView && hasNextPage && !isFetchingNextPage && !hasError) {
       fetchNextPage();
     }
-  }, [fetchNextPage, hasNextPage, inView, isFetchingNextPage]);
+  }, [fetchNextPage, hasError, hasNextPage, inView, isFetchingNextPage]);
 
   return {
     loadMoreRef: ref,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { Building2, Globe, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
@@ -8,9 +7,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   EmptyStateVariant,
-  fetchPaginatedRepositories,
-  LoadMoreButton,
-  paginatedRepositoriesKeys,
+  InfiniteScrollLoader,
   RepositoryList,
   useAddBookmark,
   useReanalyze,
@@ -23,13 +20,10 @@ import { MyReposTab } from "./my-repos-tab";
 import { OrgReposTab } from "./org-repos-tab";
 import { SearchSortControls } from "./search-sort-controls";
 
-const DEFAULT_PAGE_LIMIT = 10;
-
 type ExploreTab = "community" | "my-repos" | "organizations";
 
 export const ExploreContent = () => {
   const t = useTranslations("explore");
-  const queryClient = useQueryClient();
 
   const { addBookmark } = useAddBookmark();
   const { removeBookmark } = useRemoveBookmark();
@@ -87,39 +81,6 @@ export const ExploreContent = () => {
   const handleLoadMore = useCallback(() => {
     fetchNextPage();
   }, [fetchNextPage]);
-
-  const handlePrefetchNextPage = useCallback(() => {
-    if (!hasNextPage || isFetchingNextPage) return;
-
-    const queryKey = paginatedRepositoriesKeys.list({
-      limit: DEFAULT_PAGE_LIMIT,
-      sortBy,
-      sortOrder: "desc",
-      view: "community",
-    });
-
-    const lastPage = queryClient.getQueryData<{
-      pageParams: (string | undefined)[];
-      pages: { hasNext: boolean; nextCursor?: string | null }[];
-    }>(queryKey);
-
-    const nextCursor = lastPage?.pages.at(-1)?.nextCursor;
-    if (!nextCursor) return;
-
-    queryClient.prefetchInfiniteQuery({
-      initialPageParam: undefined as string | undefined,
-      queryFn: () =>
-        fetchPaginatedRepositories({
-          cursor: nextCursor,
-          limit: DEFAULT_PAGE_LIMIT,
-          sortBy,
-          sortOrder: "desc",
-          view: "community",
-        }),
-      queryKey,
-      staleTime: 30 * 1000,
-    });
-  }, [hasNextPage, isFetchingNextPage, queryClient, sortBy]);
 
   const handleRetry = useCallback(() => {
     refetch();
@@ -184,14 +145,15 @@ export const ExploreContent = () => {
                 repositories={filteredRepositories}
               />
 
-              <LoadMoreButton
-                hasError={isError}
-                hasNextPage={hasNextPage && !searchQuery.trim()}
-                isFetchingNextPage={isFetchingNextPage}
-                onLoadMore={handleLoadMore}
-                onPrefetch={handlePrefetchNextPage}
-                onRetry={handleRetry}
-              />
+              {!searchQuery.trim() && (
+                <InfiniteScrollLoader
+                  hasError={isError}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  onLoadMore={handleLoadMore}
+                  onRetry={handleRetry}
+                />
+              )}
             </>
           )}
         </div>
