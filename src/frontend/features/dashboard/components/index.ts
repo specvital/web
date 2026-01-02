@@ -1,7 +1,6 @@
 export { AttentionZone } from "./attention-zone";
 export { DashboardContent } from "./dashboard-content";
 export { DiscoveryCard } from "./discovery-card";
-export { DiscoveryErrorFallback } from "./discovery-error-fallback";
 export { DiscoveryListSheet } from "./discovery-list-sheet";
 export { DiscoverySection } from "./discovery-section";
 export { EmptyStateVariant } from "./empty-state-variant";
