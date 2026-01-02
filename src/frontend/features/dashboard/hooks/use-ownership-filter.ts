@@ -1,12 +1,13 @@
 "use client";
 
-import { List, User } from "lucide-react";
+import { Building2, List, User } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 
-// TODO: Add "organization" option when backend API supports ownership parameter
-export type OwnershipFilter = "all" | "mine";
+import type { OwnershipFilterParam } from "@/lib/api/types";
 
-export const OWNERSHIP_FILTER_OPTIONS: OwnershipFilter[] = ["all", "mine"];
+export type OwnershipFilter = OwnershipFilterParam;
+
+export const OWNERSHIP_FILTER_OPTIONS: OwnershipFilter[] = ["all", "mine", "organization"];
 
 export const OWNERSHIP_FILTER_ICONS: Record<
   OwnershipFilter,
@@ -14,6 +15,7 @@ export const OWNERSHIP_FILTER_ICONS: Record<
 > = {
   all: List,
   mine: User,
+  organization: Building2,
 };
 
 const ownershipFilterParser = parseAsStringLiteral(OWNERSHIP_FILTER_OPTIONS).withDefault("all");

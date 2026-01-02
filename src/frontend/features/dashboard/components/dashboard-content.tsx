@@ -7,7 +7,6 @@ import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AnalyzeDialog } from "@/features/home";
 import { Link } from "@/i18n/navigation";
-import type { ViewFilterParam } from "@/lib/api/types";
 
 import {
   useAddBookmark,
@@ -15,7 +14,7 @@ import {
   useReanalyze,
   useRemoveBookmark,
 } from "../hooks";
-import { type OwnershipFilter, useOwnershipFilter } from "../hooks/use-ownership-filter";
+import { useOwnershipFilter } from "../hooks/use-ownership-filter";
 import { useStarredFilter } from "../hooks/use-starred-filter";
 import type { SortOption } from "../types";
 import { AttentionZone } from "./attention-zone";
@@ -24,16 +23,6 @@ import { FilterBar } from "./filter-bar";
 import { InfiniteScrollLoader } from "./infinite-scroll-loader";
 import { RepositoryList } from "./repository-list";
 import { SummarySection } from "./summary-section";
-
-const mapOwnershipToViewParam = (ownership: OwnershipFilter): ViewFilterParam | undefined => {
-  switch (ownership) {
-    case "mine":
-      return "my";
-    case "all":
-    default:
-      return undefined;
-  }
-};
 
 export const DashboardContent = () => {
   const t = useTranslations("dashboard");
@@ -47,8 +36,6 @@ export const DashboardContent = () => {
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const viewParam = mapOwnershipToViewParam(ownershipFilter);
-
   const {
     data: repositories,
     fetchNextPage,
@@ -58,9 +45,9 @@ export const DashboardContent = () => {
     isLoading,
     refetch,
   } = usePaginatedRepositories({
+    ownership: ownershipFilter,
     sortBy,
     sortOrder: "desc",
-    view: viewParam,
   });
 
   const filteredRepositories = useMemo(() => {

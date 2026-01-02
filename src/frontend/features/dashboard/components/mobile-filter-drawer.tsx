@@ -40,6 +40,7 @@ export const MobileFilterDrawer = () => {
   const ownershipLabels: Record<OwnershipFilter, string> = {
     all: tOwnership("all"),
     mine: tOwnership("mine"),
+    organization: tOwnership("organization"),
   };
 
   const activeFilterCount = calculateActiveFilterCount(ownershipFilter, starredOnly);

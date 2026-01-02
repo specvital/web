@@ -250,6 +250,7 @@ func (r *PostgresRepository) getPaginatedByRecent(ctx context.Context, userUUID,
 	rows, err := r.queries.GetPaginatedRepositoriesByRecent(ctx, db.GetPaginatedRepositoriesByRecentParams{
 		UserID:           userUUID,
 		ViewFilter:       params.View.String(),
+		OwnershipFilter:  params.Ownership.String(),
 		CursorAnalyzedAt: cursorAnalyzedAt,
 		SortOrder:        params.SortOrder.String(),
 		CursorID:         cursorID,
@@ -287,12 +288,13 @@ func (r *PostgresRepository) getPaginatedByName(ctx context.Context, userUUID, c
 	}
 
 	rows, err := r.queries.GetPaginatedRepositoriesByName(ctx, db.GetPaginatedRepositoriesByNameParams{
-		UserID:     userUUID,
-		ViewFilter: params.View.String(),
-		CursorName: cursorName,
-		SortOrder:  params.SortOrder.String(),
-		CursorID:   cursorID,
-		PageLimit:  int32(params.Limit),
+		UserID:          userUUID,
+		ViewFilter:      params.View.String(),
+		OwnershipFilter: params.Ownership.String(),
+		CursorName:      cursorName,
+		SortOrder:       params.SortOrder.String(),
+		CursorID:        cursorID,
+		PageLimit:       int32(params.Limit),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("get paginated repositories by name: %w", err)
@@ -328,6 +330,7 @@ func (r *PostgresRepository) getPaginatedByTests(ctx context.Context, userUUID, 
 	rows, err := r.queries.GetPaginatedRepositoriesByTests(ctx, db.GetPaginatedRepositoriesByTestsParams{
 		UserID:          userUUID,
 		ViewFilter:      params.View.String(),
+		OwnershipFilter: params.Ownership.String(),
 		CursorTestCount: cursorTestCount,
 		SortOrder:       params.SortOrder.String(),
 		CursorID:        cursorID,

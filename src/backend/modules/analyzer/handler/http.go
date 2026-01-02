@@ -199,6 +199,9 @@ func (h *Handler) GetRecentRepositories(ctx context.Context, request api.GetRece
 	if params.View != nil {
 		input.View = entity.ParseViewFilter(string(*params.View))
 	}
+	if params.Ownership != nil {
+		input.Ownership = entity.ParseOwnershipFilter(string(*params.Ownership))
+	}
 
 	result, err := h.listRepositoryCards.ExecutePaginated(ctx, input)
 	if err != nil {

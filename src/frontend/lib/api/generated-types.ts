@@ -713,7 +713,7 @@ export interface components {
          */
         SortOrderParam: "asc" | "desc";
         /**
-         * @description Filter repositories by ownership:
+         * @description Filter repositories by view type (deprecated, use OwnershipFilterParam):
          *     - all: All analyzed repositories
          *     - my: Only repositories analyzed by the current user
          *     - community: Only repositories analyzed by other users
@@ -722,6 +722,16 @@ export interface components {
          * @enum {string}
          */
         ViewFilterParam: "all" | "my" | "community";
+        /**
+         * @description Filter repositories by ownership type:
+         *     - all: All analyzed repositories (personal and organization)
+         *     - mine: Only repositories owned by the current user
+         *     - organization: Only repositories owned by organizations the user is a member of
+         *
+         * @default all
+         * @enum {string}
+         */
+        OwnershipFilterParam: "all" | "mine" | "organization";
         RepositoryStatsResponse: {
             /**
              * @description Total number of analyzed repositories for the user
@@ -1369,8 +1379,10 @@ export interface operations {
                 sortBy?: components["schemas"]["SortByParam"];
                 /** @description Sort direction (default depends on sortBy - desc for recent/tests, asc for name) */
                 sortOrder?: components["schemas"]["SortOrderParam"];
-                /** @description Filter repositories by ownership */
+                /** @description Filter repositories by view type (deprecated, use ownership instead) */
                 view?: components["schemas"]["ViewFilterParam"];
+                /** @description Filter repositories by ownership type */
+                ownership?: components["schemas"]["OwnershipFilterParam"];
             };
             header?: never;
             path?: never;

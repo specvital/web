@@ -286,7 +286,13 @@ paths:
           required: false
           schema:
             $ref: "#/components/schemas/ViewFilterParam"
-          description: Filter repositories by ownership
+          description: Filter repositories by view type (deprecated, use ownership instead)
+        - name: ownership
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/OwnershipFilterParam"
+          description: Filter repositories by ownership type
       responses:
         "200":
           description: Repositories retrieved with pagination info
@@ -1096,10 +1102,23 @@ components:
         - community
       default: all
       description: |
-        Filter repositories by ownership:
+        Filter repositories by view type (deprecated, use OwnershipFilterParam):
         - all: All analyzed repositories
         - my: Only repositories analyzed by the current user
         - community: Only repositories analyzed by other users
+
+    OwnershipFilterParam:
+      type: string
+      enum:
+        - all
+        - mine
+        - organization
+      default: all
+      description: |
+        Filter repositories by ownership type:
+        - all: All analyzed repositories (personal and organization)
+        - mine: Only repositories owned by the current user
+        - organization: Only repositories owned by organizations the user is a member of
 
     RepositoryStatsResponse:
       type: object

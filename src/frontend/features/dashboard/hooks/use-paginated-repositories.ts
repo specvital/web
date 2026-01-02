@@ -30,7 +30,7 @@ type UsePaginatedRepositoriesReturn = {
 export const usePaginatedRepositories = (
   options: PaginatedRepositoriesOptions = {}
 ): UsePaginatedRepositoriesReturn => {
-  const { limit = DEFAULT_LIMIT, sortBy, sortOrder, view } = options;
+  const { limit = DEFAULT_LIMIT, ownership, sortBy, sortOrder, view } = options;
 
   const query = useInfiniteQuery({
     getNextPageParam: (lastPage: { hasNext: boolean; nextCursor?: string | null }) =>
@@ -40,11 +40,12 @@ export const usePaginatedRepositories = (
       fetchPaginatedRepositories({
         cursor: pageParam,
         limit,
+        ownership,
         sortBy,
         sortOrder,
         view,
       }),
-    queryKey: paginatedRepositoriesKeys.list({ limit, sortBy, sortOrder, view }),
+    queryKey: paginatedRepositoriesKeys.list({ limit, ownership, sortBy, sortOrder, view }),
     staleTime: 30 * 1000,
   });
 

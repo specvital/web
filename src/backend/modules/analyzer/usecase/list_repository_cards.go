@@ -17,6 +17,7 @@ const (
 type ListRepositoryCardsPaginatedInput struct {
 	Cursor    string
 	Limit     int
+	Ownership entity.OwnershipFilter
 	SortBy    entity.SortBy
 	SortOrder entity.SortOrder
 	UserID    string
@@ -38,6 +39,7 @@ func (uc *ListRepositoryCardsUseCase) ExecutePaginated(ctx context.Context, inpu
 	sortBy := normalizeSortBy(input.SortBy)
 	sortOrder := normalizeSortOrder(input.SortOrder, sortBy)
 	view := normalizeView(input.View)
+	ownership := normalizeOwnership(input.Ownership, input.UserID)
 
 	cursor, err := entity.DecodeCursor(input.Cursor, sortBy)
 	if err != nil {
@@ -47,6 +49,7 @@ func (uc *ListRepositoryCardsUseCase) ExecutePaginated(ctx context.Context, inpu
 	repos, err := uc.repository.GetPaginatedRepositories(ctx, port.PaginationParams{
 		Cursor:    cursor,
 		Limit:     limit + 1,
+		Ownership: ownership,
 		SortBy:    sortBy,
 		SortOrder: sortOrder,
 		UserID:    input.UserID,
@@ -117,6 +120,16 @@ func normalizeView(view entity.ViewFilter) entity.ViewFilter {
 		return entity.ViewFilterAll
 	}
 	return view
+}
+
+func normalizeOwnership(ownership entity.OwnershipFilter, userID string) entity.OwnershipFilter {
+	if ownership == "" {
+		return entity.OwnershipFilterAll
+	}
+	if userID == "" && ownership != entity.OwnershipFilterAll {
+		return entity.OwnershipFilterAll
+	}
+	return ownership
 }
 
 func (uc *ListRepositoryCardsUseCase) loadBookmarkedIDs(ctx context.Context, userID string) (map[string]bool, error) {

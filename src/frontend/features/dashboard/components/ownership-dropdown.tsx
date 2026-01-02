@@ -28,6 +28,7 @@ export const OwnershipDropdown = () => {
   const ownershipLabels: Record<OwnershipFilter, string> = {
     all: t("all"),
     mine: t("mine"),
+    organization: t("organization"),
   };
 
   const handleOwnershipChange = (value: string) => {

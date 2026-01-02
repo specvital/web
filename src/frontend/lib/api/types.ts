@@ -48,6 +48,7 @@ export type PaginatedRepositoriesResponse = components["schemas"]["PaginatedRepo
 export type SortByParam = components["schemas"]["SortByParam"];
 export type SortOrderParam = components["schemas"]["SortOrderParam"];
 export type ViewFilterParam = components["schemas"]["ViewFilterParam"];
+export type OwnershipFilterParam = components["schemas"]["OwnershipFilterParam"];
 export type RepositoryStatsResponse = components["schemas"]["RepositoryStatsResponse"];
 export type UserAnalyzedRepositoriesResponse =
   components["schemas"]["UserAnalyzedRepositoriesResponse"];

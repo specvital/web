@@ -22,6 +22,7 @@ type Repository interface {
 type PaginationParams struct {
 	Cursor    *entity.RepositoryCursor
 	Limit     int
+	Ownership entity.OwnershipFilter
 	SortBy    entity.SortBy
 	SortOrder entity.SortOrder
 	UserID    string

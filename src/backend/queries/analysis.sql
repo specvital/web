@@ -104,6 +104,15 @@ FROM codebases
 WHERE host = $1 AND owner = $2 AND name = $3 AND is_stale = false;
 
 -- name: GetPaginatedRepositoriesByRecent :many
+WITH user_context AS (
+    SELECT username FROM users WHERE id = sqlc.arg(user_id)::uuid
+),
+user_orgs AS (
+    SELECT go.login
+    FROM user_github_org_memberships ugom
+    JOIN github_organizations go ON go.id = ugom.org_id
+    WHERE ugom.user_id = sqlc.arg(user_id)::uuid
+)
 SELECT
     c.id AS codebase_id,
     c.owner,
@@ -161,6 +170,11 @@ WHERE c.last_viewed_at IS NOT NULL
         SELECT 1 FROM user_analysis_history uah
         WHERE uah.analysis_id = a.id AND uah.user_id = sqlc.arg(user_id)::uuid
     ))
+  )
+  AND (
+    sqlc.arg(ownership_filter)::text = 'all'
+    OR (sqlc.arg(ownership_filter)::text = 'mine' AND c.owner = (SELECT username FROM user_context))
+    OR (sqlc.arg(ownership_filter)::text = 'organization' AND c.owner IN (SELECT login FROM user_orgs))
   )
   AND (
     sqlc.arg(cursor_analyzed_at)::timestamptz IS NULL
@@ -177,6 +191,15 @@ ORDER BY
 LIMIT sqlc.arg(page_limit);
 
 -- name: GetPaginatedRepositoriesByName :many
+WITH user_context AS (
+    SELECT username FROM users WHERE id = sqlc.arg(user_id)::uuid
+),
+user_orgs AS (
+    SELECT go.login
+    FROM user_github_org_memberships ugom
+    JOIN github_organizations go ON go.id = ugom.org_id
+    WHERE ugom.user_id = sqlc.arg(user_id)::uuid
+)
 SELECT
     c.id AS codebase_id,
     c.owner,
@@ -234,6 +257,11 @@ WHERE c.last_viewed_at IS NOT NULL
         SELECT 1 FROM user_analysis_history uah
         WHERE uah.analysis_id = a.id AND uah.user_id = sqlc.arg(user_id)::uuid
     ))
+  )
+  AND (
+    sqlc.arg(ownership_filter)::text = 'all'
+    OR (sqlc.arg(ownership_filter)::text = 'mine' AND c.owner = (SELECT username FROM user_context))
+    OR (sqlc.arg(ownership_filter)::text = 'organization' AND c.owner IN (SELECT login FROM user_orgs))
   )
   AND (
     sqlc.arg(cursor_name)::text IS NULL
@@ -250,6 +278,15 @@ ORDER BY
 LIMIT sqlc.arg(page_limit);
 
 -- name: GetPaginatedRepositoriesByTests :many
+WITH user_context AS (
+    SELECT username FROM users WHERE id = sqlc.arg(user_id)::uuid
+),
+user_orgs AS (
+    SELECT go.login
+    FROM user_github_org_memberships ugom
+    JOIN github_organizations go ON go.id = ugom.org_id
+    WHERE ugom.user_id = sqlc.arg(user_id)::uuid
+)
 SELECT
     c.id AS codebase_id,
     c.owner,
@@ -307,6 +344,11 @@ WHERE c.last_viewed_at IS NOT NULL
         SELECT 1 FROM user_analysis_history uah
         WHERE uah.analysis_id = a.id AND uah.user_id = sqlc.arg(user_id)::uuid
     ))
+  )
+  AND (
+    sqlc.arg(ownership_filter)::text = 'all'
+    OR (sqlc.arg(ownership_filter)::text = 'mine' AND c.owner = (SELECT username FROM user_context))
+    OR (sqlc.arg(ownership_filter)::text = 'organization' AND c.owner IN (SELECT login FROM user_orgs))
   )
   AND (
     sqlc.arg(cursor_test_count)::int IS NULL

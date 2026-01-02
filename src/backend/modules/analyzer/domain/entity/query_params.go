@@ -72,3 +72,26 @@ func ParseViewFilter(s string) ViewFilter {
 func (v ViewFilter) String() string {
 	return string(v)
 }
+
+type OwnershipFilter string
+
+const (
+	OwnershipFilterAll          OwnershipFilter = "all"
+	OwnershipFilterMine         OwnershipFilter = "mine"
+	OwnershipFilterOrganization OwnershipFilter = "organization"
+)
+
+func ParseOwnershipFilter(s string) OwnershipFilter {
+	switch s {
+	case "mine":
+		return OwnershipFilterMine
+	case "organization":
+		return OwnershipFilterOrganization
+	default:
+		return OwnershipFilterAll
+	}
+}
+
+func (o OwnershipFilter) String() string {
+	return string(o)
+}
