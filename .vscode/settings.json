@@ -259,6 +259,14 @@
           "shortcut": "n",
           "terminalName": "backend-integration",
           "useVsCodeApi": false
+        },
+        {
+          "color": "",
+          "command": "just smee",
+          "name": "smee",
+          "shortcut": "s",
+          "terminalName": "smee",
+          "useVsCodeApi": false
         }
       ]
     },
