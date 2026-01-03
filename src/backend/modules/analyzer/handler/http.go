@@ -180,6 +180,12 @@ func (h *Handler) GetRecentRepositories(ctx context.Context, request api.GetRece
 	params := request.Params
 	userID := middleware.GetUserID(ctx)
 
+	if err := validateRecentRepositoriesAuth(userID, params.View, params.Ownership); err != nil {
+		return api.GetRecentRepositories401ApplicationProblemPlusJSONResponse{
+			UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized(err.Error()),
+		}, nil
+	}
+
 	input := usecase.ListRepositoryCardsPaginatedInput{
 		UserID: userID,
 	}
@@ -316,6 +322,22 @@ func validateOwnerRepo(owner, repo string) error {
 	if !validNamePattern.MatchString(repo) {
 		return errors.New("invalid repo format")
 	}
+	return nil
+}
+
+func validateRecentRepositoriesAuth(userID string, view *api.ViewFilterParam, ownership *api.OwnershipFilterParam) error {
+	if userID != "" {
+		return nil
+	}
+
+	if view != nil && *view == api.ViewFilterParamMy {
+		return errors.New("authentication required to view your analyzed repositories")
+	}
+
+	if ownership != nil && *ownership != api.OwnershipFilterParamAll {
+		return errors.New("authentication required to filter by ownership")
+	}
+
 	return nil
 }
 

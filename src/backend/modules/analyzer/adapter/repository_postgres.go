@@ -216,12 +216,17 @@ func (r *PostgresRepository) GetTestSuitesWithCases(ctx context.Context, analysi
 }
 
 func (r *PostgresRepository) GetPaginatedRepositories(ctx context.Context, params port.PaginationParams) ([]port.PaginatedRepository, error) {
-	userUUID, err := stringToUUID(params.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("parse user ID: %w", err)
+	var userUUID pgtype.UUID
+	if params.UserID != "" {
+		var err error
+		userUUID, err = stringToUUID(params.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("parse user ID: %w", err)
+		}
 	}
 
 	var cursorID pgtype.UUID
+	var err error
 	if params.Cursor != nil {
 		cursorID, err = stringToUUID(params.Cursor.ID)
 		if err != nil {

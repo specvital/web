@@ -226,6 +226,7 @@ export interface paths {
          *     Supports cursor-based pagination, sorting, and view filtering.
          *     - Default behavior (no params): Returns first 20 items sorted by recent analysis
          *     - Backward compatible: Existing clients work without changes
+         *     - Authentication: Optional for view=community/all with ownership=all. Required for view=my or ownership=mine/organization.
          *
          */
         get: operations["getRecentRepositories"];
