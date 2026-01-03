@@ -26,7 +26,7 @@ export const ExploreContent = () => {
   const t = useTranslations("explore");
   const { isAuthenticated } = useAuth();
 
-  const { addToDashboard } = useAddToDashboard();
+  const { addToDashboard, isPendingFor } = useAddToDashboard();
   const { reanalyze } = useReanalyze();
 
   const [activeTab, setActiveTab] = useState<ExploreTab>("community");
@@ -127,6 +127,7 @@ export const ExploreContent = () => {
 
           {isLoadingCommunity ? (
             <RepositoryList
+              isAddingToDashboard={isPendingFor}
               isLoading
               onAddToDashboard={handleAddToDashboard}
               onReanalyze={handleReanalyze}
@@ -141,6 +142,7 @@ export const ExploreContent = () => {
             <>
               <RepositoryList
                 dashboardRepoIds={dashboardRepoIds}
+                isAddingToDashboard={isPendingFor}
                 onAddToDashboard={handleAddToDashboard}
                 onReanalyze={handleReanalyze}
                 repositories={filteredRepositories}

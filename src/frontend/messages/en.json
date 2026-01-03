@@ -222,6 +222,7 @@
     "card": {
       "addBookmark": "Add bookmark",
       "addToDashboard": "Add to Dashboard",
+      "adding": "Adding...",
       "analyzeLatest": "Analyze latest commits",
       "bookmarked": "Bookmarked",
       "inDashboard": "In Dashboard",
@@ -311,6 +312,11 @@
       "retry": "Retry",
       "showingAll": "{count, plural, =0 {No repositories} =1 {Showing 1 repository} other {Showing all # repositories}}",
       "showingWithMore": "{count, plural, =1 {Showing 1 repository} other {Showing # repositories}}"
+    },
+    "toast": {
+      "addFailed": "Failed to add to dashboard",
+      "addSuccess": "Added to dashboard",
+      "goToDashboard": "Go to Dashboard"
     },
     "discovery": {
       "title": "Discover New Repos",

@@ -36,6 +36,7 @@ const messages = {
   dashboard: {
     card: {
       addBookmark: "Add bookmark",
+      adding: "Adding...",
       addToDashboard: "Add to Dashboard",
       analyzeLatest: "Analyze latest commits",
       bookmarked: "Bookmarked",
@@ -153,6 +154,33 @@ describe("RepositoryCard", () => {
       renderRepositoryCard({ variant: "explore" });
 
       expect(screen.getByRole("button", { name: /sign in to add/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("loading state (explore variant)", () => {
+    it("shows spinner and disables button when adding to dashboard", () => {
+      renderRepositoryCard({
+        isAddingToDashboard: true,
+        variant: "explore",
+      });
+
+      const button = screen.getByRole("button", { name: /adding/i });
+      expect(button).toBeDisabled();
+    });
+
+    it("shows desktop text for add to dashboard button", () => {
+      renderRepositoryCard({ variant: "explore" });
+
+      expect(screen.getByText("Add to Dashboard")).toBeInTheDocument();
+    });
+
+    it("shows desktop text for in dashboard state", () => {
+      renderRepositoryCard({
+        isInDashboard: true,
+        variant: "explore",
+      });
+
+      expect(screen.getByText("In Dashboard")).toBeInTheDocument();
     });
   });
 });

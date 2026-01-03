@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Plus, RefreshCw, Star } from "lucide-react";
+import { Check, Loader2, Plus, RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 
@@ -18,6 +18,7 @@ import { UpdateStatusBadge } from "./update-status-badge";
 type RepositoryCardVariant = "dashboard" | "explore";
 
 type RepositoryCardProps = {
+  isAddingToDashboard?: boolean;
   isInDashboard?: boolean;
   onAddToDashboard?: (owner: string, repo: string) => void;
   onBookmarkToggle?: (owner: string, repo: string, isBookmarked: boolean) => void;
@@ -27,6 +28,7 @@ type RepositoryCardProps = {
 };
 
 export const RepositoryCard = ({
+  isAddingToDashboard = false,
   isInDashboard = false,
   onAddToDashboard,
   onBookmarkToggle,
@@ -79,28 +81,38 @@ export const RepositoryCard = ({
     if (variant === "explore") {
       const tooltipContent = !isAuthenticated
         ? t("loginToAdd")
-        : isInDashboard
-          ? t("inDashboard")
-          : t("addToDashboard");
+        : isAddingToDashboard
+          ? t("adding")
+          : isInDashboard
+            ? t("inDashboard")
+            : t("addToDashboard");
+
+      const isDisabled = isInDashboard || isAddingToDashboard;
 
       return (
         <ResponsiveTooltip content={tooltipContent}>
           <Button
             aria-label={tooltipContent}
             className={cn(
-              "size-8 shrink-0",
+              "shrink-0 gap-1.5",
+              "size-8 sm:h-8 sm:w-auto sm:px-3",
               isInDashboard && "text-emerald-600 hover:text-emerald-700"
             )}
-            disabled={isInDashboard}
+            disabled={isDisabled}
             onClick={handleAddToDashboardClick}
             size="icon"
             variant="ghost"
           >
-            {isInDashboard ? (
+            {isAddingToDashboard ? (
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+            ) : isInDashboard ? (
               <Check aria-hidden="true" className="size-4" />
             ) : (
               <Plus aria-hidden="true" className="size-4" />
             )}
+            <span className="hidden sm:inline">
+              {isInDashboard ? t("inDashboard") : t("addToDashboard")}
+            </span>
           </Button>
         </ResponsiveTooltip>
       );

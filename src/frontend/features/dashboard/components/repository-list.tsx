@@ -10,6 +10,7 @@ type RepositoryListVariant = "dashboard" | "explore";
 
 type RepositoryListProps = {
   dashboardRepoIds?: Set<string>;
+  isAddingToDashboard?: (owner: string, repo: string) => boolean;
   isLoading?: boolean;
   onAddToDashboard?: (owner: string, repo: string) => void;
   onBookmarkToggle?: (owner: string, repo: string, isBookmarked: boolean) => void;
@@ -20,6 +21,7 @@ type RepositoryListProps = {
 
 export const RepositoryList = ({
   dashboardRepoIds,
+  isAddingToDashboard,
   isLoading = false,
   onAddToDashboard,
   onBookmarkToggle,
@@ -48,6 +50,7 @@ export const RepositoryList = ({
       {repositories.map((repo) => (
         <li key={repo.id}>
           <RepositoryCard
+            isAddingToDashboard={isAddingToDashboard?.(repo.owner, repo.name)}
             isInDashboard={dashboardRepoIds?.has(repo.id)}
             onAddToDashboard={onAddToDashboard}
             onBookmarkToggle={onBookmarkToggle}
