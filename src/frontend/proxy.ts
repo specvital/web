@@ -9,6 +9,13 @@ const AUTH_COOKIE_NAME = "auth_token";
 const REFRESH_COOKIE_NAME = "refresh_token";
 const JWT_MIN_LENGTH = 20;
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const ACCESS_TOKEN_MAX_AGE = 15 * 60;
+const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
+
+type AuthResult = {
+  isValid: boolean;
+  newTokens?: { accessToken: string; refreshToken: string };
+};
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -57,12 +64,59 @@ const hasValidAuthCookie = (request: NextRequest): boolean => {
   return true;
 };
 
-const verifyAuthToken = async (request: NextRequest): Promise<boolean> => {
+const refreshTokens = async (
+  refreshToken: string
+): Promise<{ accessToken: string; refreshToken: string } | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
+      headers: {
+        Accept: "application/json",
+        Cookie: `${REFRESH_COOKIE_NAME}=${refreshToken}`,
+      },
+      method: "POST",
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const setCookieHeaders = response.headers.getSetCookie();
+    let accessToken: string | null = null;
+    let newRefreshToken: string | null = null;
+
+    for (const cookieHeader of setCookieHeaders) {
+      const authMatch = cookieHeader.match(/^auth_token=([^;]+)/);
+      if (authMatch) {
+        accessToken = authMatch[1];
+      }
+      const refreshMatch = cookieHeader.match(/^refresh_token=([^;]+)/);
+      if (refreshMatch) {
+        newRefreshToken = refreshMatch[1];
+      }
+    }
+
+    if (accessToken && newRefreshToken) {
+      return { accessToken, refreshToken: newRefreshToken };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const verifyAuthToken = async (request: NextRequest): Promise<AuthResult> => {
   const authCookie = request.cookies.get(AUTH_COOKIE_NAME);
   const refreshCookie = request.cookies.get(REFRESH_COOKIE_NAME);
 
   if (!authCookie?.value) {
-    return false;
+    return { isValid: false };
   }
 
   const cookieHeader = [
@@ -85,9 +139,21 @@ const verifyAuthToken = async (request: NextRequest): Promise<boolean> => {
     });
 
     clearTimeout(timeoutId);
-    return response.ok;
+
+    if (response.ok) {
+      return { isValid: true };
+    }
+
+    if (response.status === 401 && refreshCookie?.value) {
+      const newTokens = await refreshTokens(refreshCookie.value);
+      if (newTokens) {
+        return { isValid: true, newTokens };
+      }
+    }
+
+    return { isValid: false };
   } catch {
-    return false;
+    return { isValid: false };
   }
 };
 
@@ -96,6 +162,29 @@ const createRedirectWithCookieClear = (url: URL): NextResponse => {
   response.cookies.delete(AUTH_COOKIE_NAME);
   response.cookies.delete(REFRESH_COOKIE_NAME);
   return response;
+};
+
+const setTokenCookies = (
+  response: NextResponse,
+  tokens: { accessToken: string; refreshToken: string }
+): void => {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  response.cookies.set(AUTH_COOKIE_NAME, tokens.accessToken, {
+    httpOnly: true,
+    maxAge: ACCESS_TOKEN_MAX_AGE,
+    path: "/",
+    sameSite: "lax",
+    secure: isProduction,
+  });
+
+  response.cookies.set(REFRESH_COOKIE_NAME, tokens.refreshToken, {
+    httpOnly: true,
+    maxAge: REFRESH_TOKEN_MAX_AGE,
+    path: "/",
+    sameSite: "strict",
+    secure: isProduction,
+  });
 };
 
 const proxy = async (request: NextRequest) => {
@@ -110,10 +199,16 @@ const proxy = async (request: NextRequest) => {
       return NextResponse.redirect(homeUrl, 307);
     }
 
-    const isValid = await verifyAuthToken(request);
-    if (!isValid) {
+    const authResult = await verifyAuthToken(request);
+    if (!authResult.isValid) {
       const homeUrl = new URL(`/${locale}`, request.url);
       return createRedirectWithCookieClear(homeUrl);
+    }
+
+    if (authResult.newTokens) {
+      const response = intlMiddleware(request);
+      setTokenCookies(response, authResult.newTokens);
+      return response;
     }
   }
 

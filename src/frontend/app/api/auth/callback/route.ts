@@ -4,7 +4,9 @@ import { type NextRequest, NextResponse } from "next/server";
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:5173";
 const AUTH_COOKIE_NAME = "auth_token";
-const MAX_COOKIE_AGE = 30 * 24 * 60 * 60; // 30 days
+const REFRESH_COOKIE_NAME = "refresh_token";
+const ACCESS_TOKEN_MAX_AGE = 15 * 60;
+const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
 
 /**
  * OAuth callback proxy - needed because:
@@ -25,20 +27,34 @@ export async function GET(request: NextRequest) {
     const response = await fetch(backendUrl, { redirect: "manual" });
 
     if (response.status === 302) {
-      const setCookie = response.headers.get("set-cookie");
-      if (setCookie) {
-        const match = setCookie.match(/^auth_token=([^;]+)/);
-        if (match) {
-          const cookieStore = await cookies();
-          cookieStore.set(AUTH_COOKIE_NAME, match[1], {
+      const setCookieHeaders = response.headers.getSetCookie();
+      const cookieStore = await cookies();
+      const isProduction = process.env.NODE_ENV === "production";
+
+      for (const cookieHeader of setCookieHeaders) {
+        const authMatch = cookieHeader.match(/^auth_token=([^;]+)/);
+        if (authMatch) {
+          cookieStore.set(AUTH_COOKIE_NAME, authMatch[1], {
             httpOnly: true,
-            maxAge: MAX_COOKIE_AGE,
+            maxAge: ACCESS_TOKEN_MAX_AGE,
             path: "/",
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
+            secure: isProduction,
+          });
+        }
+
+        const refreshMatch = cookieHeader.match(/^refresh_token=([^;]+)/);
+        if (refreshMatch) {
+          cookieStore.set(REFRESH_COOKIE_NAME, refreshMatch[1], {
+            httpOnly: true,
+            maxAge: REFRESH_TOKEN_MAX_AGE,
+            path: "/",
+            sameSite: "strict",
+            secure: isProduction,
           });
         }
       }
+
       return NextResponse.redirect(FRONTEND_URL, { status: 302 });
     }
 
