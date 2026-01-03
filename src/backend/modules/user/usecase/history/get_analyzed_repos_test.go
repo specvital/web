@@ -15,6 +15,14 @@ type mockAnalysisHistoryRepository struct {
 	err   error
 }
 
+func (m *mockAnalysisHistoryRepository) AddUserAnalyzedRepository(_ context.Context, _, _, _ string) (*port.AddHistoryResult, error) {
+	return nil, nil
+}
+
+func (m *mockAnalysisHistoryRepository) CheckUserHistoryExists(_ context.Context, _, _, _ string) (bool, error) {
+	return false, nil
+}
+
 func (m *mockAnalysisHistoryRepository) GetUserAnalyzedRepositories(_ context.Context, _ string, _ port.AnalyzedReposParams) ([]*entity.AnalyzedRepository, error) {
 	if m.err != nil {
 		return nil, m.err

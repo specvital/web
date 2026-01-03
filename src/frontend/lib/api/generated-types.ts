@@ -206,7 +206,14 @@ export interface paths {
          */
         get: operations["getUserAnalyzedRepositories"];
         put?: never;
-        post?: never;
+        /**
+         * Add repository to user's analysis history
+         * @description Adds a repository to the user's analysis history (dashboard).
+         *     Useful when viewing analysis results from other users.
+         *     UPSERT behavior - updates timestamp if already exists.
+         *
+         */
+        post: operations["addUserAnalyzedRepository"];
         delete?: never;
         options?: never;
         head?: never;
@@ -547,6 +554,8 @@ export interface components {
              * @example 2024-01-14T09:00:00Z
              */
             committedAt?: string;
+            /** @description Whether this analysis is in the current user's dashboard history */
+            isInMyHistory?: boolean;
             /**
              * @description Repository owner
              * @example facebook
@@ -753,6 +762,27 @@ export interface components {
             nextCursor?: string | null;
             /** @description Whether more pages are available */
             hasNext: boolean;
+        };
+        AddAnalyzedRepositoryRequest: {
+            /**
+             * @description GitHub repository owner
+             * @example facebook
+             */
+            owner: string;
+            /**
+             * @description GitHub repository name
+             * @example react
+             */
+            repo: string;
+        };
+        AddAnalyzedRepositoryResponse: {
+            /** @description Analysis ID added to user's history */
+            analysisId: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 timestamp when the history was updated
+             */
+            updatedAt: string;
         };
         RepositoryCard: {
             /**
@@ -1367,6 +1397,34 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    addUserAnalyzedRepository: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddAnalyzedRepositoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Repository added to history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddAnalyzedRepositoryResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };
     };

@@ -29,6 +29,7 @@ type BookmarkHandlers interface {
 }
 
 type AnalysisHistoryHandlers interface {
+	AddUserAnalyzedRepository(ctx context.Context, request AddUserAnalyzedRepositoryRequestObject) (AddUserAnalyzedRepositoryResponseObject, error)
 	GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error)
 }
 
@@ -139,6 +140,10 @@ func (h *APIHandlers) GetUserBookmarks(ctx context.Context, request GetUserBookm
 
 func (h *APIHandlers) RemoveBookmark(ctx context.Context, request RemoveBookmarkRequestObject) (RemoveBookmarkResponseObject, error) {
 	return h.bookmark.RemoveBookmark(ctx, request)
+}
+
+func (h *APIHandlers) AddUserAnalyzedRepository(ctx context.Context, request AddUserAnalyzedRepositoryRequestObject) (AddUserAnalyzedRepositoryResponseObject, error) {
+	return h.analysisHistory.AddUserAnalyzedRepository(ctx, request)
 }
 
 func (h *APIHandlers) GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error) {

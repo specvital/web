@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cockroachdb/errors"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/specvital/web/src/backend/internal/db"
@@ -20,6 +22,61 @@ var _ port.AnalysisHistoryRepository = (*HistoryRepositoryPostgres)(nil)
 
 func NewHistoryRepository(queries *db.Queries) *HistoryRepositoryPostgres {
 	return &HistoryRepositoryPostgres{queries: queries}
+}
+
+func (r *HistoryRepositoryPostgres) AddUserAnalyzedRepository(
+	ctx context.Context,
+	userID, owner, repo string,
+) (*port.AddHistoryResult, error) {
+	userUUID, err := stringToUUID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("parse user ID: %w", err)
+	}
+
+	analysisID, err := r.queries.GetLatestAnalysisIDByOwnerRepo(ctx, db.GetLatestAnalysisIDByOwnerRepoParams{
+		Owner: owner,
+		Repo:  repo,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrAnalysisNotFound
+		}
+		return nil, fmt.Errorf("get latest analysis: %w", err)
+	}
+
+	result, err := r.queries.AddUserAnalyzedRepository(ctx, db.AddUserAnalyzedRepositoryParams{
+		UserID:     userUUID,
+		AnalysisID: analysisID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("add history: %w", err)
+	}
+
+	return &port.AddHistoryResult{
+		AnalysisID: uuidToString(result.AnalysisID),
+		UpdatedAt:  result.UpdatedAt.Time,
+	}, nil
+}
+
+func (r *HistoryRepositoryPostgres) CheckUserHistoryExists(
+	ctx context.Context,
+	userID, owner, repo string,
+) (bool, error) {
+	userUUID, err := stringToUUID(userID)
+	if err != nil {
+		return false, fmt.Errorf("parse user ID: %w", err)
+	}
+
+	exists, err := r.queries.CheckUserHistoryExists(ctx, db.CheckUserHistoryExistsParams{
+		UserID: userUUID,
+		Owner:  owner,
+		Repo:   repo,
+	})
+	if err != nil {
+		return false, fmt.Errorf("check history exists: %w", err)
+	}
+
+	return exists, nil
 }
 
 func (r *HistoryRepositoryPostgres) GetUserAnalyzedRepositories(

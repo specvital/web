@@ -11,6 +11,81 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addUserAnalyzedRepository = `-- name: AddUserAnalyzedRepository :one
+INSERT INTO user_analysis_history (user_id, analysis_id)
+VALUES ($1, $2)
+ON CONFLICT (user_id, analysis_id) DO UPDATE SET updated_at = now()
+RETURNING id, analysis_id, updated_at
+`
+
+type AddUserAnalyzedRepositoryParams struct {
+	UserID     pgtype.UUID `json:"user_id"`
+	AnalysisID pgtype.UUID `json:"analysis_id"`
+}
+
+type AddUserAnalyzedRepositoryRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	AnalysisID pgtype.UUID        `json:"analysis_id"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) AddUserAnalyzedRepository(ctx context.Context, arg AddUserAnalyzedRepositoryParams) (AddUserAnalyzedRepositoryRow, error) {
+	row := q.db.QueryRow(ctx, addUserAnalyzedRepository, arg.UserID, arg.AnalysisID)
+	var i AddUserAnalyzedRepositoryRow
+	err := row.Scan(&i.ID, &i.AnalysisID, &i.UpdatedAt)
+	return i, err
+}
+
+const checkUserHistoryExists = `-- name: CheckUserHistoryExists :one
+SELECT EXISTS (
+    SELECT 1 FROM user_analysis_history uah
+    JOIN analyses a ON a.id = uah.analysis_id
+    JOIN codebases c ON c.id = a.codebase_id
+    WHERE uah.user_id = $1
+      AND c.host = 'github.com'
+      AND c.owner = $2
+      AND c.name = $3
+      AND a.status = 'completed'
+) AS exists
+`
+
+type CheckUserHistoryExistsParams struct {
+	UserID pgtype.UUID `json:"user_id"`
+	Owner  string      `json:"owner"`
+	Repo   string      `json:"repo"`
+}
+
+func (q *Queries) CheckUserHistoryExists(ctx context.Context, arg CheckUserHistoryExistsParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkUserHistoryExists, arg.UserID, arg.Owner, arg.Repo)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const getLatestAnalysisIDByOwnerRepo = `-- name: GetLatestAnalysisIDByOwnerRepo :one
+SELECT a.id
+FROM analyses a
+JOIN codebases c ON c.id = a.codebase_id
+WHERE c.host = 'github.com'
+  AND c.owner = $1
+  AND c.name = $2
+  AND a.status = 'completed'
+ORDER BY a.completed_at DESC
+LIMIT 1
+`
+
+type GetLatestAnalysisIDByOwnerRepoParams struct {
+	Owner string `json:"owner"`
+	Repo  string `json:"repo"`
+}
+
+func (q *Queries) GetLatestAnalysisIDByOwnerRepo(ctx context.Context, arg GetLatestAnalysisIDByOwnerRepoParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, getLatestAnalysisIDByOwnerRepo, arg.Owner, arg.Repo)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getUserAnalyzedRepositories = `-- name: GetUserAnalyzedRepositories :many
 SELECT
     uah.id AS history_id,

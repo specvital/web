@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/cockroachdb/errors"
 
@@ -15,12 +16,15 @@ import (
 	historyuc "github.com/specvital/web/src/backend/modules/user/usecase/history"
 )
 
+var validNamePattern = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+
 const (
 	defaultPageLimit = 20
 	maxPageLimit     = 100
 )
 
 type Handler struct {
+	addAnalyzedRepo  *historyuc.AddAnalyzedRepoUseCase
 	addBookmark      *bookmarkuc.AddBookmarkUseCase
 	getAnalyzedRepos *historyuc.GetAnalyzedReposUseCase
 	getBookmarks     *bookmarkuc.GetBookmarksUseCase
@@ -29,6 +33,7 @@ type Handler struct {
 }
 
 type HandlerConfig struct {
+	AddAnalyzedRepo  *historyuc.AddAnalyzedRepoUseCase
 	AddBookmark      *bookmarkuc.AddBookmarkUseCase
 	GetAnalyzedRepos *historyuc.GetAnalyzedReposUseCase
 	GetBookmarks     *bookmarkuc.GetBookmarksUseCase
@@ -46,6 +51,9 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	if cfg.Logger == nil {
 		return nil, errors.New("logger is required")
 	}
+	if cfg.AddAnalyzedRepo == nil {
+		return nil, errors.New("addAnalyzedRepo usecase is required")
+	}
 	if cfg.AddBookmark == nil {
 		return nil, errors.New("addBookmark usecase is required")
 	}
@@ -59,11 +67,52 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 		return nil, errors.New("getAnalyzedRepos usecase is required")
 	}
 	return &Handler{
+		addAnalyzedRepo:  cfg.AddAnalyzedRepo,
 		addBookmark:      cfg.AddBookmark,
 		getAnalyzedRepos: cfg.GetAnalyzedRepos,
 		getBookmarks:     cfg.GetBookmarks,
 		logger:           cfg.Logger,
 		removeBookmark:   cfg.RemoveBookmark,
+	}, nil
+}
+
+func (h *Handler) AddUserAnalyzedRepository(
+	ctx context.Context,
+	request api.AddUserAnalyzedRepositoryRequestObject,
+) (api.AddUserAnalyzedRepositoryResponseObject, error) {
+	userID := middleware.GetUserID(ctx)
+	if userID == "" {
+		return api.AddUserAnalyzedRepository401ApplicationProblemPlusJSONResponse{
+			UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("authentication required"),
+		}, nil
+	}
+
+	if err := validateOwnerRepo(request.Body.Owner, request.Body.Repo); err != nil {
+		return api.AddUserAnalyzedRepository400ApplicationProblemPlusJSONResponse{
+			BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest(err.Error()),
+		}, nil
+	}
+
+	output, err := h.addAnalyzedRepo.Execute(ctx, historyuc.AddAnalyzedRepoInput{
+		Owner:  request.Body.Owner,
+		Repo:   request.Body.Repo,
+		UserID: userID,
+	})
+	if err != nil {
+		if errors.Is(err, domain.ErrAnalysisNotFound) {
+			return api.AddUserAnalyzedRepository404ApplicationProblemPlusJSONResponse{
+				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("analysis not found for this repository"),
+			}, nil
+		}
+		h.logger.Error(ctx, "failed to add analyzed repository", "error", err, "owner", request.Body.Owner, "repo", request.Body.Repo)
+		return api.AddUserAnalyzedRepository500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to add analyzed repository"),
+		}, nil
+	}
+
+	return api.AddUserAnalyzedRepository200JSONResponse{
+		AnalysisID: output.AnalysisID,
+		UpdatedAt:  output.UpdatedAt,
 	}, nil
 }
 
@@ -186,4 +235,17 @@ func (h *Handler) GetUserAnalyzedRepositories(
 	}
 
 	return api.GetUserAnalyzedRepositories200JSONResponse(mapper.ToUserAnalyzedRepositoriesResponse(result)), nil
+}
+
+func validateOwnerRepo(owner, repo string) error {
+	if owner == "" || repo == "" {
+		return errors.New("owner and repo are required")
+	}
+	if !validNamePattern.MatchString(owner) {
+		return errors.New("invalid owner format")
+	}
+	if !validNamePattern.MatchString(repo) {
+		return errors.New("invalid repo format")
+	}
+	return nil
 }

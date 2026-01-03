@@ -107,12 +107,14 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	bookmarkRepo := useradapter.NewBookmarkRepository(queries)
 	historyRepo := useradapter.NewHistoryRepository(queries)
 
+	addAnalyzedRepoUC := historyuc.NewAddAnalyzedRepoUseCase(historyRepo)
 	addBookmarkUC := bookmarkuc.NewAddBookmarkUseCase(bookmarkRepo)
 	getBookmarksUC := bookmarkuc.NewGetBookmarksUseCase(bookmarkRepo)
 	removeBookmarkUC := bookmarkuc.NewRemoveBookmarkUseCase(bookmarkRepo)
 	getAnalyzedReposUC := historyuc.NewGetAnalyzedReposUseCase(historyRepo)
 
 	userHandler, err := userhandler.NewHandler(&userhandler.HandlerConfig{
+		AddAnalyzedRepo:  addAnalyzedRepoUC,
 		AddBookmark:      addBookmarkUC,
 		GetAnalyzedRepos: getAnalyzedReposUC,
 		GetBookmarks:     getBookmarksUC,
@@ -142,6 +144,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		getUpdateStatusUC,
 		getRepositoryStatsUC,
 		reanalyzeRepositoryUC,
+		historyRepo,
 	)
 
 	githubRepo := githubadapter.NewPostgresRepository(container.DB, queries)

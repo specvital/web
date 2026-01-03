@@ -81,3 +81,7 @@ type PreviousAnalysis struct {
 	ID         string
 	TotalTests int
 }
+
+type HistoryChecker interface {
+	CheckUserHistoryExists(ctx context.Context, userID, owner, repo string) (bool, error)
+}

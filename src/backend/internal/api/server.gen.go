@@ -91,6 +91,24 @@ const (
 	GetUserAnalyzedRepositoriesParamsOwnershipOrganization GetUserAnalyzedRepositoriesParamsOwnership = "organization"
 )
 
+// AddAnalyzedRepositoryRequest defines model for AddAnalyzedRepositoryRequest.
+type AddAnalyzedRepositoryRequest struct {
+	// Owner GitHub repository owner
+	Owner string `json:"owner"`
+
+	// Repo GitHub repository name
+	Repo string `json:"repo"`
+}
+
+// AddAnalyzedRepositoryResponse defines model for AddAnalyzedRepositoryResponse.
+type AddAnalyzedRepositoryResponse struct {
+	// AnalysisID Analysis ID added to user's history
+	AnalysisID string `json:"analysisId"`
+
+	// UpdatedAt ISO 8601 timestamp when the history was updated
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
 // AnalysisResponse defines model for AnalysisResponse.
 type AnalysisResponse struct {
 	union json.RawMessage
@@ -109,6 +127,9 @@ type AnalysisResult struct {
 
 	// CommittedAt ISO 8601 timestamp of the commit
 	CommittedAt *time.Time `json:"committedAt,omitempty"`
+
+	// IsInMyHistory Whether this analysis is in the current user's dashboard history
+	IsInMyHistory *bool `json:"isInMyHistory,omitempty"`
 
 	// Owner Repository owner
 	Owner string `json:"owner"`
@@ -734,6 +755,9 @@ type HandleGitHubAppWebhookParams struct {
 	XGitHubDelivery openapi_types.UUID `json:"X-GitHub-Delivery"`
 }
 
+// AddUserAnalyzedRepositoryJSONRequestBody defines body for AddUserAnalyzedRepository for application/json ContentType.
+type AddUserAnalyzedRepositoryJSONRequestBody = AddAnalyzedRepositoryRequest
+
 // HandleGitHubAppWebhookJSONRequestBody defines body for HandleGitHubAppWebhook for application/json ContentType.
 type HandleGitHubAppWebhookJSONRequestBody = GitHubWebhookPayload
 
@@ -930,6 +954,9 @@ type ServerInterface interface {
 	// Get user's analyzed repositories
 	// (GET /api/user/analyzed-repositories)
 	GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request, params GetUserAnalyzedRepositoriesParams)
+	// Add repository to user's analysis history
+	// (POST /api/user/analyzed-repositories)
+	AddUserAnalyzedRepository(w http.ResponseWriter, r *http.Request)
 	// Get user's bookmarked repositories
 	// (GET /api/user/bookmarks)
 	GetUserBookmarks(w http.ResponseWriter, r *http.Request)
@@ -1038,6 +1065,12 @@ func (_ Unimplemented) GetUpdateStatus(w http.ResponseWriter, r *http.Request, o
 // Get user's analyzed repositories
 // (GET /api/user/analyzed-repositories)
 func (_ Unimplemented) GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request, params GetUserAnalyzedRepositoriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add repository to user's analysis history
+// (POST /api/user/analyzed-repositories)
+func (_ Unimplemented) AddUserAnalyzedRepository(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1579,6 +1612,26 @@ func (siw *ServerInterfaceWrapper) GetUserAnalyzedRepositories(w http.ResponseWr
 	handler.ServeHTTP(w, r)
 }
 
+// AddUserAnalyzedRepository operation middleware
+func (siw *ServerInterfaceWrapper) AddUserAnalyzedRepository(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddUserAnalyzedRepository(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetUserBookmarks operation middleware
 func (siw *ServerInterfaceWrapper) GetUserBookmarks(w http.ResponseWriter, r *http.Request) {
 
@@ -1991,6 +2044,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/analyzed-repositories", wrapper.GetUserAnalyzedRepositories)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/user/analyzed-repositories", wrapper.AddUserAnalyzedRepository)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/bookmarks", wrapper.GetUserBookmarks)
@@ -2701,6 +2757,67 @@ func (response GetUserAnalyzedRepositories500ApplicationProblemPlusJSONResponse)
 	return json.NewEncoder(w).Encode(response)
 }
 
+type AddUserAnalyzedRepositoryRequestObject struct {
+	Body *AddUserAnalyzedRepositoryJSONRequestBody
+}
+
+type AddUserAnalyzedRepositoryResponseObject interface {
+	VisitAddUserAnalyzedRepositoryResponse(w http.ResponseWriter) error
+}
+
+type AddUserAnalyzedRepository200JSONResponse AddAnalyzedRepositoryResponse
+
+func (response AddUserAnalyzedRepository200JSONResponse) VisitAddUserAnalyzedRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddUserAnalyzedRepository400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response AddUserAnalyzedRepository400ApplicationProblemPlusJSONResponse) VisitAddUserAnalyzedRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddUserAnalyzedRepository401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response AddUserAnalyzedRepository401ApplicationProblemPlusJSONResponse) VisitAddUserAnalyzedRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddUserAnalyzedRepository404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response AddUserAnalyzedRepository404ApplicationProblemPlusJSONResponse) VisitAddUserAnalyzedRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddUserAnalyzedRepository500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response AddUserAnalyzedRepository500ApplicationProblemPlusJSONResponse) VisitAddUserAnalyzedRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type GetUserBookmarksRequestObject struct {
 }
 
@@ -3070,6 +3187,9 @@ type StrictServerInterface interface {
 	// Get user's analyzed repositories
 	// (GET /api/user/analyzed-repositories)
 	GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error)
+	// Add repository to user's analysis history
+	// (POST /api/user/analyzed-repositories)
+	AddUserAnalyzedRepository(ctx context.Context, request AddUserAnalyzedRepositoryRequestObject) (AddUserAnalyzedRepositoryResponseObject, error)
 	// Get user's bookmarked repositories
 	// (GET /api/user/bookmarks)
 	GetUserBookmarks(ctx context.Context, request GetUserBookmarksRequestObject) (GetUserBookmarksResponseObject, error)
@@ -3475,6 +3595,37 @@ func (sh *strictHandler) GetUserAnalyzedRepositories(w http.ResponseWriter, r *h
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetUserAnalyzedRepositoriesResponseObject); ok {
 		if err := validResponse.VisitGetUserAnalyzedRepositoriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddUserAnalyzedRepository operation middleware
+func (sh *strictHandler) AddUserAnalyzedRepository(w http.ResponseWriter, r *http.Request) {
+	var request AddUserAnalyzedRepositoryRequestObject
+
+	var body AddUserAnalyzedRepositoryJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddUserAnalyzedRepository(ctx, request.(AddUserAnalyzedRepositoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddUserAnalyzedRepository")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddUserAnalyzedRepositoryResponseObject); ok {
+		if err := validResponse.VisitAddUserAnalyzedRepositoryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

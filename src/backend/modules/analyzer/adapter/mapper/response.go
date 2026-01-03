@@ -8,9 +8,18 @@ import (
 	"github.com/specvital/web/src/backend/modules/analyzer/domain/entity"
 )
 
-func ToCompletedResponse(analysis *entity.Analysis) (api.AnalysisResponse, error) {
+type CompletedResponseOptions struct {
+	IsInMyHistory *bool
+}
+
+func ToCompletedResponse(analysis *entity.Analysis, opts ...CompletedResponseOptions) (api.AnalysisResponse, error) {
 	if analysis == nil {
 		return api.AnalysisResponse{}, fmt.Errorf("analysis is nil")
+	}
+
+	var options CompletedResponseOptions
+	if len(opts) > 0 {
+		options = opts[0]
 	}
 
 	suites := make([]api.TestSuite, len(analysis.TestSuites))
@@ -72,13 +81,14 @@ func ToCompletedResponse(analysis *entity.Analysis) (api.AnalysisResponse, error
 	})
 
 	result := api.AnalysisResult{
-		AnalyzedAt:  analysis.CompletedAt,
-		BranchName:  analysis.BranchName,
-		CommitSHA:   analysis.CommitSHA,
-		CommittedAt: analysis.CommittedAt,
-		Owner:       analysis.Owner,
-		Repo:        analysis.Repo,
-		Suites:      suites,
+		AnalyzedAt:    analysis.CompletedAt,
+		BranchName:    analysis.BranchName,
+		CommitSHA:     analysis.CommitSHA,
+		CommittedAt:   analysis.CommittedAt,
+		IsInMyHistory: options.IsInMyHistory,
+		Owner:         analysis.Owner,
+		Repo:          analysis.Repo,
+		Suites:        suites,
 		Summary: api.Summary{
 			Active:     totalActive,
 			Focused:    totalFocused,

@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/specvital/web/src/backend/internal/api"
 )
@@ -25,6 +26,10 @@ func (h *MockHandler) GetUserBookmarks(_ context.Context, _ api.GetUserBookmarks
 
 func (h *MockHandler) RemoveBookmark(_ context.Context, _ api.RemoveBookmarkRequestObject) (api.RemoveBookmarkResponseObject, error) {
 	return api.RemoveBookmark200JSONResponse{IsBookmarked: false, Success: true}, nil
+}
+
+func (h *MockHandler) AddUserAnalyzedRepository(_ context.Context, _ api.AddUserAnalyzedRepositoryRequestObject) (api.AddUserAnalyzedRepositoryResponseObject, error) {
+	return api.AddUserAnalyzedRepository200JSONResponse{AnalysisID: "mock-analysis-id", UpdatedAt: time.Now()}, nil
 }
 
 func (h *MockHandler) GetUserAnalyzedRepositories(_ context.Context, _ api.GetUserAnalyzedRepositoriesRequestObject) (api.GetUserAnalyzedRepositoriesResponseObject, error) {

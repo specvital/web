@@ -15,6 +15,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/analyzer/adapter/mapper"
 	"github.com/specvital/web/src/backend/modules/analyzer/domain"
 	"github.com/specvital/web/src/backend/modules/analyzer/domain/entity"
+	"github.com/specvital/web/src/backend/modules/analyzer/domain/port"
 	"github.com/specvital/web/src/backend/modules/analyzer/usecase"
 )
 
@@ -25,6 +26,7 @@ type Handler struct {
 	getAnalysis         *usecase.GetAnalysisUseCase
 	getRepositoryStats  *usecase.GetRepositoryStatsUseCase
 	getUpdateStatus     *usecase.GetUpdateStatusUseCase
+	historyChecker      port.HistoryChecker
 	listRepositoryCards *usecase.ListRepositoryCardsUseCase
 	logger              *logger.Logger
 	reanalyzeRepository *usecase.ReanalyzeRepositoryUseCase
@@ -41,12 +43,14 @@ func NewHandler(
 	getUpdateStatus *usecase.GetUpdateStatusUseCase,
 	getRepositoryStats *usecase.GetRepositoryStatsUseCase,
 	reanalyzeRepository *usecase.ReanalyzeRepositoryUseCase,
+	historyChecker port.HistoryChecker,
 ) *Handler {
 	return &Handler{
 		analyzeRepository:   analyzeRepository,
 		getAnalysis:         getAnalysis,
 		getRepositoryStats:  getRepositoryStats,
 		getUpdateStatus:     getUpdateStatus,
+		historyChecker:      historyChecker,
 		listRepositoryCards: listRepositoryCards,
 		logger:              logger,
 		reanalyzeRepository: reanalyzeRepository,
@@ -95,7 +99,8 @@ func (h *Handler) AnalyzeRepository(ctx context.Context, request api.AnalyzeRepo
 	}
 
 	if result.Analysis != nil {
-		response, mapErr := mapper.ToCompletedResponse(result.Analysis)
+		opts := h.buildHistoryOptions(ctx, userID, owner, repo)
+		response, mapErr := mapper.ToCompletedResponse(result.Analysis, opts)
 		if mapErr != nil {
 			log.Error(ctx, "failed to map completed response", "error", mapErr)
 			return api.AnalyzeRepository500ApplicationProblemPlusJSONResponse{
@@ -125,6 +130,7 @@ func (h *Handler) AnalyzeRepository(ctx context.Context, request api.AnalyzeRepo
 func (h *Handler) GetAnalysisStatus(ctx context.Context, request api.GetAnalysisStatusRequestObject) (api.GetAnalysisStatusResponseObject, error) {
 	owner, repo := request.Owner, request.Repo
 	log := h.logger.With("owner", owner, "repo", repo)
+	userID := middleware.GetUserID(ctx)
 
 	if err := validateOwnerRepo(owner, repo); err != nil {
 		return api.GetAnalysisStatus400ApplicationProblemPlusJSONResponse{
@@ -156,7 +162,8 @@ func (h *Handler) GetAnalysisStatus(ctx context.Context, request api.GetAnalysis
 	}
 
 	if result.Analysis != nil {
-		response, mapErr := mapper.ToCompletedResponse(result.Analysis)
+		opts := h.buildHistoryOptions(ctx, userID, owner, repo)
+		response, mapErr := mapper.ToCompletedResponse(result.Analysis, opts)
 		if mapErr != nil {
 			log.Error(ctx, "failed to map completed response", "error", mapErr)
 			return api.GetAnalysisStatus500ApplicationProblemPlusJSONResponse{
@@ -396,4 +403,18 @@ func (r reanalyze202Response) VisitReanalyzeRepositoryResponse(w http.ResponseWr
 	w.WriteHeader(http.StatusAccepted)
 	_, err := w.Write(r.union)
 	return err
+}
+
+func (h *Handler) buildHistoryOptions(ctx context.Context, userID, owner, repo string) mapper.CompletedResponseOptions {
+	if userID == "" || h.historyChecker == nil {
+		return mapper.CompletedResponseOptions{}
+	}
+
+	exists, err := h.historyChecker.CheckUserHistoryExists(ctx, userID, owner, repo)
+	if err != nil {
+		h.logger.Warn(ctx, "failed to check user history", "error", err)
+		return mapper.CompletedResponseOptions{}
+	}
+
+	return mapper.CompletedResponseOptions{IsInMyHistory: &exists}
 }
