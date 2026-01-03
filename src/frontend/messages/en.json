@@ -275,7 +275,8 @@
         "all": "All",
         "label": "Filter by ownership",
         "mine": "Mine",
-        "organization": "Organization"
+        "organization": "Organization",
+        "others": "Others"
       },
       "starred": "Starred",
       "starredLabel": "Show starred only"

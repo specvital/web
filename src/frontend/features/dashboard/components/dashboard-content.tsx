@@ -48,6 +48,7 @@ export const DashboardContent = () => {
     ownership: ownershipFilter,
     sortBy,
     sortOrder: "desc",
+    view: "my",
   });
 
   const filteredRepositories = useMemo(() => {

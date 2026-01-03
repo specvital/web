@@ -41,6 +41,7 @@ export const MobileFilterDrawer = () => {
     all: tOwnership("all"),
     mine: tOwnership("mine"),
     organization: tOwnership("organization"),
+    others: tOwnership("others"),
   };
 
   const activeFilterCount = calculateActiveFilterCount(ownershipFilter, starredOnly);

@@ -29,6 +29,7 @@ export const OwnershipDropdown = () => {
     all: t("all"),
     mine: t("mine"),
     organization: t("organization"),
+    others: t("others"),
   };
 
   const handleOwnershipChange = (value: string) => {
