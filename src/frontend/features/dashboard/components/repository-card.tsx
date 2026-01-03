@@ -7,6 +7,8 @@ import { useFormatter, useNow, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ResponsiveTooltip } from "@/components/ui/responsive-tooltip";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { useLoginModal } from "@/features/auth/hooks/use-login-modal";
 import type { RepositoryCard as RepositoryCardType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +25,8 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
   const format = useFormatter();
   const now = useNow({ updateInterval: 60_000 });
   const t = useTranslations("dashboard.card");
+  const { isAuthenticated } = useAuth();
+  const { open: openLoginModal } = useLoginModal();
   const { fullName, isBookmarked, latestAnalysis, name, owner, updateStatus } = repo;
   const hasNewCommits = updateStatus === "new-commits";
   const hasAnalysis = Boolean(latestAnalysis);
@@ -30,6 +34,12 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
   const handleBookmarkClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
     onBookmarkToggle?.(owner, name, isBookmarked);
   };
 
@@ -63,10 +73,24 @@ export const RepositoryCard = ({ onBookmarkToggle, onReanalyze, repo }: Reposito
               {fullName}
             </h3>
           </div>
-          <ResponsiveTooltip content={isBookmarked ? t("removeBookmark") : t("addBookmark")}>
+          <ResponsiveTooltip
+            content={
+              isAuthenticated
+                ? isBookmarked
+                  ? t("removeBookmark")
+                  : t("addBookmark")
+                : t("loginToBookmark")
+            }
+          >
             <Button
-              aria-label={isBookmarked ? t("removeBookmark") : t("addBookmark")}
-              aria-pressed={isBookmarked}
+              aria-label={
+                isAuthenticated
+                  ? isBookmarked
+                    ? t("removeBookmark")
+                    : t("addBookmark")
+                  : t("loginToBookmark")
+              }
+              aria-pressed={isAuthenticated ? isBookmarked : undefined}
               className={cn(
                 "size-8 shrink-0",
                 isBookmarked && "text-amber-500 hover:text-amber-600"

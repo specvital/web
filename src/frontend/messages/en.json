@@ -220,6 +220,7 @@
       "addBookmark": "Add bookmark",
       "analyzeLatest": "Analyze latest commits",
       "bookmarked": "Bookmarked",
+      "loginToBookmark": "Sign in to bookmark",
       "noAnalysis": "No analysis yet",
       "reanalyze": "Reanalyze repository",
       "removeBookmark": "Remove bookmark",
