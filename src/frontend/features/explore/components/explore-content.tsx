@@ -1,10 +1,11 @@
 "use client";
 
-import { Building2, Globe, User } from "lucide-react";
+import { Building2, Globe, Lock, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/features/auth";
 import {
   EmptyStateVariant,
   InfiniteScrollLoader,
@@ -16,6 +17,7 @@ import {
 } from "@/features/dashboard";
 
 import { useExploreRepositories } from "../hooks";
+import { LoginRequiredState } from "./login-required-state";
 import { MyReposTab } from "./my-repos-tab";
 import { OrgReposTab } from "./org-repos-tab";
 import { SearchSortControls } from "./search-sort-controls";
@@ -24,6 +26,7 @@ type ExploreTab = "community" | "my-repos" | "organizations";
 
 export const ExploreContent = () => {
   const t = useTranslations("explore");
+  const { isAuthenticated } = useAuth();
 
   const { addBookmark } = useAddBookmark();
   const { removeBookmark } = useRemoveBookmark();
@@ -105,11 +108,11 @@ export const ExploreContent = () => {
           {t("tabs.community")}
         </TabsTrigger>
         <TabsTrigger className="gap-2" value="my-repos">
-          <User className="size-4" />
+          {isAuthenticated ? <User className="size-4" /> : <Lock className="size-4" />}
           {t("tabs.myRepos")}
         </TabsTrigger>
         <TabsTrigger className="gap-2" value="organizations">
-          <Building2 className="size-4" />
+          {isAuthenticated ? <Building2 className="size-4" /> : <Lock className="size-4" />}
           {t("tabs.organizations")}
         </TabsTrigger>
       </TabsList>
@@ -160,11 +163,22 @@ export const ExploreContent = () => {
       </TabsContent>
 
       <TabsContent value="my-repos">
-        <MyReposTab />
+        {isAuthenticated ? (
+          <MyReposTab />
+        ) : (
+          <LoginRequiredState descriptionKey="myReposDescription" titleKey="myReposTitle" />
+        )}
       </TabsContent>
 
       <TabsContent value="organizations">
-        <OrgReposTab />
+        {isAuthenticated ? (
+          <OrgReposTab />
+        ) : (
+          <LoginRequiredState
+            descriptionKey="organizationsDescription"
+            titleKey="organizationsTitle"
+          />
+        )}
       </TabsContent>
     </Tabs>
   );

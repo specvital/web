@@ -171,6 +171,13 @@
       "myRepos": "내 저장소",
       "organizations": "조직"
     },
+    "loginRequired": {
+      "myReposTitle": "내 저장소를 보려면 로그인하세요",
+      "myReposDescription": "GitHub 계정을 연결하여 개인 저장소를 확인하고 분석하세요.",
+      "organizationsTitle": "조직을 보려면 로그인하세요",
+      "organizationsDescription": "GitHub 계정을 연결하여 조직 저장소에 접근하세요.",
+      "signIn": "로그인하여 계속하기"
+    },
     "myRepos": {
       "title": "내 저장소",
       "description": "내 GitHub 저장소 목록",

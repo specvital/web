@@ -171,6 +171,13 @@
       "myRepos": "My Repos",
       "organizations": "Organizations"
     },
+    "loginRequired": {
+      "myReposTitle": "Sign in to view your repositories",
+      "myReposDescription": "Connect your GitHub account to see and analyze your personal repositories.",
+      "organizationsTitle": "Sign in to view organizations",
+      "organizationsDescription": "Connect your GitHub account to access your organization repositories.",
+      "signIn": "Sign in to continue"
+    },
     "myRepos": {
       "title": "My Repositories",
       "description": "Your personal GitHub repositories",
