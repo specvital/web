@@ -19,14 +19,22 @@ type AuthResult = {
 
 const intlMiddleware = createIntlMiddleware(routing);
 
+/**
+ * Routes that require authentication.
+ * Unauthenticated users will be redirected to home.
+ */
+const PROTECTED_ROUTES = ["dashboard", "explore"] as const;
+
 const isHomePage = (pathname: string): boolean => {
   if (pathname === "/") return true;
   return locales.some((locale) => pathname === `/${locale}` || pathname === `/${locale}/`);
 };
 
-const isDashboardRoute = (pathname: string): boolean => {
-  return locales.some(
-    (locale) => pathname.startsWith(`/${locale}/dashboard`) || pathname === `/${locale}/dashboard`
+const isProtectedRoute = (pathname: string): boolean => {
+  return locales.some((locale) =>
+    PROTECTED_ROUTES.some(
+      (route) => pathname.startsWith(`/${locale}/${route}`) || pathname === `/${locale}/${route}`
+    )
   );
 };
 
@@ -192,8 +200,8 @@ const proxy = async (request: NextRequest) => {
   const hasCookie = hasValidAuthCookie(request);
   const locale = getLocaleFromRequest(request, pathname);
 
-  // Dashboard route: verify token with backend
-  if (isDashboardRoute(pathname)) {
+  // Protected routes: require authentication
+  if (isProtectedRoute(pathname)) {
     if (!hasCookie) {
       const homeUrl = new URL(`/${locale}`, request.url);
       return NextResponse.redirect(homeUrl, 307);
@@ -212,7 +220,7 @@ const proxy = async (request: NextRequest) => {
     }
   }
 
-  // Home page: redirect to dashboard if has valid cookie format
+  // Exception: authenticated users on home → redirect to dashboard
   if (isHomePage(pathname) && hasCookie) {
     const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
     return NextResponse.redirect(dashboardUrl, 307);
