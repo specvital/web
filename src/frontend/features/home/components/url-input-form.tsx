@@ -15,7 +15,11 @@ import { cn } from "@/lib/utils";
 import { useDebouncedValidation } from "../hooks/use-debounced-validation";
 import { getInputFeedback, isValidGitHubUrl, parseGitHubUrl } from "../lib";
 
-export const UrlInputForm = () => {
+type UrlInputFormProps = {
+  onSuccess?: () => void;
+};
+
+export const UrlInputForm = ({ onSuccess }: UrlInputFormProps) => {
   const router = useRouter();
   const t = useTranslations("home");
   const isDesktop = useMediaQuery("(min-width: 640px)");
@@ -43,6 +47,7 @@ export const UrlInputForm = () => {
     setError(null);
     const { owner, repo } = result.data;
 
+    onSuccess?.();
     startTransition(() => {
       router.push(`/analyze/${owner}/${repo}`);
     });

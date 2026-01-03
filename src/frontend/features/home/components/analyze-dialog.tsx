@@ -47,7 +47,7 @@ export const AnalyzeDialog = ({ children, variant = "header" }: AnalyzeDialogPro
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
-        <UrlInputForm />
+        <UrlInputForm onSuccess={() => setIsOpen(false)} />
       </DialogContent>
     </Dialog>
   );
