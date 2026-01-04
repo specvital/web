@@ -256,5 +256,7 @@ const proxy = async (request: NextRequest) => {
 export default proxy;
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  // Exclude: api, _next, _vercel, root-level static files (e.g., favicon.ico)
+  // Allow: deep paths with dots (e.g., /analyze/vercel/next.js)
+  matcher: ["/((?!api|_next|_vercel|[^/]+\\.[\\w]+$).*)"],
 };
