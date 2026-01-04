@@ -159,6 +159,13 @@
     "linkCopied": "Link copied!",
     "linkCopiedDescription": "Share this analysis with your team"
   },
+  "export": {
+    "ariaLabel": "Export analysis results",
+    "button": "Export",
+    "copyMarkdown": "Copy Markdown",
+    "downloadMarkdown": "Download Markdown",
+    "success": "Done!"
+  },
   "explore": {
     "title": "Explore",
     "searchPlaceholder": "Search repositories...",

@@ -63,6 +63,7 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
           branchName={result.branchName}
           commitSha={result.commitSha}
           committedAt={result.committedAt}
+          data={result}
           owner={result.owner}
           repo={result.repo}
         />

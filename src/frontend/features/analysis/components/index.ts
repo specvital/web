@@ -2,6 +2,7 @@ export { AnalysisContent } from "./analysis-content";
 export { AnalysisHeader } from "./analysis-header";
 export { AnalysisSkeleton } from "./analysis-skeleton";
 export { EmptyState } from "./empty-state";
+export { ExportButton } from "./export-button";
 export { FilterBar, FilterSummary } from "./filter-bar";
 export { FilterEmptyState } from "./filter-empty-state";
 export { FrameworkBadge } from "./framework-badge";

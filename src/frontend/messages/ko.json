@@ -159,6 +159,13 @@
     "linkCopied": "링크 복사됨!",
     "linkCopiedDescription": "팀원들과 이 분석을 공유하세요"
   },
+  "export": {
+    "ariaLabel": "분석 결과 내보내기",
+    "button": "내보내기",
+    "copyMarkdown": "마크다운 복사",
+    "downloadMarkdown": "마크다운 다운로드",
+    "success": "완료!"
+  },
   "explore": {
     "title": "탐색",
     "searchPlaceholder": "저장소 검색...",
