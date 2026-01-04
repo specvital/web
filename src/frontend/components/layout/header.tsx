@@ -36,7 +36,7 @@ export const Header = () => {
         {tHeader("skipToContent")}
       </a>
       <header
-        className={`sticky top-0 z-50 w-full border-b border-border/30 bg-background/80 backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 supports-[backdrop-filter]:bg-background/50 ${isScrolled ? "shadow-[0_1px_3px_0_rgb(0_0_0/0.08)] dark:shadow-[0_1px_3px_0_rgb(0_0_0/0.3)]" : ""}`}
+        className={`sticky top-0 z-50 w-full border-b border-border/30 bg-background/80 backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 supports-[backdrop-filter]:bg-background/50 ${isScrolled ? "shadow-[var(--shadow-card)]" : ""}`}
       >
         <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4">
           <div className="flex items-center gap-6">

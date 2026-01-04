@@ -82,6 +82,14 @@
     /* Hero gradient colors - subtle blue glow */
     --hero-gradient-center: oklch(0.965 0.025 255);
     --hero-gradient-edge: oklch(0.985 0.002 250);
+    /* Glassmorphism backgrounds */
+    --glass-bg: oklch(1 0 0 / 0.7);
+    --glass-bg-subtle: oklch(1 0 0 / 0.5);
+    --glass-bg-strong: oklch(1 0 0 / 0.85);
+    /* Shadow system */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+    --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+    --shadow-dropdown: 0 4px 16px 0 rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.06);
   }
 
   .dark {
@@ -124,6 +132,14 @@
     /* Hero gradient colors - subtle blue glow */
     --hero-gradient-center: oklch(0.180 0.050 255);
     --hero-gradient-edge: oklch(0.130 0.015 250);
+    /* Glassmorphism backgrounds */
+    --glass-bg: oklch(0.165 0.018 250 / 0.7);
+    --glass-bg-subtle: oklch(0.165 0.018 250 / 0.5);
+    --glass-bg-strong: oklch(0.165 0.018 250 / 0.85);
+    /* Shadow system */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+    --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-dropdown: 0 4px 16px 0 rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
   }
 }
 
@@ -171,4 +187,23 @@
 
 @utility bottom-safe {
   bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Glassmorphism Utilities */
+@utility glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+@utility glass-subtle {
+  background: var(--glass-bg-subtle);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+}
+
+@utility glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
