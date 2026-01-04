@@ -114,7 +114,7 @@ export const RepositoryCard = ({
         {hasAnalysis && latestAnalysis ? (
           <div className="space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold">{latestAnalysis.testCount}</span>
+              <span className="text-3xl font-bold tracking-tight">{latestAnalysis.testCount}</span>
               <span className="text-sm text-muted-foreground">{t("tests")}</span>
               {latestAnalysis.change !== 0 && (
                 <TestDeltaBadge delta={latestAnalysis.change} isCompact />
@@ -125,7 +125,7 @@ export const RepositoryCard = ({
               <UpdateStatusBadge status={updateStatus} />
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t">
+            <div className="flex items-center justify-between pt-2 border-t min-h-[36px]">
               <ResponsiveTooltip
                 content={format.dateTime(new Date(latestAnalysis.analyzedAt), {
                   dateStyle: "medium",
@@ -140,7 +140,7 @@ export const RepositoryCard = ({
                 </time>
               </ResponsiveTooltip>
 
-              {hasNewCommits && (
+              {hasNewCommits ? (
                 <ResponsiveTooltip content={t("analyzeLatest")}>
                   <Button
                     aria-label={t("reanalyze")}
@@ -153,6 +153,8 @@ export const RepositoryCard = ({
                     {t("update")}
                   </Button>
                 </ResponsiveTooltip>
+              ) : (
+                <div aria-hidden="true" className="h-7" />
               )}
             </div>
           </div>
