@@ -44,3 +44,9 @@ func (h *MockHandler) AuthRefresh(_ context.Context, _ api.AuthRefreshRequestObj
 		InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("mock: not implemented"),
 	}, nil
 }
+
+func (h *MockHandler) AuthDevLogin(_ context.Context, _ api.AuthDevLoginRequestObject) (api.AuthDevLoginResponseObject, error) {
+	return api.AuthDevLogin403ApplicationProblemPlusJSONResponse{
+		ForbiddenApplicationProblemPlusJSONResponse: api.NewForbidden("mock: dev login disabled"),
+	}, nil
+}

@@ -4,6 +4,7 @@ import "github.com/cockroachdb/errors"
 
 var (
 	ErrAccessDenied         = errors.New("access denied by user")
+	ErrDevLoginDisabled     = errors.New("dev login is disabled")
 	ErrInvalidCode          = errors.New("invalid authorization code")
 	ErrInvalidGitHubToken   = errors.New("invalid or expired github access token")
 	ErrInvalidOAuthCode     = errors.New("invalid oauth code")

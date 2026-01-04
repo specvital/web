@@ -2,6 +2,7 @@ import { getApiUrl } from "./client";
 
 const SKIP_REFRESH_PATHS = [
   "/api/auth/callback",
+  "/api/auth/dev-login",
   "/api/auth/login",
   "/api/auth/logout",
   "/api/auth/refresh",

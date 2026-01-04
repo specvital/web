@@ -182,6 +182,21 @@ type CompletedResponse struct {
 	Status string         `json:"status"`
 }
 
+// DevLoginRequest defines model for DevLoginRequest.
+type DevLoginRequest struct {
+	// UserID Optional user ID to login as (uses default test user if not provided)
+	UserID *string `json:"userId,omitempty"`
+
+	// Username Optional username for test user (default is "test-user")
+	Username *string `json:"username,omitempty"`
+}
+
+// DevLoginResponse defines model for DevLoginResponse.
+type DevLoginResponse struct {
+	Success bool     `json:"success"`
+	User    UserInfo `json:"user"`
+}
+
 // FailedResponse defines model for FailedResponse.
 type FailedResponse struct {
 	// Error Error message describing the failure
@@ -665,6 +680,9 @@ type Repo = string
 // BadRequest defines model for BadRequest.
 type BadRequest = ProblemDetail
 
+// Forbidden defines model for Forbidden.
+type Forbidden = ProblemDetail
+
 // InternalError defines model for InternalError.
 type InternalError = ProblemDetail
 
@@ -754,6 +772,9 @@ type HandleGitHubAppWebhookParams struct {
 	// XGitHubDelivery Unique delivery ID for this webhook event
 	XGitHubDelivery openapi_types.UUID `json:"X-GitHub-Delivery"`
 }
+
+// AuthDevLoginJSONRequestBody defines body for AuthDevLogin for application/json ContentType.
+type AuthDevLoginJSONRequestBody = DevLoginRequest
 
 // AddUserAnalyzedRepositoryJSONRequestBody defines body for AddUserAnalyzedRepository for application/json ContentType.
 type AddUserAnalyzedRepositoryJSONRequestBody = AddAnalyzedRepositoryRequest
@@ -921,6 +942,9 @@ type ServerInterface interface {
 	// GitHub OAuth callback
 	// (GET /api/auth/callback)
 	AuthCallback(w http.ResponseWriter, r *http.Request, params AuthCallbackParams)
+	// Development-only test login
+	// (POST /api/auth/dev-login)
+	AuthDevLogin(w http.ResponseWriter, r *http.Request)
 	// Initiate GitHub OAuth login
 	// (GET /api/auth/login)
 	AuthLogin(w http.ResponseWriter, r *http.Request)
@@ -999,6 +1023,12 @@ func (_ Unimplemented) GetAnalysisStatus(w http.ResponseWriter, r *http.Request,
 // GitHub OAuth callback
 // (GET /api/auth/callback)
 func (_ Unimplemented) AuthCallback(w http.ResponseWriter, r *http.Request, params AuthCallbackParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Development-only test login
+// (POST /api/auth/dev-login)
+func (_ Unimplemented) AuthDevLogin(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1233,6 +1263,20 @@ func (siw *ServerInterfaceWrapper) AuthCallback(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AuthCallback(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AuthDevLogin operation middleware
+func (siw *ServerInterfaceWrapper) AuthDevLogin(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AuthDevLogin(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2013,6 +2057,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/auth/callback", wrapper.AuthCallback)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/auth/dev-login", wrapper.AuthDevLogin)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/auth/login", wrapper.AuthLogin)
 	})
 	r.Group(func(r chi.Router) {
@@ -2074,6 +2121,8 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 }
 
 type BadRequestApplicationProblemPlusJSONResponse ProblemDetail
+
+type ForbiddenApplicationProblemPlusJSONResponse ProblemDetail
 
 type InternalErrorApplicationProblemPlusJSONResponse ProblemDetail
 
@@ -2225,6 +2274,53 @@ type AuthCallback500ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response AuthCallback500ApplicationProblemPlusJSONResponse) VisitAuthCallbackResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AuthDevLoginRequestObject struct {
+	Body *AuthDevLoginJSONRequestBody
+}
+
+type AuthDevLoginResponseObject interface {
+	VisitAuthDevLoginResponse(w http.ResponseWriter) error
+}
+
+type AuthDevLogin200ResponseHeaders struct {
+	SetCookie string
+}
+
+type AuthDevLogin200JSONResponse struct {
+	Body    DevLoginResponse
+	Headers AuthDevLogin200ResponseHeaders
+}
+
+func (response AuthDevLogin200JSONResponse) VisitAuthDevLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Set-Cookie", fmt.Sprint(response.Headers.SetCookie))
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
+type AuthDevLogin403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response AuthDevLogin403ApplicationProblemPlusJSONResponse) VisitAuthDevLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AuthDevLogin500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response AuthDevLogin500ApplicationProblemPlusJSONResponse) VisitAuthDevLoginResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(500)
 
@@ -3154,6 +3250,9 @@ type StrictServerInterface interface {
 	// GitHub OAuth callback
 	// (GET /api/auth/callback)
 	AuthCallback(ctx context.Context, request AuthCallbackRequestObject) (AuthCallbackResponseObject, error)
+	// Development-only test login
+	// (POST /api/auth/dev-login)
+	AuthDevLogin(ctx context.Context, request AuthDevLoginRequestObject) (AuthDevLoginResponseObject, error)
 	// Initiate GitHub OAuth login
 	// (GET /api/auth/login)
 	AuthLogin(ctx context.Context, request AuthLoginRequestObject) (AuthLoginResponseObject, error)
@@ -3315,6 +3414,37 @@ func (sh *strictHandler) AuthCallback(w http.ResponseWriter, r *http.Request, pa
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AuthCallbackResponseObject); ok {
 		if err := validResponse.VisitAuthCallbackResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AuthDevLogin operation middleware
+func (sh *strictHandler) AuthDevLogin(w http.ResponseWriter, r *http.Request) {
+	var request AuthDevLoginRequestObject
+
+	var body AuthDevLoginJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AuthDevLogin(ctx, request.(AuthDevLoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AuthDevLogin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AuthDevLoginResponseObject); ok {
+		if err := validResponse.VisitAuthDevLoginResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

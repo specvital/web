@@ -16,6 +16,7 @@ type WebhookHandlers interface {
 
 type AuthHandlers interface {
 	AuthCallback(ctx context.Context, request AuthCallbackRequestObject) (AuthCallbackResponseObject, error)
+	AuthDevLogin(ctx context.Context, request AuthDevLoginRequestObject) (AuthDevLoginResponseObject, error)
 	AuthLogin(ctx context.Context, request AuthLoginRequestObject) (AuthLoginResponseObject, error)
 	AuthLogout(ctx context.Context, request AuthLogoutRequestObject) (AuthLogoutResponseObject, error)
 	AuthMe(ctx context.Context, request AuthMeRequestObject) (AuthMeResponseObject, error)
@@ -112,6 +113,10 @@ func (h *APIHandlers) AuthMe(ctx context.Context, request AuthMeRequestObject) (
 
 func (h *APIHandlers) AuthRefresh(ctx context.Context, request AuthRefreshRequestObject) (AuthRefreshResponseObject, error) {
 	return h.auth.AuthRefresh(ctx, request)
+}
+
+func (h *APIHandlers) AuthDevLogin(ctx context.Context, request AuthDevLoginRequestObject) (AuthDevLoginResponseObject, error) {
+	return h.auth.AuthDevLogin(ctx, request)
 }
 
 func (h *APIHandlers) AddBookmark(ctx context.Context, request AddBookmarkRequestObject) (AddBookmarkResponseObject, error) {

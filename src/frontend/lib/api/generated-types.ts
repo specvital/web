@@ -173,6 +173,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/dev-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Development-only test login
+         * @description Creates or retrieves a test user and issues authentication tokens.
+         *     Only available when ENV != "production".
+         *     WARNING: This endpoint is for development and E2E testing only.
+         *
+         */
+        post: operations["authDevLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user/bookmarks": {
         parameters: {
             query?: never;
@@ -691,6 +714,16 @@ export interface components {
             /** @description Token refresh operation result */
             success: boolean;
         };
+        DevLoginRequest: {
+            /** @description Optional user ID to login as (uses default test user if not provided) */
+            userId?: string;
+            /** @description Optional username for test user (default is "test-user") */
+            username?: string;
+        };
+        DevLoginResponse: {
+            success: boolean;
+            user: components["schemas"]["UserInfo"];
+        };
         BookmarkedRepositoriesResponse: {
             /** @description Bookmarked repositories */
             data: components["schemas"]["RepositoryCard"][];
@@ -1132,6 +1165,15 @@ export interface components {
                 "application/problem+json": components["schemas"]["ProblemDetail"];
             };
         };
+        /** @description Access forbidden */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetail"];
+            };
+        };
     };
     parameters: {
         /**
@@ -1341,6 +1383,34 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    authDevLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DevLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Login successful */
+            200: {
+                headers: {
+                    /** @description Authentication cookies (auth_token, refresh_token) */
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DevLoginResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
             500: components["responses"]["InternalError"];
         };
     };

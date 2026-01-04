@@ -22,6 +22,7 @@ type Container struct {
 	CookieDomain           string
 	DB                     *pgxpool.Pool
 	Encryptor              crypto.Encryptor
+	Environment            string
 	FrontendURL            string
 	GitClient              client.GitClient
 	GitHubAppClient        ghappport.GitHubAppClient
@@ -153,6 +154,7 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 		CookieDomain:           cfg.CookieDomain,
 		DB:                     pool,
 		Encryptor:              encryptor,
+		Environment:            cfg.Environment,
 		FrontendURL:            cfg.FrontendURL,
 		GitClient:              gitClient,
 		GitHubAppClient:        ghAppClient,

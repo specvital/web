@@ -13,6 +13,7 @@ import (
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/adapter/mapper"
 	"github.com/specvital/web/src/backend/modules/auth/domain"
+	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	"github.com/specvital/web/src/backend/modules/auth/usecase"
 )
 
@@ -30,6 +31,7 @@ var (
 type Handler struct {
 	cookieDomain        string
 	cookieSecure        bool
+	devLogin            *usecase.DevLoginUseCase
 	frontendURL         string
 	getCurrentUser      *usecase.GetCurrentUserUseCase
 	handleOAuthCallback *usecase.HandleOAuthCallbackUseCase
@@ -41,6 +43,7 @@ type Handler struct {
 type HandlerConfig struct {
 	CookieDomain        string
 	CookieSecure        bool
+	DevLogin            *usecase.DevLoginUseCase
 	FrontendURL         string
 	GetCurrentUser      *usecase.GetCurrentUserUseCase
 	HandleOAuthCallback *usecase.HandleOAuthCallbackUseCase
@@ -76,6 +79,7 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	return &Handler{
 		cookieDomain:        cfg.CookieDomain,
 		cookieSecure:        cfg.CookieSecure,
+		devLogin:            cfg.DevLogin,
 		frontendURL:         cfg.FrontendURL,
 		getCurrentUser:      cfg.GetCurrentUser,
 		handleOAuthCallback: cfg.HandleOAuthCallback,
@@ -213,6 +217,48 @@ func (h *Handler) AuthMe(ctx context.Context, _ api.AuthMeRequestObject) (api.Au
 	return api.AuthMe200JSONResponse(mapper.ToUserInfo(output.User)), nil
 }
 
+func (h *Handler) AuthDevLogin(ctx context.Context, request api.AuthDevLoginRequestObject) (api.AuthDevLoginResponseObject, error) {
+	if h.devLogin == nil {
+		return api.AuthDevLogin403ApplicationProblemPlusJSONResponse{
+			ForbiddenApplicationProblemPlusJSONResponse: api.NewForbidden("dev login is disabled"),
+		}, nil
+	}
+
+	var userID, username string
+	if request.Body != nil {
+		if request.Body.UserID != nil {
+			userID = *request.Body.UserID
+		}
+		if request.Body.Username != nil {
+			username = *request.Body.Username
+		}
+	}
+
+	output, err := h.devLogin.Execute(ctx, usecase.DevLoginInput{
+		UserID:   userID,
+		Username: username,
+	})
+	if err != nil {
+		if errors.Is(err, domain.ErrDevLoginDisabled) {
+			return api.AuthDevLogin403ApplicationProblemPlusJSONResponse{
+				ForbiddenApplicationProblemPlusJSONResponse: api.NewForbidden("dev login is disabled in production"),
+			}, nil
+		}
+
+		h.logger.Error(ctx, "dev login failed", "error", err)
+		return api.AuthDevLogin500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("dev login failed"),
+		}, nil
+	}
+
+	return devLoginResponse{
+		accessCookie:  h.buildAccessCookie(output.AccessToken),
+		cookieSecure:  h.cookieSecure,
+		refreshCookie: h.buildRefreshCookie(output.RefreshToken),
+		user:          output.User,
+	}, nil
+}
+
 func (h *Handler) buildAccessCookie(token string) string {
 	cookie := &http.Cookie{
 		Domain:   h.cookieDomain,
@@ -301,4 +347,22 @@ func (r refreshResponse) VisitAuthRefreshResponse(w http.ResponseWriter) error {
 	w.Header().Add("Set-Cookie", r.refreshCookie)
 	w.WriteHeader(http.StatusOK)
 	return json.NewEncoder(w).Encode(api.RefreshResponse{Success: r.success})
+}
+
+type devLoginResponse struct {
+	accessCookie  string
+	cookieSecure  bool
+	refreshCookie string
+	user          *entity.User
+}
+
+func (r devLoginResponse) VisitAuthDevLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Add("Set-Cookie", r.accessCookie)
+	w.Header().Add("Set-Cookie", r.refreshCookie)
+	w.WriteHeader(http.StatusOK)
+	return json.NewEncoder(w).Encode(api.DevLoginResponse{
+		Success: true,
+		User:    mapper.ToUserInfo(r.user),
+	})
 }

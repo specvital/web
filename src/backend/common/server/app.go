@@ -90,9 +90,20 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 	initiateOAuthUC := authusecase.NewInitiateOAuthUseCase(container.GitHubOAuth, stateStore)
 	refreshTokenUC := authusecase.NewRefreshTokenUseCase(refreshTokenRepo, authRepo, container.JWTManager)
 
+	var devLoginUC *authusecase.DevLoginUseCase
+	if container.Environment != "production" {
+		devLoginUC = authusecase.NewDevLoginUseCase(
+			true,
+			refreshTokenRepo,
+			authRepo,
+			container.JWTManager,
+		)
+	}
+
 	authHandler, err := authhandler.NewHandler(&authhandler.HandlerConfig{
 		CookieDomain:        container.CookieDomain,
 		CookieSecure:        container.SecureCookie,
+		DevLogin:            devLoginUC,
 		FrontendURL:         container.FrontendURL,
 		GetCurrentUser:      getCurrentUserUC,
 		HandleOAuthCallback: handleOAuthCallbackUC,

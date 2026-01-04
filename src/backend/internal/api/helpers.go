@@ -41,3 +41,11 @@ func NewTooManyRequests(detail string) TooManyRequestsApplicationProblemPlusJSON
 		Title:  "Too Many Requests",
 	}
 }
+
+func NewForbidden(detail string) ForbiddenApplicationProblemPlusJSONResponse {
+	return ForbiddenApplicationProblemPlusJSONResponse{
+		Detail: detail,
+		Status: http.StatusForbidden,
+		Title:  "Forbidden",
+	}
+}
