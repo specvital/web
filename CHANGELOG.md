@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.1](https://github.com/specvital/web/compare/v1.2.0...v1.2.1) (2026-01-04)
+
+### 🎯 Highlights
+
+#### 🐛 Bug Fixes
+
+- **auth:** fix dashboard redirect bug after time passes while logged in ([ef604fd](https://github.com/specvital/web/commit/ef604fdc41724ae42e62c9e57566712fb191d399))
+- **routing:** fix 404 error for paths containing dots in repository names ([cfb36fc](https://github.com/specvital/web/commit/cfb36fc25ace5fff6303edc73ce72e6c4f3e8811))
+
+### 🔧 Maintenance
+
+#### 💄 Styles
+
+- replace Korean comments with English ([796db0c](https://github.com/specvital/web/commit/796db0c5df3cd223a43a688c899e7e6fa9827e26))
+
 ## [1.2.0](https://github.com/specvital/web/compare/v1.1.2...v1.2.0) (2026-01-04)
 
 ### 🎯 Highlights
