@@ -5,6 +5,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:5173";
 const AUTH_COOKIE_NAME = "auth_token";
 const REFRESH_COOKIE_NAME = "refresh_token";
+const SESSION_INDICATOR_COOKIE = "has_session";
 const ACCESS_TOKEN_MAX_AGE = 15 * 60;
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
 
@@ -54,6 +55,14 @@ export async function GET(request: NextRequest) {
           });
         }
       }
+
+      cookieStore.set(SESSION_INDICATOR_COOKIE, "1", {
+        httpOnly: false,
+        maxAge: REFRESH_TOKEN_MAX_AGE,
+        path: "/",
+        sameSite: "lax",
+        secure: isProduction,
+      });
 
       return NextResponse.redirect(FRONTEND_URL, { status: 302 });
     }

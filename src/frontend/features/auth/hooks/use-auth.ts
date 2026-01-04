@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -26,12 +27,14 @@ const checkSessionCookie = (): boolean => {
 
 export const useAuth = (): UseAuthReturn => {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
 
   // hydration mismatch 방지: 클라이언트에서만 쿠키 확인
+  // pathname 변경 시마다 재확인하여 SPA 네비게이션 시 쿠키 변경 감지
   const [hasSession, setHasSession] = useState(false);
   useEffect(() => {
     setHasSession(checkSessionCookie());
-  }, []);
+  }, [pathname]);
 
   const userQuery = useQuery({
     enabled: hasSession,
