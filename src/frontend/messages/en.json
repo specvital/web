@@ -287,6 +287,7 @@
     },
     "exploreCta": "Browse other repositories",
     "status": {
+      "analyzing": "Analyzing...",
       "newCommits": "New commits available",
       "unknown": "Status unknown",
       "upToDate": "Up to date"

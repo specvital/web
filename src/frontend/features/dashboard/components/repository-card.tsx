@@ -13,7 +13,7 @@ import type { RepositoryCard as RepositoryCardType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 import { TestDeltaBadge } from "./test-delta-badge";
-import { UpdateStatusBadge } from "./update-status-badge";
+import { type DisplayUpdateStatus, UpdateStatusBadge } from "./update-status-badge";
 
 type RepositoryCardVariant = "dashboard" | "explore";
 
@@ -36,6 +36,8 @@ export const RepositoryCard = ({
   const { isAuthenticated } = useAuth();
   const { open: openLoginModal } = useLoginModal();
   const { fullName, isBookmarked, latestAnalysis, name, owner, updateStatus } = repo;
+  const displayStatus = updateStatus as DisplayUpdateStatus;
+  const isAnalyzing = displayStatus === "analyzing";
   const hasNewCommits = updateStatus === "new-commits";
   const hasAnalysis = Boolean(latestAnalysis);
 
@@ -122,7 +124,7 @@ export const RepositoryCard = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <UpdateStatusBadge status={updateStatus} />
+              <UpdateStatusBadge status={displayStatus} />
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t min-h-[36px]">
@@ -140,7 +142,7 @@ export const RepositoryCard = ({
                 </time>
               </ResponsiveTooltip>
 
-              {hasNewCommits ? (
+              {hasNewCommits && !isAnalyzing ? (
                 <ResponsiveTooltip content={t("analyzeLatest")}>
                   <Button
                     aria-label={t("reanalyze")}
