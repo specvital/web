@@ -19,7 +19,7 @@ const ExplorePage = async ({ params }: ExplorePageProps) => {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">{t("title")}</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight">{t("title")}</h1>
       <ExploreContent />
     </main>
   );
