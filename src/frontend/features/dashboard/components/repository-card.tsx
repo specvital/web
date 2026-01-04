@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Loader2, Plus, RefreshCw, Star } from "lucide-react";
+import { RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 
@@ -18,9 +18,6 @@ import { UpdateStatusBadge } from "./update-status-badge";
 type RepositoryCardVariant = "dashboard" | "explore";
 
 type RepositoryCardProps = {
-  isAddingToDashboard?: boolean;
-  isInDashboard?: boolean;
-  onAddToDashboard?: (owner: string, repo: string) => void;
   onBookmarkToggle?: (owner: string, repo: string, isBookmarked: boolean) => void;
   onReanalyze?: (owner: string, repo: string) => void;
   repo: RepositoryCardType;
@@ -28,9 +25,6 @@ type RepositoryCardProps = {
 };
 
 export const RepositoryCard = ({
-  isAddingToDashboard = false,
-  isInDashboard = false,
-  onAddToDashboard,
   onBookmarkToggle,
   onReanalyze,
   repo,
@@ -57,20 +51,6 @@ export const RepositoryCard = ({
     onBookmarkToggle?.(owner, name, isBookmarked);
   };
 
-  const handleAddToDashboardClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!isAuthenticated) {
-      openLoginModal();
-      return;
-    }
-
-    if (!isInDashboard) {
-      onAddToDashboard?.(owner, name);
-    }
-  };
-
   const handleReanalyzeClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -79,43 +59,7 @@ export const RepositoryCard = ({
 
   const renderActionButton = () => {
     if (variant === "explore") {
-      const tooltipContent = !isAuthenticated
-        ? t("loginToAdd")
-        : isAddingToDashboard
-          ? t("adding")
-          : isInDashboard
-            ? t("inDashboard")
-            : t("addToDashboard");
-
-      const isDisabled = isInDashboard || isAddingToDashboard;
-
-      return (
-        <ResponsiveTooltip content={tooltipContent}>
-          <Button
-            aria-label={tooltipContent}
-            className={cn(
-              "shrink-0 gap-1.5",
-              "size-8 sm:h-8 sm:w-auto sm:px-3",
-              isInDashboard && "text-emerald-600 hover:text-emerald-700"
-            )}
-            disabled={isDisabled}
-            onClick={handleAddToDashboardClick}
-            size="icon"
-            variant="ghost"
-          >
-            {isAddingToDashboard ? (
-              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
-            ) : isInDashboard ? (
-              <Check aria-hidden="true" className="size-4" />
-            ) : (
-              <Plus aria-hidden="true" className="size-4" />
-            )}
-            <span className="hidden sm:inline">
-              {isInDashboard ? t("inDashboard") : t("addToDashboard")}
-            </span>
-          </Button>
-        </ResponsiveTooltip>
-      );
+      return null;
     }
 
     return (

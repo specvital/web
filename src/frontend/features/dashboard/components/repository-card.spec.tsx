@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RepositoryCard as RepositoryCardType } from "@/lib/api/types";
 
@@ -36,12 +36,8 @@ const messages = {
   dashboard: {
     card: {
       addBookmark: "Add bookmark",
-      adding: "Adding...",
-      addToDashboard: "Add to Dashboard",
       analyzeLatest: "Analyze latest commits",
       bookmarked: "Bookmarked",
-      inDashboard: "In Dashboard",
-      loginToAdd: "Sign in to add",
       loginToBookmark: "Sign in to bookmark",
       noAnalysis: "No analysis yet",
       reanalyze: "Reanalyze repository",
@@ -61,8 +57,9 @@ const messages = {
 const createMockRepo = (overrides?: Partial<RepositoryCardType>): RepositoryCardType => ({
   fullName: "facebook/react",
   id: "1",
+  isAnalyzedByMe: false,
   isBookmarked: false,
-  latestAnalysis: null,
+  latestAnalysis: undefined,
   name: "react",
   owner: "facebook",
   updateStatus: "up-to-date",
@@ -109,24 +106,13 @@ describe("RepositoryCard", () => {
   });
 
   describe("explore variant", () => {
-    it("shows add to dashboard button instead of star", () => {
+    it("does not show action button", () => {
       renderRepositoryCard({ variant: "explore" });
 
-      expect(screen.getByRole("button", { name: /add to dashboard/i })).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /add bookmark/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
 
-    it("shows check icon when already in dashboard", () => {
-      renderRepositoryCard({
-        isInDashboard: true,
-        variant: "explore",
-      });
-
-      expect(screen.getByRole("button", { name: /in dashboard/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /in dashboard/i })).toBeDisabled();
-    });
-
-    it("does not show bookmarked star icon in explore variant", () => {
+    it("does not show bookmarked star icon", () => {
       renderRepositoryCard({
         repo: createMockRepo({ isBookmarked: true }),
         variant: "explore",
@@ -148,39 +134,6 @@ describe("RepositoryCard", () => {
       renderRepositoryCard({ variant: "dashboard" });
 
       expect(screen.getByRole("button", { name: /sign in to bookmark/i })).toBeInTheDocument();
-    });
-
-    it("shows login prompt for explore variant", () => {
-      renderRepositoryCard({ variant: "explore" });
-
-      expect(screen.getByRole("button", { name: /sign in to add/i })).toBeInTheDocument();
-    });
-  });
-
-  describe("loading state (explore variant)", () => {
-    it("shows spinner and disables button when adding to dashboard", () => {
-      renderRepositoryCard({
-        isAddingToDashboard: true,
-        variant: "explore",
-      });
-
-      const button = screen.getByRole("button", { name: /adding/i });
-      expect(button).toBeDisabled();
-    });
-
-    it("shows desktop text for add to dashboard button", () => {
-      renderRepositoryCard({ variant: "explore" });
-
-      expect(screen.getByText("Add to Dashboard")).toBeInTheDocument();
-    });
-
-    it("shows desktop text for in dashboard state", () => {
-      renderRepositoryCard({
-        isInDashboard: true,
-        variant: "explore",
-      });
-
-      expect(screen.getByText("In Dashboard")).toBeInTheDocument();
     });
   });
 });

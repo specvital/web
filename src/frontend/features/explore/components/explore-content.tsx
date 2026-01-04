@@ -14,7 +14,7 @@ import {
   type SortOption,
 } from "@/features/dashboard";
 
-import { useAddToDashboard, useDashboardRepoIds, useExploreRepositories } from "../hooks";
+import { useExploreRepositories } from "../hooks";
 import { LoginRequiredState } from "./login-required-state";
 import { MyReposTab } from "./my-repos-tab";
 import { OrgReposTab } from "./org-repos-tab";
@@ -26,7 +26,6 @@ export const ExploreContent = () => {
   const t = useTranslations("explore");
   const { isAuthenticated } = useAuth();
 
-  const { addToDashboard, isPendingFor } = useAddToDashboard();
   const { reanalyze } = useReanalyze();
 
   const [activeTab, setActiveTab] = useState<ExploreTab>("community");
@@ -46,8 +45,6 @@ export const ExploreContent = () => {
     sortOrder: "desc",
   });
 
-  const dashboardRepoIds = useDashboardRepoIds();
-
   const filteredRepositories = useMemo(() => {
     if (!searchQuery.trim()) {
       return communityRepositories;
@@ -61,13 +58,6 @@ export const ExploreContent = () => {
         `${repo.owner}/${repo.name}`.toLowerCase().includes(query)
     );
   }, [communityRepositories, searchQuery]);
-
-  const handleAddToDashboard = useCallback(
-    (owner: string, repo: string) => {
-      addToDashboard(owner, repo);
-    },
-    [addToDashboard]
-  );
 
   const handleReanalyze = useCallback(
     (owner: string, repo: string) => {
@@ -127,9 +117,7 @@ export const ExploreContent = () => {
 
           {isLoadingCommunity ? (
             <RepositoryList
-              isAddingToDashboard={isPendingFor}
               isLoading
-              onAddToDashboard={handleAddToDashboard}
               onReanalyze={handleReanalyze}
               repositories={[]}
               variant="explore"
@@ -141,9 +129,6 @@ export const ExploreContent = () => {
           ) : (
             <>
               <RepositoryList
-                dashboardRepoIds={dashboardRepoIds}
-                isAddingToDashboard={isPendingFor}
-                onAddToDashboard={handleAddToDashboard}
                 onReanalyze={handleReanalyze}
                 repositories={filteredRepositories}
                 variant="explore"
