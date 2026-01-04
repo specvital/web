@@ -39,7 +39,7 @@ export const AnalysisHeader = ({
   return (
     <motion.header variants={fadeInUp}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        {/* 저장소 정보 세트 */}
+        {/* Repository info section */}
         <div className="space-y-1 min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl truncate">
             {owner}/{repo}
@@ -74,7 +74,7 @@ export const AnalysisHeader = ({
           </div>
         </div>
 
-        {/* 액션 버튼 세트 */}
+        {/* Action buttons section */}
         <div className="flex items-center gap-2 shrink-0">
           {data && <ExportButton data={data} />}
           <ShareButton />

@@ -29,8 +29,8 @@ export const useAuth = (): UseAuthReturn => {
   const queryClient = useQueryClient();
   const pathname = usePathname();
 
-  // hydration mismatch 방지: 클라이언트에서만 쿠키 확인
-  // pathname 변경 시마다 재확인하여 SPA 네비게이션 시 쿠키 변경 감지
+  // Prevent hydration mismatch: check cookie only on client
+  // Re-check on pathname change to detect cookie changes during SPA navigation
   const [hasSession, setHasSession] = useState(false);
   useEffect(() => {
     setHasSession(checkSessionCookie());

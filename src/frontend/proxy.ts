@@ -162,7 +162,7 @@ const verifyAuthToken = async (request: NextRequest): Promise<AuthResult> => {
 
     return { isValid: false };
   } catch {
-    // 네트워크 오류 시 쿠키가 유효하면 낙관적 허용 (client-side에서 재검증됨)
+    // Allow optimistically if cookie is valid on network error (re-validated client-side)
     if (hasValidAuthCookie(request)) {
       return { isValid: true };
     }
