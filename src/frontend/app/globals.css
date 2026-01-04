@@ -40,80 +40,88 @@
 
 @layer base {
   :root {
-    /* Cloud Dancer warm whites */
-    --background: oklch(0.952 0.006 98);
-    --foreground: oklch(0.25 0.008 95);
-    --card: oklch(0.975 0.004 98);
-    --card-foreground: oklch(0.25 0.008 95);
-    --popover: oklch(0.975 0.004 98);
-    --popover-foreground: oklch(0.25 0.008 95);
-    --primary: oklch(0.28 0.010 95);
-    --primary-foreground: oklch(0.975 0.004 98);
-    --secondary: oklch(0.935 0.006 98);
-    --secondary-foreground: oklch(0.28 0.010 95);
-    --muted: oklch(0.935 0.006 98);
-    --muted-foreground: oklch(0.52 0.008 95);
-    --accent: oklch(0.925 0.008 95);
-    --accent-foreground: oklch(0.28 0.010 95);
-    --destructive: oklch(0.577 0.215 35);
-    --destructive-foreground: oklch(0.975 0.004 98);
-    --border: oklch(0.885 0.006 98);
-    --input: oklch(0.750 0.010 98);
-    --input-bg: oklch(0.965 0.004 98);
-    --ring: oklch(0.65 0.010 95);
-    --chart-1: oklch(0.646 0.190 85);
-    --chart-2: oklch(0.600 0.130 180);
-    --chart-3: oklch(0.450 0.090 230);
-    --chart-4: oklch(0.750 0.160 105);
-    --chart-5: oklch(0.620 0.150 45);
+    /* Cool Slate - Light Mode (Vercel/Linear style) */
+    --background: oklch(0.985 0.002 250);
+    --foreground: oklch(0.145 0.015 250);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0.015 250);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0.015 250);
+    --primary: oklch(0.205 0.015 250);
+    --primary-foreground: oklch(0.985 0.002 250);
+    --secondary: oklch(0.965 0.003 250);
+    --secondary-foreground: oklch(0.205 0.015 250);
+    --muted: oklch(0.965 0.003 250);
+    --muted-foreground: oklch(0.455 0.012 250);
+    --accent: oklch(0.955 0.005 250);
+    --accent-foreground: oklch(0.205 0.015 250);
+    --destructive: oklch(0.577 0.215 25);
+    --destructive-foreground: oklch(0.985 0.002 250);
+    --border: oklch(0.925 0.004 250);
+    --input: oklch(0.780 0.008 250);
+    --input-bg: oklch(0.985 0.002 250);
+    --ring: oklch(0.555 0.150 255);
+    --chart-1: oklch(0.600 0.180 255);
+    --chart-2: oklch(0.650 0.140 180);
+    --chart-3: oklch(0.550 0.160 145);
+    --chart-4: oklch(0.700 0.150 85);
+    --chart-5: oklch(0.580 0.180 320);
+    /* Accent colors */
+    --accent-blue: oklch(0.555 0.150 255);
+    --accent-violet: oklch(0.580 0.180 290);
+    --accent-cyan: oklch(0.720 0.130 195);
     /* Status colors for test results */
-    --status-active: oklch(0.580 0.140 145);
-    --status-focused: oklch(0.580 0.160 310);
-    --status-skipped: oklch(0.680 0.140 85);
-    --status-todo: oklch(0.580 0.130 240);
-    --status-xfail: oklch(0.600 0.180 25);
+    --status-active: oklch(0.580 0.160 145);
+    --status-focused: oklch(0.580 0.180 290);
+    --status-skipped: oklch(0.650 0.130 85);
+    --status-todo: oklch(0.555 0.150 255);
+    --status-xfail: oklch(0.577 0.200 25);
     --radius: 0.625rem;
-    /* Hero gradient colors - subtle sand glow */
-    --hero-gradient-center: oklch(0.95 0.025 90);
-    --hero-gradient-edge: oklch(0.952 0.006 98);
+    /* Hero gradient colors - subtle blue glow */
+    --hero-gradient-center: oklch(0.965 0.025 255);
+    --hero-gradient-edge: oklch(0.985 0.002 250);
   }
 
   .dark {
-    /* Warm charcoal tones */
-    --background: oklch(0.185 0.010 95);
-    --foreground: oklch(0.950 0.006 98);
-    --card: oklch(0.205 0.010 95);
-    --card-foreground: oklch(0.950 0.006 98);
-    --popover: oklch(0.205 0.010 95);
-    --popover-foreground: oklch(0.950 0.006 98);
-    --primary: oklch(0.950 0.006 98);
-    --primary-foreground: oklch(0.25 0.010 95);
-    --secondary: oklch(0.285 0.012 95);
-    --secondary-foreground: oklch(0.950 0.006 98);
-    --muted: oklch(0.285 0.012 95);
-    --muted-foreground: oklch(0.680 0.008 98);
-    --accent: oklch(0.320 0.014 95);
-    --accent-foreground: oklch(0.950 0.006 98);
-    --destructive: oklch(0.480 0.170 30);
-    --destructive-foreground: oklch(0.950 0.006 98);
-    --border: oklch(0.320 0.012 95);
-    --input: oklch(0.380 0.014 95);
-    --input-bg: oklch(0.205 0.010 95);
-    --ring: oklch(0.480 0.012 95);
-    --chart-1: oklch(0.580 0.180 75);
-    --chart-2: oklch(0.650 0.150 165);
-    --chart-3: oklch(0.650 0.140 245);
-    --chart-4: oklch(0.700 0.150 100);
-    --chart-5: oklch(0.620 0.160 40);
+    /* Cool Slate - Dark Mode */
+    --background: oklch(0.130 0.015 250);
+    --foreground: oklch(0.965 0.003 250);
+    --card: oklch(0.165 0.018 250);
+    --card-foreground: oklch(0.965 0.003 250);
+    --popover: oklch(0.165 0.018 250);
+    --popover-foreground: oklch(0.965 0.003 250);
+    --primary: oklch(0.965 0.003 250);
+    --primary-foreground: oklch(0.165 0.018 250);
+    --secondary: oklch(0.220 0.018 250);
+    --secondary-foreground: oklch(0.965 0.003 250);
+    --muted: oklch(0.220 0.018 250);
+    --muted-foreground: oklch(0.650 0.010 250);
+    --accent: oklch(0.260 0.020 250);
+    --accent-foreground: oklch(0.965 0.003 250);
+    --destructive: oklch(0.500 0.180 25);
+    --destructive-foreground: oklch(0.965 0.003 250);
+    --border: oklch(0.280 0.015 250);
+    --input: oklch(0.350 0.018 250);
+    --input-bg: oklch(0.165 0.018 250);
+    --ring: oklch(0.600 0.160 255);
+    --chart-1: oklch(0.650 0.180 255);
+    --chart-2: oklch(0.700 0.140 180);
+    --chart-3: oklch(0.650 0.160 145);
+    --chart-4: oklch(0.750 0.150 85);
+    --chart-5: oklch(0.650 0.180 320);
+    /* Accent colors - brighter for dark mode */
+    --accent-blue: oklch(0.600 0.160 255);
+    --accent-violet: oklch(0.650 0.180 290);
+    --accent-cyan: oklch(0.780 0.130 195);
     /* Status colors - brighter for dark backgrounds */
-    --status-active: oklch(0.680 0.160 145);
-    --status-focused: oklch(0.680 0.180 305);
-    --status-skipped: oklch(0.750 0.160 80);
-    --status-todo: oklch(0.680 0.150 240);
-    --status-xfail: oklch(0.680 0.180 25);
-    /* Hero gradient colors - subtle cool glow */
-    --hero-gradient-center: oklch(0.25 0.05 260);
-    --hero-gradient-edge: oklch(0.185 0.010 95);
+    --status-active: oklch(0.680 0.180 145);
+    --status-focused: oklch(0.680 0.200 290);
+    --status-skipped: oklch(0.720 0.140 85);
+    --status-todo: oklch(0.600 0.160 255);
+    --status-xfail: oklch(0.650 0.200 25);
+    /* Hero gradient colors - subtle blue glow */
+    --hero-gradient-center: oklch(0.180 0.050 255);
+    --hero-gradient-edge: oklch(0.130 0.015 250);
   }
 }
 
