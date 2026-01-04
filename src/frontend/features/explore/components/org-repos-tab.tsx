@@ -281,7 +281,7 @@ const RepoListItem = ({ format, isAnalyzed, now, repo, t }: RepoListItemProps) =
     <div className="flex items-start gap-3 p-3 rounded-lg border bg-card shadow-sm hover:shadow-md hover:bg-accent/50 transition-all">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h4 className="font-medium text-sm truncate">{repo.name}</h4>
+          <h4 className="font-medium text-sm truncate">{repo.fullName}</h4>
           {repo.isPrivate && <Lock className="size-3 text-muted-foreground shrink-0" />}
           {isAnalyzed && (
             <Badge className="text-xs" variant="secondary">
