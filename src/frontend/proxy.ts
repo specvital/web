@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing";
 
 const AUTH_COOKIE_NAME = "auth_token";
 const REFRESH_COOKIE_NAME = "refresh_token";
+const SESSION_INDICATOR_COOKIE = "has_session";
 const JWT_MIN_LENGTH = 20;
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const ACCESS_TOKEN_MAX_AGE = 15 * 60;
@@ -161,6 +162,10 @@ const verifyAuthToken = async (request: NextRequest): Promise<AuthResult> => {
 
     return { isValid: false };
   } catch {
+    // 네트워크 오류 시 쿠키가 유효하면 낙관적 허용 (client-side에서 재검증됨)
+    if (hasValidAuthCookie(request)) {
+      return { isValid: true };
+    }
     return { isValid: false };
   }
 };
@@ -169,6 +174,7 @@ const createRedirectWithCookieClear = (url: URL): NextResponse => {
   const response = NextResponse.redirect(url, 307);
   response.cookies.delete(AUTH_COOKIE_NAME);
   response.cookies.delete(REFRESH_COOKIE_NAME);
+  response.cookies.delete(SESSION_INDICATOR_COOKIE);
   return response;
 };
 
@@ -193,6 +199,20 @@ const setTokenCookies = (
     sameSite: "strict",
     secure: isProduction,
   });
+
+  setSessionIndicator(response);
+};
+
+const setSessionIndicator = (response: NextResponse): void => {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  response.cookies.set(SESSION_INDICATOR_COOKIE, "1", {
+    httpOnly: false,
+    maxAge: REFRESH_TOKEN_MAX_AGE,
+    path: "/",
+    sameSite: "lax",
+    secure: isProduction,
+  });
 };
 
 const proxy = async (request: NextRequest) => {
@@ -213,17 +233,21 @@ const proxy = async (request: NextRequest) => {
       return createRedirectWithCookieClear(homeUrl);
     }
 
+    const response = authResult.newTokens ? NextResponse.next() : intlMiddleware(request);
     if (authResult.newTokens) {
-      const response = NextResponse.next();
       setTokenCookies(response, authResult.newTokens);
-      return response;
+    } else {
+      setSessionIndicator(response);
     }
+    return response;
   }
 
   // Exception: authenticated users on home → redirect to dashboard
   if (isHomePage(pathname) && hasCookie) {
     const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
-    return NextResponse.redirect(dashboardUrl, 307);
+    const response = NextResponse.redirect(dashboardUrl, 307);
+    setSessionIndicator(response);
+    return response;
   }
 
   return intlMiddleware(request);

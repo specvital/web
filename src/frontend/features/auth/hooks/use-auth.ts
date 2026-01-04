@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { authKeys } from "@/lib/api/error-handler";
@@ -18,10 +19,22 @@ type UseAuthReturn = {
   user: UserInfo | null;
 };
 
+const checkSessionCookie = (): boolean => {
+  if (typeof document === "undefined") return false;
+  return document.cookie.includes("has_session=1");
+};
+
 export const useAuth = (): UseAuthReturn => {
   const queryClient = useQueryClient();
 
+  // hydration mismatch 방지: 클라이언트에서만 쿠키 확인
+  const [hasSession, setHasSession] = useState(false);
+  useEffect(() => {
+    setHasSession(checkSessionCookie());
+  }, []);
+
   const userQuery = useQuery({
+    enabled: hasSession,
     queryFn: fetchCurrentUser,
     queryKey: authKeys.user(),
     retry: false,
@@ -39,14 +52,17 @@ export const useAuth = (): UseAuthReturn => {
   const logoutMutation = useMutation({
     mutationFn: fetchLogout,
     onSuccess: () => {
+      document.cookie = "has_session=; path=/; max-age=0";
       queryClient.setQueryData(authKeys.user(), null);
       window.location.href = "/";
     },
   });
 
+  const isLoading = userQuery.isFetching;
+
   return {
     isAuthenticated: !!userQuery.data,
-    isLoading: userQuery.isPending,
+    isLoading,
     login: () => loginMutation.mutate(),
     loginPending: loginMutation.isPending,
     logout: () => logoutMutation.mutate(),
