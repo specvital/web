@@ -1,1 +1,5 @@
-export { getFrameworkColor } from "./framework-colors";
+export {
+  getFrameworkBadgeClasses,
+  getFrameworkColor,
+  getFrameworkSolidColor,
+} from "./framework-colors";

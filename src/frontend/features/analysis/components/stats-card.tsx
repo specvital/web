@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Summary } from "@/lib/api/types";
 import { easeOutTransition, useReducedMotion } from "@/lib/motion";
-import { getFrameworkColor } from "@/lib/styles";
+import { getFrameworkSolidColor } from "@/lib/styles";
 
 type StatsCardProps = {
   summary: Summary;
@@ -54,7 +54,7 @@ export const StatsCard = ({ summary }: StatsCardProps) => {
                       <span className="flex items-center gap-2 font-medium">
                         <span
                           className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: getFrameworkColor(index, fw.framework) }}
+                          style={{ backgroundColor: getFrameworkSolidColor(fw.framework) }}
                         />
                         {fw.framework}
                         <span className="text-muted-foreground font-normal">({percentage}%)</span>
@@ -74,7 +74,7 @@ export const StatsCard = ({ summary }: StatsCardProps) => {
                         animate={{ width: `${percentage}%` }}
                         className="h-full rounded-full"
                         initial={shouldReduceMotion ? false : { width: 0 }}
-                        style={{ backgroundColor: getFrameworkColor(index, fw.framework) }}
+                        style={{ backgroundColor: getFrameworkSolidColor(fw.framework) }}
                         transition={
                           shouldReduceMotion
                             ? undefined
