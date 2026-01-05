@@ -34,7 +34,7 @@ describe("SpecItem", () => {
 
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
-        <SpecItem item={item} />
+        <SpecItem index={0} item={item} totalItems={1} />
       </NextIntlClientProvider>
     );
 
@@ -43,7 +43,7 @@ describe("SpecItem", () => {
     expect(screen.getByText("L:42")).toBeInTheDocument();
   });
 
-  it("displays correct status icon for different statuses", () => {
+  it("displays correct status for different statuses via sr-only text", () => {
     const statuses = ["active", "focused", "skipped", "todo", "xfail"] as const;
 
     for (const status of statuses) {
@@ -57,7 +57,7 @@ describe("SpecItem", () => {
 
       const { unmount } = render(
         <NextIntlClientProvider locale="en" messages={messages}>
-          <SpecItem item={item} />
+          <SpecItem index={0} item={item} totalItems={1} />
         </NextIntlClientProvider>
       );
 
@@ -69,9 +69,30 @@ describe("SpecItem", () => {
         xfail: "Expected failure",
       };
 
-      expect(screen.getByLabelText(statusLabels[status])).toBeInTheDocument();
+      expect(screen.getByText(`, ${statusLabels[status]}`)).toBeInTheDocument();
       unmount();
     }
+  });
+
+  it("has correct ARIA attributes for tree navigation", () => {
+    const item = {
+      convertedName: "Test item",
+      isFromCache: false,
+      line: 10,
+      originalName: "original",
+      status: "active" as const,
+    };
+
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <SpecItem index={2} item={item} totalItems={5} />
+      </NextIntlClientProvider>
+    );
+
+    const treeItem = screen.getByRole("treeitem");
+    expect(treeItem).toHaveAttribute("aria-level", "3");
+    expect(treeItem).toHaveAttribute("aria-posinset", "3");
+    expect(treeItem).toHaveAttribute("aria-setsize", "5");
   });
 });
 

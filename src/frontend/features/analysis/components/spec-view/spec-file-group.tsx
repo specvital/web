@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -12,9 +12,11 @@ import { StatusMiniBar } from "../status-mini-bar";
 
 type SpecFileGroupProps = {
   file: ConvertedTestFile;
+  index: number;
+  totalFiles: number;
 };
 
-export const SpecFileGroup = ({ file }: SpecFileGroupProps) => {
+export const SpecFileGroup = ({ file, index, totalFiles }: SpecFileGroupProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const { statusCounts, testCount } = useMemo(() => {
@@ -32,16 +34,39 @@ export const SpecFileGroup = ({ file }: SpecFileGroupProps) => {
     return { statusCounts: counts, testCount: allTests.length };
   }, [file.suites]);
 
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setIsExpanded((prev) => !prev);
+      } else if (event.key === "ArrowRight" && !isExpanded) {
+        event.preventDefault();
+        setIsExpanded(true);
+      } else if (event.key === "ArrowLeft" && isExpanded) {
+        event.preventDefault();
+        setIsExpanded(false);
+      }
+    },
+    [isExpanded]
+  );
+
+  const contentId = `file-content-${file.filePath.replace(/[^a-zA-Z0-9]/g, "-")}`;
+
   return (
     <div
+      aria-expanded={isExpanded}
+      aria-level={1}
+      aria-posinset={index + 1}
+      aria-setsize={totalFiles}
       className={cn(
         "rounded-lg border bg-card transition-shadow duration-200",
         isExpanded ? "shadow-md" : "shadow-sm"
       )}
+      role="treeitem"
     >
       <button
+        aria-controls={contentId}
         aria-expanded={isExpanded}
-        aria-label={isExpanded ? `Collapse ${file.filePath}` : `Expand ${file.filePath}`}
         className={cn(
           "flex w-full items-center gap-3 px-4 py-3 rounded-t-lg",
           "transition-all duration-200 ease-in-out",
@@ -49,13 +74,18 @@ export const SpecFileGroup = ({ file }: SpecFileGroupProps) => {
           isExpanded ? "bg-accent/40 hover:bg-accent/60" : "hover:bg-muted/70"
         )}
         onClick={() => setIsExpanded((prev) => !prev)}
+        onKeyDown={handleKeyDown}
+        type="button"
       >
         {isExpanded ? (
-          <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+          <ChevronDown aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
         ) : (
-          <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+          <ChevronRight
+            aria-hidden="true"
+            className="h-4 w-4 flex-shrink-0 text-muted-foreground"
+          />
         )}
-        <FileText className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+        <FileText aria-hidden="true" className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
         <span className="flex-1 text-left text-sm font-medium truncate">{file.filePath}</span>
         <FrameworkBadge framework={file.framework} />
         <StatusMiniBar counts={statusCounts} />
@@ -65,10 +95,19 @@ export const SpecFileGroup = ({ file }: SpecFileGroupProps) => {
       </button>
 
       {isExpanded && (
-        <div className="border-t border-accent/20 bg-accent/10 px-4 py-3">
+        <div
+          className="border-t border-accent/20 bg-accent/10 px-4 py-3"
+          id={contentId}
+          role="group"
+        >
           <div className="space-y-3 pl-6">
-            {file.suites.map((suite) => (
-              <SpecSuiteGroup key={suite.suiteHierarchy} suite={suite} />
+            {file.suites.map((suite, suiteIndex) => (
+              <SpecSuiteGroup
+                index={suiteIndex}
+                key={suite.suiteHierarchy}
+                suite={suite}
+                totalSuites={file.suites.length}
+              />
             ))}
           </div>
         </div>

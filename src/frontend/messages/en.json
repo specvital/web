@@ -108,9 +108,12 @@
       "errorTitle": "Conversion Failed",
       "generatedAt": "Generated {time}",
       "languageLabel": "Language",
+      "loaded": "Loaded {fileCount} files with {testCount} tests",
       "regenerate": "Regenerate",
+      "regenerating": "Regenerating specifications, please wait...",
       "retry": "Try Again",
-      "summary": "{total} tests ({cached} cached, {converted} converted)"
+      "summary": "{total} tests ({cached} cached, {converted} converted)",
+      "treeLabel": "Test specifications, {fileCount} files, {testCount} tests"
     },
     "status": {
       "loading": "Loading...",

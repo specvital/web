@@ -108,9 +108,12 @@
       "errorTitle": "변환 실패",
       "generatedAt": "{time} 생성됨",
       "languageLabel": "언어",
+      "loaded": "{fileCount}개 파일, {testCount}개 테스트 로드됨",
       "regenerate": "다시 생성",
+      "regenerating": "스펙 재생성 중, 잠시 기다려주세요...",
       "retry": "다시 시도",
-      "summary": "{total}개 테스트 ({cached}개 캐시됨, {converted}개 변환됨)"
+      "summary": "{total}개 테스트 ({cached}개 캐시됨, {converted}개 변환됨)",
+      "treeLabel": "테스트 스펙, {fileCount}개 파일, {testCount}개 테스트"
     },
     "status": {
       "loading": "로딩 중...",

@@ -6,7 +6,9 @@ import { cn } from "@/lib/utils";
 import type { ConvertedTestItem } from "../../types";
 
 type SpecItemProps = {
+  index: number;
   item: ConvertedTestItem;
+  totalItems: number;
 };
 
 const STATUS_CONFIG: Record<
@@ -44,28 +46,40 @@ const STATUS_CONFIG: Record<
   },
 };
 
-export const SpecItem = ({ item }: SpecItemProps) => {
+export const SpecItem = ({ index, item, totalItems }: SpecItemProps) => {
   const config = STATUS_CONFIG[item.status];
   const Icon = config.icon;
 
   return (
     <div
+      aria-level={3}
+      aria-posinset={index + 1}
+      aria-setsize={totalItems}
       className={cn(
         "group flex items-start gap-3 px-3 py-2 rounded-md",
         "hover:bg-muted/50 transition-colors"
       )}
+      role="treeitem"
     >
-      <Icon
-        aria-label={config.label}
-        className={cn("mt-0.5 h-4 w-4 flex-shrink-0", config.color)}
-      />
+      <Icon aria-hidden="true" className={cn("mt-0.5 h-4 w-4 flex-shrink-0", config.color)} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm">{item.convertedName}</p>
-        <p className="text-xs text-muted-foreground truncate opacity-0 group-hover:opacity-100 transition-opacity">
+        <p className="text-sm">
+          {item.convertedName}
+          <span className="sr-only">, {config.label}</span>
+        </p>
+        <p
+          aria-hidden="true"
+          className="text-xs text-muted-foreground truncate opacity-0 group-hover:opacity-100 transition-opacity"
+        >
           {item.originalName}
         </p>
       </div>
-      <span className="text-xs text-muted-foreground font-mono flex-shrink-0">L:{item.line}</span>
+      <span
+        aria-label={`Line ${item.line}`}
+        className="text-xs text-muted-foreground font-mono flex-shrink-0"
+      >
+        L:{item.line}
+      </span>
     </div>
   );
 };

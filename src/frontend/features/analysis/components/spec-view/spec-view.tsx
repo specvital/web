@@ -1,7 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { LiveAnnouncement } from "./live-announcement";
 import { SpecViewContent } from "./spec-view-content";
 import { SpecViewError } from "./spec-view-error";
 import { SpecViewHeader } from "./spec-view-header";
@@ -17,6 +19,7 @@ type SpecViewProps = {
 };
 
 export const SpecView = ({ commitSha, initialLanguage, owner, repo }: SpecViewProps) => {
+  const t = useTranslations("analyze.specView");
   const [language, setLanguage] = useState<ConversionLanguage>(initialLanguage);
 
   const { data, error, isLoading, isRegenerating, regenerate } = useSpecConversion({
@@ -42,8 +45,19 @@ export const SpecView = ({ commitSha, initialLanguage, owner, repo }: SpecViewPr
     return <SpecViewSkeleton />;
   }
 
+  const totalTests = data.data.reduce(
+    (acc, file) => acc + file.suites.reduce((sum, suite) => sum + suite.tests.length, 0),
+    0
+  );
+
   return (
     <div>
+      {isRegenerating && <LiveAnnouncement assertive message={t("regenerating")} />}
+      {!isRegenerating && data && (
+        <LiveAnnouncement
+          message={t("loaded", { fileCount: data.data.length, testCount: totalTests })}
+        />
+      )}
       <SpecViewHeader
         isRegenerating={isRegenerating}
         language={language}

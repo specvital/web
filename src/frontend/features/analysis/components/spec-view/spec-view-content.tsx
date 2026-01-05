@@ -1,6 +1,7 @@
 "use client";
 
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useTranslations } from "next-intl";
 import { useLayoutEffect, useRef, useState } from "react";
 
 import { SpecFileGroup } from "./spec-file-group";
@@ -15,6 +16,7 @@ const ITEM_GAP = 12;
 const ESTIMATED_ITEM_HEIGHT = 60;
 
 export const SpecViewContent = ({ files }: SpecViewContentProps) => {
+  const t = useTranslations("analyze.specView");
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
 
@@ -34,10 +36,16 @@ export const SpecViewContent = ({ files }: SpecViewContentProps) => {
   }
 
   const virtualItems = virtualizer.getVirtualItems();
+  const totalTests = files.reduce(
+    (acc, file) => acc + file.suites.reduce((sum, suite) => sum + suite.tests.length, 0),
+    0
+  );
 
   return (
     <div
+      aria-label={t("treeLabel", { fileCount: files.length, testCount: totalTests })}
       ref={listRef}
+      role="tree"
       style={{
         height: `${virtualizer.getTotalSize()}px`,
         position: "relative",
@@ -64,7 +72,7 @@ export const SpecViewContent = ({ files }: SpecViewContentProps) => {
             }}
           >
             <div className="pb-3">
-              <SpecFileGroup file={file} />
+              <SpecFileGroup file={file} index={virtualItem.index} totalFiles={files.length} />
             </div>
           </div>
         );

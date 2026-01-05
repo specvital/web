@@ -1,6 +1,7 @@
 export { CacheIndicator } from "./cache-indicator";
 export { ConsentDialog } from "./consent-dialog";
 export { LanguageSelector } from "./language-selector";
+export { LiveAnnouncement } from "./live-announcement";
 export { SpecFileGroup } from "./spec-file-group";
 export { SpecItem } from "./spec-item";
 export { SpecSuiteGroup } from "./spec-suite-group";
