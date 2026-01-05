@@ -40,6 +40,8 @@ Documentation of architectural decisions made during the development of Specvita
 - [External Repo ID Integrity](./adr/08-external-repo-id-integrity.md)
 - [GitHub App Integration](./adr/09-github-app-integration.md)
 - [TestStatus Data Contract](./adr/10-test-status-data-contract.md)
+- [Repository Visibility-Based Access Control](./adr/11-community-private-repo-filtering.md)
+- [Collector-Centric Analysis Lifecycle](./adr/12-collector-centric-analysis-lifecycle.md)
 
 **[Core](./adr/core/)**
 
@@ -57,6 +59,7 @@ Documentation of architectural decisions made during the development of Specvita
 - [Parallel Scanning with Worker Pool](./adr/core/12-parallel-scanning-worker-pool.md)
 - [NaCl SecretBox Encryption](./adr/core/13-nacl-secretbox-encryption.md)
 - [Indirect Import Alias Detection Unsupported](./adr/core/14-indirect-import-unsupported.md)
+- [C# Preprocessor Block Attribute Detection Limitation](./adr/core/15-csharp-preprocessor-attribute-limitation.md)
 
 **[Collector](./adr/collector/)**
 
@@ -71,6 +74,25 @@ Documentation of architectural decisions made during the development of Specvita
 **[Web](./adr/web/)**
 
 - [Go as Backend Language](./adr/web/01-go-backend-language.md)
+- [Next.js 16 + React 19 Selection](./adr/web/02-nextjs-react-selection.md)
+- [Chi Router Selection](./adr/web/03-chi-router-selection.md)
+- [TanStack Query Selection](./adr/web/04-tanstack-query-selection.md)
+- [shadcn/ui + Tailwind CSS Selection](./adr/web/05-shadcn-tailwind-selection.md)
+- [SQLc Selection](./adr/web/06-sqlc-selection.md)
+- [Next.js BFF Architecture](./adr/web/07-nextjs-bff-architecture.md)
+- [Clean Architecture Pattern](./adr/web/08-clean-architecture-pattern.md)
+- [DI Container Pattern](./adr/web/09-di-container-pattern.md)
+- [StrictServerInterface Contract](./adr/web/10-strict-server-interface-contract.md)
+- [Feature-Based Module Organization](./adr/web/11-feature-based-module-organization.md)
+- [APIHandlers Composition Pattern](./adr/web/12-apihandlers-composition-pattern.md)
+- [Domain Error Handling Pattern](./adr/web/13-domain-error-handling-pattern.md)
+- [slog Structured Logging](./adr/web/14-slog-structured-logging.md)
+- [React 19 use() Hook Pattern](./adr/web/15-react-19-use-hook-pattern.md)
+- [nuqs URL State Management](./adr/web/16-nuqs-url-state-management.md)
+- [next-intl i18n Strategy](./adr/web/17-next-intl-i18n-strategy.md)
+- [next-themes Dark Mode](./adr/web/18-next-themes-dark-mode.md)
+- [CSS Variable Design Token System](./adr/web/19-css-variable-design-token-system.md)
+- [Skeleton Loading Pattern](./adr/web/20-skeleton-loading-pattern.md)
 
 ### [Tech Radar](./tech-radar.md)
 

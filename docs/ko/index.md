@@ -40,6 +40,8 @@ Specvital 개발 중 내린 아키텍처 결정에 대한 문서.
 - [External Repo ID 무결성](./adr/08-external-repo-id-integrity.md)
 - [GitHub App 통합](./adr/09-github-app-integration.md)
 - [TestStatus 데이터 계약](./adr/10-test-status-data-contract.md)
+- [Repository Visibility 기반 접근 제어](./adr/11-community-private-repo-filtering.md)
+- [Collector 중심 분석 라이프사이클](./adr/12-collector-centric-analysis-lifecycle.md)
 
 **[Core](./adr/core/)**
 
@@ -57,6 +59,7 @@ Specvital 개발 중 내린 아키텍처 결정에 대한 문서.
 - [Worker Pool 병렬 스캔](./adr/core/12-parallel-scanning-worker-pool.md)
 - [NaCl SecretBox 암호화](./adr/core/13-nacl-secretbox-encryption.md)
 - [간접 Import Alias 감지 미지원](./adr/core/14-indirect-import-unsupported.md)
+- [C# 전처리기 블록 내 Attribute 감지 한계](./adr/core/15-csharp-preprocessor-attribute-limitation.md)
 
 **[Collector](./adr/collector/)**
 
@@ -71,6 +74,25 @@ Specvital 개발 중 내린 아키텍처 결정에 대한 문서.
 **[Web](./adr/web/)**
 
 - [백엔드 언어로 Go 선택](./adr/web/01-go-backend-language.md)
+- [Next.js 16 + React 19 선택](./adr/web/02-nextjs-react-selection.md)
+- [Chi 라우터 선택](./adr/web/03-chi-router-selection.md)
+- [TanStack Query 선택](./adr/web/04-tanstack-query-selection.md)
+- [shadcn/ui + Tailwind CSS 선택](./adr/web/05-shadcn-tailwind-selection.md)
+- [SQLc 선택](./adr/web/06-sqlc-selection.md)
+- [Next.js BFF 아키텍처](./adr/web/07-nextjs-bff-architecture.md)
+- [Clean Architecture 패턴](./adr/web/08-clean-architecture-pattern.md)
+- [DI Container 패턴](./adr/web/09-di-container-pattern.md)
+- [StrictServerInterface 계약](./adr/web/10-strict-server-interface-contract.md)
+- [Feature 기반 모듈 구조](./adr/web/11-feature-based-module-organization.md)
+- [APIHandlers 합성 패턴](./adr/web/12-apihandlers-composition-pattern.md)
+- [도메인 에러 처리 패턴](./adr/web/13-domain-error-handling-pattern.md)
+- [slog 구조화 로깅](./adr/web/14-slog-structured-logging.md)
+- [React 19 use() Hook 패턴](./adr/web/15-react-19-use-hook-pattern.md)
+- [nuqs URL 상태 관리](./adr/web/16-nuqs-url-state-management.md)
+- [next-intl i18n 전략](./adr/web/17-next-intl-i18n-strategy.md)
+- [next-themes 다크 모드](./adr/web/18-next-themes-dark-mode.md)
+- [CSS 변수 디자인 토큰 시스템](./adr/web/19-css-variable-design-token-system.md)
+- [스켈레톤 로딩 패턴](./adr/web/20-skeleton-loading-pattern.md)
 
 ### [기술 레이더](./tech-radar.md)
 
