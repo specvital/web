@@ -78,7 +78,7 @@ const refreshTokens = async (
 ): Promise<{ accessToken: string; refreshToken: string } | null> => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const response = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
       headers: {
@@ -137,7 +137,7 @@ const verifyAuthToken = async (request: NextRequest): Promise<AuthResult> => {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: {
@@ -244,10 +244,18 @@ const proxy = async (request: NextRequest) => {
 
   // Exception: authenticated users on home → redirect to dashboard
   if (isHomePage(pathname) && hasCookie) {
-    const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
-    const response = NextResponse.redirect(dashboardUrl, 307);
-    setSessionIndicator(response);
-    return response;
+    const authResult = await verifyAuthToken(request);
+    if (authResult.isValid) {
+      const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
+      const response = NextResponse.redirect(dashboardUrl, 307);
+      if (authResult.newTokens) {
+        setTokenCookies(response, authResult.newTokens);
+      } else {
+        setSessionIndicator(response);
+      }
+      return response;
+    }
+    // Token verification failed - stay on home, let client handle refresh
   }
 
   return intlMiddleware(request);

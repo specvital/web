@@ -1,6 +1,7 @@
 export {
   AnalyzeDialog,
   AnimatedHero,
+  AuthenticatedRedirect,
   SupportedFrameworksDialog,
   TrustBadges,
   TrustBadgesWithDialog,

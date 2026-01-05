@@ -3,7 +3,12 @@ import { Suspense } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { OAuthErrorHandler } from "@/features/auth";
-import { AnimatedHero, TrustBadgesWithDialog, UrlInputForm } from "@/features/home";
+import {
+  AnimatedHero,
+  AuthenticatedRedirect,
+  TrustBadgesWithDialog,
+  UrlInputForm,
+} from "@/features/home";
 
 export const dynamic = "force-static";
 
@@ -23,6 +28,7 @@ export const HomePage = async ({ params }: HomePageProps) => {
     <div className="flex flex-1 flex-col items-center justify-center bg-[radial-gradient(ellipse_80%_50%_at_50%_40%,var(--hero-gradient-center),var(--hero-gradient-edge)_70%)] p-8">
       <Suspense fallback={null}>
         <OAuthErrorHandler />
+        <AuthenticatedRedirect />
       </Suspense>
 
       <AnimatedHero
