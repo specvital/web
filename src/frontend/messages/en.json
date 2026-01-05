@@ -106,7 +106,9 @@
       "consentTitle": "AI Conversion",
       "convert": "Convert",
       "errorTitle": "Conversion Failed",
+      "generatedAt": "Generated {time}",
       "languageLabel": "Language",
+      "regenerate": "Regenerate",
       "retry": "Try Again",
       "summary": "{total} tests ({cached} cached, {converted} converted)"
     },

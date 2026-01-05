@@ -30,7 +30,7 @@ export const SpecView = ({ commitSha, initialLanguage, owner, repo }: SpecViewPr
     setLanguage(newLanguage);
   };
 
-  if (isLoading || isRegenerating) {
+  if (isLoading) {
     return <SpecViewSkeleton />;
   }
 
@@ -45,8 +45,10 @@ export const SpecView = ({ commitSha, initialLanguage, owner, repo }: SpecViewPr
   return (
     <div>
       <SpecViewHeader
+        isRegenerating={isRegenerating}
         language={language}
         onLanguageChange={handleLanguageChange}
+        onRegenerate={regenerate}
         summary={data.summary}
       />
       <SpecViewContent files={data.data} />

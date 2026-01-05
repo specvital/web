@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 
+import { CacheIndicator } from "./cache-indicator";
 import { LanguageSelector } from "./language-selector";
 import { SpecItem } from "./spec-item";
 import { SpecViewSkeleton } from "./spec-view-skeleton";
@@ -12,7 +13,9 @@ const messages = {
       cancel: "Cancel",
       convert: "Convert",
       errorTitle: "Conversion Failed",
+      generatedAt: "Generated {time}",
       languageLabel: "Language",
+      regenerate: "Regenerate",
       retry: "Try Again",
       summary: "{total} tests ({cached} cached, {converted} converted)",
     },
@@ -91,5 +94,55 @@ describe("SpecViewSkeleton", () => {
     render(<SpecViewSkeleton />);
 
     expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Loading spec view");
+  });
+});
+
+describe("CacheIndicator", () => {
+  const defaultProps = {
+    convertedAt: "2026-01-05T10:30:00Z",
+    isRegenerating: false,
+    onRegenerate: vi.fn(),
+  };
+
+  const renderWithIntl = (ui: React.ReactElement, now?: Date) =>
+    render(
+      <NextIntlClientProvider locale="en" messages={messages} now={now} timeZone="UTC">
+        {ui}
+      </NextIntlClientProvider>
+    );
+
+  it("renders relative time", () => {
+    renderWithIntl(<CacheIndicator {...defaultProps} />, new Date("2026-01-05T11:30:00Z"));
+
+    expect(screen.getByText(/Generated/)).toBeInTheDocument();
+  });
+
+  it("displays regenerate button", () => {
+    renderWithIntl(<CacheIndicator {...defaultProps} />);
+
+    expect(screen.getByRole("button", { name: "Regenerate" })).toBeInTheDocument();
+  });
+
+  it("calls onRegenerate when button clicked", () => {
+    const onRegenerate = vi.fn();
+
+    renderWithIntl(<CacheIndicator {...defaultProps} onRegenerate={onRegenerate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+    expect(onRegenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables button when regenerating", () => {
+    renderWithIntl(<CacheIndicator {...defaultProps} isRegenerating={true} />);
+
+    expect(screen.getByRole("button", { name: "Regenerate" })).toBeDisabled();
+  });
+
+  it("shows spinning animation when regenerating", () => {
+    renderWithIntl(<CacheIndicator {...defaultProps} isRegenerating={true} />);
+
+    const button = screen.getByRole("button", { name: "Regenerate" });
+    const svg = button.querySelector("svg");
+    expect(svg).toHaveClass("animate-spin");
   });
 });

@@ -1,3 +1,4 @@
+export { CacheIndicator } from "./cache-indicator";
 export { ConsentDialog } from "./consent-dialog";
 export { LanguageSelector } from "./language-selector";
 export { SpecFileGroup } from "./spec-file-group";

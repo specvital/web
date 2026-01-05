@@ -106,7 +106,9 @@
       "consentTitle": "AI 변환",
       "convert": "변환",
       "errorTitle": "변환 실패",
+      "generatedAt": "{time} 생성됨",
       "languageLabel": "언어",
+      "regenerate": "다시 생성",
       "retry": "다시 시도",
       "summary": "{total}개 테스트 ({cached}개 캐시됨, {converted}개 변환됨)"
     },
