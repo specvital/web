@@ -202,14 +202,11 @@ func (h *APIHandlers) WebhookHandler() WebhookHandlers {
 	return h.webhook
 }
 
-// Spec View handler - stub implementation for Commit 1
-// Will be replaced with actual handler delegation in Commit 5
-
-func (h *APIHandlers) ConvertSpecView(_ context.Context, _ ConvertSpecViewRequestObject) (ConvertSpecViewResponseObject, error) {
+func (h *APIHandlers) ConvertSpecView(ctx context.Context, request ConvertSpecViewRequestObject) (ConvertSpecViewResponseObject, error) {
 	if h.specView == nil {
 		return ConvertSpecView500ApplicationProblemPlusJSONResponse{
-			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View not yet implemented"),
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View not configured"),
 		}, nil
 	}
-	return nil, nil
+	return h.specView.ConvertSpecView(ctx, request)
 }

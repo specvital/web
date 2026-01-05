@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/specvital/web/src/backend/common/docs"
 	"github.com/specvital/web/src/backend/common/health"
@@ -24,6 +25,9 @@ import (
 	githubadapter "github.com/specvital/web/src/backend/modules/github/adapter"
 	githubhandler "github.com/specvital/web/src/backend/modules/github/handler"
 	githubusecase "github.com/specvital/web/src/backend/modules/github/usecase"
+	specviewadapter "github.com/specvital/web/src/backend/modules/spec-view/adapter"
+	specviewhandler "github.com/specvital/web/src/backend/modules/spec-view/handler"
+	specviewusecase "github.com/specvital/web/src/backend/modules/spec-view/usecase"
 	useradapter "github.com/specvital/web/src/backend/modules/user/adapter"
 	userhandler "github.com/specvital/web/src/backend/modules/user/handler"
 	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
@@ -40,6 +44,7 @@ type Handlers struct {
 type App struct {
 	AuthMiddleware *middleware.AuthMiddleware
 	Handlers       *Handlers
+	closers        []io.Closer
 	infra          *infra.Container
 }
 
@@ -50,7 +55,7 @@ func NewApp(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("init infra: %w", err)
 	}
 
-	handlers, err := initHandlers(container)
+	handlers, closers, err := initHandlers(ctx, container)
 	if err != nil {
 		return nil, fmt.Errorf("init handlers: %w", err)
 	}
@@ -63,12 +68,14 @@ func NewApp(ctx context.Context) (*App, error) {
 	return &App{
 		AuthMiddleware: authMiddleware,
 		Handlers:       handlers,
+		closers:        closers,
 		infra:          container,
 	}, nil
 }
 
-func initHandlers(container *infra.Container) (*Handlers, error) {
+func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, []io.Closer, error) {
 	log := logger.New()
+	var closers []io.Closer
 
 	queries := db.New(container.DB)
 
@@ -112,7 +119,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		RefreshToken:        refreshTokenUC,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create auth handler: %w", err)
+		return nil, nil, fmt.Errorf("create auth handler: %w", err)
 	}
 
 	bookmarkRepo := useradapter.NewBookmarkRepository(queries)
@@ -133,7 +140,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		RemoveBookmark:   removeBookmarkUC,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create user handler: %w", err)
+		return nil, nil, fmt.Errorf("create user handler: %w", err)
 	}
 
 	analyzerRepo := analyzeradapter.NewPostgresRepository(queries)
@@ -177,13 +184,13 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		Logger:        log,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create github handler: %w", err)
+		return nil, nil, fmt.Errorf("create github handler: %w", err)
 	}
 
 	handleWebhookUC := ghappusecase.NewHandleWebhookUseCase(ghAppRepo)
 	webhookVerifier, err := ghappadapter.NewWebhookVerifier(container.GitHubAppWebhookSecret)
 	if err != nil {
-		return nil, fmt.Errorf("create webhook verifier: %w", err)
+		return nil, nil, fmt.Errorf("create webhook verifier: %w", err)
 	}
 
 	webhookHandler, err := ghapphandler.NewHandler(&ghapphandler.HandlerConfig{
@@ -192,7 +199,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		Verifier:      webhookVerifier,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create github-app handler: %w", err)
+		return nil, nil, fmt.Errorf("create github-app handler: %w", err)
 	}
 
 	listInstallationsUC := ghappusecase.NewListInstallationsUseCase(ghAppRepo)
@@ -204,11 +211,17 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		Logger:            log,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create github-app api handler: %w", err)
+		return nil, nil, fmt.Errorf("create github-app api handler: %w", err)
 	}
 
-	// specView is nil until Commit 5 (handler implementation)
-	var specViewHandler api.SpecViewHandlers
+	specViewHandler, specViewCloser, err := initSpecViewHandler(ctx, container, queries, log)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create spec-view handler: %w", err)
+	}
+	if specViewCloser != nil {
+		closers = append(closers, specViewCloser)
+	}
+
 	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, analyzerHandler, specViewHandler, webhookHandler)
 
 	return &Handlers{
@@ -216,7 +229,7 @@ func initHandlers(container *infra.Container) (*Handlers, error) {
 		Docs:    docs.NewHandler(),
 		Health:  health.NewHandler(log),
 		Webhook: webhookHandler,
-	}, nil
+	}, closers, nil
 }
 
 func (a *App) APIHandler() api.StrictServerInterface {
@@ -235,8 +248,62 @@ func (a *App) WebhookHandler() api.WebhookHandlers {
 }
 
 func (a *App) Close() error {
+	var errs []error
+
+	for _, closer := range a.closers {
+		if err := closer.Close(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
 	if a.infra != nil {
-		return a.infra.Close()
+		if err := a.infra.Close(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("close errors: %v", errs)
 	}
 	return nil
+}
+
+func initSpecViewHandler(ctx context.Context, container *infra.Container, queries *db.Queries, log *logger.Logger) (api.SpecViewHandlers, io.Closer, error) {
+	if container.GeminiAPIKey == "" {
+		log.Info(ctx, "Gemini API key not configured, spec-view will be disabled")
+		return nil, nil, nil
+	}
+
+	aiProvider, err := specviewadapter.NewGeminiProvider(ctx, specviewadapter.GeminiConfig{
+		APIKey:  container.GeminiAPIKey,
+		ModelID: container.GeminiModel,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("create gemini provider: %w", err)
+	}
+
+	analysisProvider, err := specviewadapter.NewAnalysisProviderAdapter(queries)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create analysis provider: %w", err)
+	}
+	cacheRepo := specviewadapter.NewCacheRepositoryPostgres(container.DB, queries)
+	rateLimiter := specviewadapter.NewMemoryRateLimiter(specviewadapter.RateLimiterConfig{})
+
+	convertSpecViewUC := specviewusecase.NewConvertSpecViewUseCase(
+		aiProvider,
+		analysisProvider,
+		cacheRepo,
+		rateLimiter,
+	)
+
+	handler, err := specviewhandler.NewHandler(&specviewhandler.HandlerConfig{
+		ConvertSpecView: convertSpecViewUC,
+		Logger:          log,
+	})
+	if err != nil {
+		rateLimiter.Close()
+		return nil, nil, fmt.Errorf("create handler: %w", err)
+	}
+
+	return handler, rateLimiter, nil
 }

@@ -24,6 +24,8 @@ type Container struct {
 	Encryptor              crypto.Encryptor
 	Environment            string
 	FrontendURL            string
+	GeminiAPIKey           string
+	GeminiModel            string
 	GitClient              client.GitClient
 	GitHubAppClient        ghappport.GitHubAppClient
 	GitHubAppWebhookSecret string
@@ -160,6 +162,8 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 		Encryptor:              encryptor,
 		Environment:            cfg.Environment,
 		FrontendURL:            cfg.FrontendURL,
+		GeminiAPIKey:           cfg.GeminiAPIKey,
+		GeminiModel:            cfg.GeminiModel,
 		GitClient:              gitClient,
 		GitHubAppClient:        ghAppClient,
 		GitHubAppWebhookSecret: cfg.GitHubAppWebhookSecret,
