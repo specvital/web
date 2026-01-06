@@ -207,13 +207,11 @@ func groupUncachedByFile(metas []testMeta, cached map[string]*entity.CacheEntry)
 	result := make(map[string]*uncachedFileData)
 
 	fileSuiteTests := make(map[string]map[string][]string)
-	fileSuiteGlobalIdx := make(map[string]map[string][]int)
+	fileLocalIdx := make(map[string]int)
 
-	globalIdx := 1
 	for i, meta := range metas {
 		keyHex := hex.EncodeToString(meta.cacheKeyHash)
 		if _, ok := cached[keyHex]; ok {
-			globalIdx++
 			continue
 		}
 
@@ -222,14 +220,14 @@ func groupUncachedByFile(metas []testMeta, cached map[string]*entity.CacheEntry)
 				indexToMeta: make(map[string]testMeta),
 			}
 			fileSuiteTests[meta.filePath] = make(map[string][]string)
-			fileSuiteGlobalIdx[meta.filePath] = make(map[string][]int)
+			fileLocalIdx[meta.filePath] = 1
 		}
 
-		result[meta.filePath].indexToMeta[fmt.Sprintf("%d", globalIdx)] = metas[i]
+		localIdx := fileLocalIdx[meta.filePath]
+		result[meta.filePath].indexToMeta[fmt.Sprintf("%d", localIdx)] = metas[i]
 		fileSuiteTests[meta.filePath][meta.suiteHierarchy] = append(fileSuiteTests[meta.filePath][meta.suiteHierarchy], meta.originalName)
-		fileSuiteGlobalIdx[meta.filePath][meta.suiteHierarchy] = append(fileSuiteGlobalIdx[meta.filePath][meta.suiteHierarchy], globalIdx)
 
-		globalIdx++
+		fileLocalIdx[meta.filePath]++
 	}
 
 	for filePath, suiteTests := range fileSuiteTests {
