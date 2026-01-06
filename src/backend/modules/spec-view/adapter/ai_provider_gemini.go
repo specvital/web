@@ -235,6 +235,13 @@ func buildPrompt(input port.ConvertInput) string {
 
 	sb.WriteString(fmt.Sprintf(`Convert test names to user-facing feature descriptions in %s for non-technical product managers.
 
+<thinking_process>
+For each test name, mentally follow these steps:
+1. EXTRACT: What is the core behavior being tested? Ignore HOW it's tested.
+2. TRANSLATE: Convert ALL text to %s (target language). English phrases must also be translated.
+3. SIMPLIFY: Describe from user's perspective, not developer's. What does this feature DO for the user?
+</thinking_process>
+
 <rules>
 1. STRIP test syntax: should, must, it, test, spec, when, given, then, if, expect, assert, verify, returns, throws, describe, context
 2. FOCUS on user value, not implementation:
@@ -250,29 +257,36 @@ func buildPrompt(input port.ConvertInput) string {
    - Numeric/meaningless names: Derive meaning from hierarchy
    - Negation tests: Frame as protection or prevention
 5. LENGTH: Max 50 characters. Prefer noun phrases.
-6. LANGUAGE: Output in %s. Maintain technical terms that are universal (API, HTTP, JSON, etc.)
+6. LANGUAGE: ALL output MUST be in %s. Translate English phrases too. Only keep universal terms (API, HTTP, JSON).
 7. NEVER include code literals in output:
-   - Variable names (camelCase, snake_case) must be translated to natural language concepts
-   - Boolean values (true, false) must describe the state or mode
-   - Parameter syntax (=, ==) must be removed entirely
-   - Function/method names must describe the user-visible action
+   - Variable names (camelCase, snake_case) -> natural language concepts
+   - Type names (GroupButton, UserService) -> describe user-visible element
+   - Boolean conditions (isX=true, hasY=false) -> describe the state/mode
+   - Function/method calls -> describe the action result
 </rules>
 
-<bad_vs_good_examples>
-These show what NOT to do vs what TO do:
+<examples>
+These are GENERIC patterns - apply the same logic to any similar input:
 
-BAD: "insertOnly=true일 때 addNewLine=false로 sendText 호출"
-GOOD: "삽입 모드에서 줄바꿈 없이 텍스트 전송"
+Pattern 1 - English test names must be translated:
+Input: "should allow user input and persist value"
+Output: "사용자 입력 저장" (NOT English)
 
-BAD: "dispose 호출 시 event listener 해제"
-GOOD: "종료 시 이벤트 감지 정리"
+Pattern 2 - Code literals (camelCase/PascalCase) must become natural language:
+Input: "isEnabled가 true일 때 MyButton으로 타입 좁힘"
+Output: "활성화 시 버튼 타입 자동 인식"
 
-BAD: "isEnabled가 false면 handleClick 미실행"
-GOOD: "비활성 상태에서 클릭 무시"
-</bad_vs_good_examples>
+Pattern 3 - Function calls must describe the result:
+Input: "handleSubmit saves form data"
+Output: "폼 제출 시 데이터 저장"
+
+Pattern 4 - Boolean conditions must describe the state:
+Input: "when hasPermission is false returns error"
+Output: "권한 없을 때 오류 반환"
+</examples>
 
 <input>
-`, languageDisplayName(input.Language), languageDisplayName(input.Language)))
+`, languageDisplayName(input.Language), languageDisplayName(input.Language), languageDisplayName(input.Language)))
 
 	globalIndex := 1
 	for _, suite := range input.Suites {
