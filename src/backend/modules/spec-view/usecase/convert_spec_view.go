@@ -9,10 +9,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 
 	"github.com/specvital/web/src/backend/modules/spec-view/domain"
 	"github.com/specvital/web/src/backend/modules/spec-view/domain/entity"
 	"github.com/specvital/web/src/backend/modules/spec-view/domain/port"
+)
+
+const (
+	defaultMaxConcurrency = 10
 )
 
 type ConvertSpecViewInput struct {
@@ -111,35 +117,7 @@ func (uc *ConvertSpecViewUseCase) Execute(ctx context.Context, input ConvertSpec
 
 	uncachedByFile := groupUncachedByFile(testMetas, cachedResults)
 
-	newConversions := make(map[string]string)
-	for filePath, fileData := range uncachedByFile {
-		if len(fileData.suites) == 0 {
-			continue
-		}
-
-		convertInput := port.ConvertInput{
-			FilePath: filePath,
-			Language: input.Language,
-			Suites:   fileData.suites,
-		}
-
-		result, err := uc.aiProvider.ConvertTestNames(ctx, convertInput)
-		if err != nil {
-			if errors.Is(err, domain.ErrRateLimited) {
-				slog.WarnContext(ctx, "rate limited during conversion, returning partial results",
-					"file", filePath, "converted_so_far", len(newConversions))
-				break
-			}
-			return nil, fmt.Errorf("convert file %s: %w", filePath, err)
-		}
-
-		for globalIdx, convertedName := range result {
-			if meta, ok := fileData.indexToMeta[globalIdx]; ok {
-				keyHex := hex.EncodeToString(meta.cacheKeyHash)
-				newConversions[keyHex] = convertedName
-			}
-		}
-	}
+	newConversions := uc.convertFilesInParallel(ctx, uncachedByFile, input.Language)
 
 	if len(newConversions) > 0 {
 		entries := buildCacheEntries(testMetas, newConversions, uc.aiProvider.ModelID())
@@ -201,6 +179,88 @@ func extractCacheKeys(metas []testMeta) [][]byte {
 type uncachedFileData struct {
 	indexToMeta map[string]testMeta
 	suites      []port.SuiteInput
+}
+
+type fileConversionResult struct {
+	conversions map[string]string
+	err         error
+	filePath    string
+}
+
+func (uc *ConvertSpecViewUseCase) convertFilesInParallel(
+	ctx context.Context,
+	uncachedByFile map[string]*uncachedFileData,
+	language entity.Language,
+) map[string]string {
+	if len(uncachedByFile) == 0 {
+		return make(map[string]string)
+	}
+
+	sem := semaphore.NewWeighted(int64(defaultMaxConcurrency))
+	resultsCh := make(chan fileConversionResult, len(uncachedByFile))
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	for filePath, fileData := range uncachedByFile {
+		if len(fileData.suites) == 0 {
+			continue
+		}
+
+		fp := filePath
+		fd := fileData
+
+		g.Go(func() error {
+			if err := sem.Acquire(gCtx, 1); err != nil {
+				return nil
+			}
+			defer sem.Release(1)
+
+			result, err := uc.aiProvider.ConvertTestNames(gCtx, port.ConvertInput{
+				FilePath: fp,
+				Language: language,
+				Suites:   fd.suites,
+			})
+
+			resultsCh <- fileConversionResult{
+				filePath:    fp,
+				conversions: result,
+				err:         err,
+			}
+
+			return nil
+		})
+	}
+
+	go func() {
+		g.Wait()
+		close(resultsCh)
+	}()
+
+	newConversions := make(map[string]string)
+
+	for r := range resultsCh {
+		if r.err != nil {
+			if errors.Is(r.err, domain.ErrRateLimited) ||
+				errors.Is(r.err, domain.ErrAIProviderUnavailable) {
+				slog.WarnContext(ctx, "file conversion skipped",
+					"file", r.filePath, "error", r.err)
+				continue
+			}
+			slog.ErrorContext(ctx, "file conversion failed",
+				"file", r.filePath, "error", r.err)
+			continue
+		}
+
+		fileData := uncachedByFile[r.filePath]
+		for globalIdx, convertedName := range r.conversions {
+			if meta, ok := fileData.indexToMeta[globalIdx]; ok {
+				keyHex := hex.EncodeToString(meta.cacheKeyHash)
+				newConversions[keyHex] = convertedName
+			}
+		}
+	}
+
+	return newConversions
 }
 
 func groupUncachedByFile(metas []testMeta, cached map[string]*entity.CacheEntry) map[string]*uncachedFileData {
