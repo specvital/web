@@ -233,7 +233,7 @@ func calculateBackoff(attempt int) time.Duration {
 func buildPrompt(input port.ConvertInput) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf(`Convert test names to user-facing feature descriptions in %s.
+	sb.WriteString(fmt.Sprintf(`Convert test names to user-facing feature descriptions in %s for non-technical product managers.
 
 <rules>
 1. STRIP test syntax: should, must, it, test, spec, when, given, then, if, expect, assert, verify, returns, throws, describe, context
@@ -251,7 +251,25 @@ func buildPrompt(input port.ConvertInput) string {
    - Negation tests: Frame as protection or prevention
 5. LENGTH: Max 50 characters. Prefer noun phrases.
 6. LANGUAGE: Output in %s. Maintain technical terms that are universal (API, HTTP, JSON, etc.)
+7. NEVER include code literals in output:
+   - Variable names (camelCase, snake_case) must be translated to natural language concepts
+   - Boolean values (true, false) must describe the state or mode
+   - Parameter syntax (=, ==) must be removed entirely
+   - Function/method names must describe the user-visible action
 </rules>
+
+<bad_vs_good_examples>
+These show what NOT to do vs what TO do:
+
+BAD: "insertOnly=true일 때 addNewLine=false로 sendText 호출"
+GOOD: "삽입 모드에서 줄바꿈 없이 텍스트 전송"
+
+BAD: "dispose 호출 시 event listener 해제"
+GOOD: "종료 시 이벤트 감지 정리"
+
+BAD: "isEnabled가 false면 handleClick 미실행"
+GOOD: "비활성 상태에서 클릭 무시"
+</bad_vs_good_examples>
 
 <input>
 `, languageDisplayName(input.Language), languageDisplayName(input.Language)))
