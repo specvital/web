@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.1](https://github.com/specvital/web/compare/v1.3.0...v1.3.1) (2026-01-07)
+
+### 🎯 Highlights
+
+#### 🐛 Bug Fixes
+
+- **ui:** fix AI Analysis button overflow on mobile ([e530add](https://github.com/specvital/web/commit/e530add96bde80f7ea3cb8bd1ae2e600f461fcbd))
+
+### 🔧 Maintenance
+
+#### ✅ Tests
+
+- **spec-view:** skip handler tests during feature suspension ([df074c8](https://github.com/specvital/web/commit/df074c88bdbd2a626422a4fbf10ad091c7b9ad7a))
+
 ## [1.3.0](https://github.com/specvital/web/compare/v1.2.1...v1.3.0) (2026-01-07)
 
 ### 🎯 Highlights
