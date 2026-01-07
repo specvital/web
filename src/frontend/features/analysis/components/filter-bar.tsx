@@ -4,11 +4,12 @@ import { useTranslations } from "next-intl";
 
 import type { TestStatus } from "@/lib/api";
 
+import { AIAnalysisButton } from "./ai-analysis";
 import { FrameworkFilter } from "./framework-filter";
 import { SearchInput } from "./search-input";
 import { StatusFilter } from "./status-filter";
 import { ViewModeToggle } from "./view-mode-toggle";
-import type { ConversionLanguage, ViewMode } from "../types";
+import type { ViewMode } from "../types";
 
 type FilterBarProps = {
   availableFrameworks: string[];
@@ -16,7 +17,7 @@ type FilterBarProps = {
   onFrameworksChange: (value: string[]) => void;
   onQueryChange: (value: string) => void;
   onStatusesChange: (value: TestStatus[]) => void;
-  onViewModeChange: (value: ViewMode, language?: ConversionLanguage) => void;
+  onViewModeChange: (value: ViewMode) => void;
   query: string;
   statuses: TestStatus[];
   viewMode: ViewMode;
@@ -72,6 +73,7 @@ export const FilterBar = ({
           </div>
         </div>
         <ViewModeToggle onChange={onViewModeChange} value={viewMode} />
+        <AIAnalysisButton />
       </div>
     </div>
   );

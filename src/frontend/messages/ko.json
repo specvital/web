@@ -73,6 +73,22 @@
     }
   },
   "analyze": {
+    "aiAnalysis": {
+      "badge": "Soon",
+      "button": "AI 분석",
+      "modal": {
+        "cta": "GitHub에서 진행 상황을 팔로우하세요",
+        "description": "AI로 테스트 코드를 인간이 읽을 수 있는 스펙 문서로 변환합니다.",
+        "dismiss": "확인",
+        "feature1": "도메인 기반 스펙 문서",
+        "feature2": "이해관계자를 위한 요약 보고서",
+        "feature3": "스마트 검색 및 필터링",
+        "feature4": "갭 분석 및 커버리지 인사이트",
+        "starOnGitHub": "GitHub에서 Star",
+        "subtitle": "Coming Soon",
+        "title": "AI 기반 분석"
+      }
+    },
     "viewOnGitHub": "GitHub에서 보기",
     "analyzedAt": "분석 시각: {date}",
     "branch": "브랜치",

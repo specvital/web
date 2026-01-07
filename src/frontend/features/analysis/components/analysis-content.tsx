@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import type { AnalysisResult } from "@/lib/api";
 import { createStaggerContainer, fadeInUp, useReducedMotion } from "@/lib/motion";
@@ -10,14 +10,12 @@ import { createStaggerContainer, fadeInUp, useReducedMotion } from "@/lib/motion
 import { AnalysisHeader } from "./analysis-header";
 import { FilterBar, FilterSummary } from "./filter-bar";
 import { FilterEmptyState } from "./filter-empty-state";
-import { SpecView } from "./spec-view";
 import { StatsCard } from "./stats-card";
 import { TestList } from "./test-list";
 import { TreeView } from "./tree-view";
 import { useFilterState } from "../hooks/use-filter-state";
 import { useViewMode } from "../hooks/use-view-mode";
-import type { ConversionLanguage, ViewMode } from "../types";
-import { DEFAULT_CONVERSION_LANGUAGE } from "../types";
+import type { ViewMode } from "../types";
 import { filterSuites } from "../utils/filter-suites";
 
 type AnalysisContentProps = {
@@ -31,7 +29,6 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const { frameworks, query, setFrameworks, setQuery, setStatuses, statuses } = useFilterState();
   const { setViewMode, viewMode } = useViewMode();
   const shouldReduceMotion = useReducedMotion();
-  const [specLanguage, setSpecLanguage] = useState<ConversionLanguage>(DEFAULT_CONVERSION_LANGUAGE);
 
   const containerVariants = shouldReduceMotion ? {} : pageStaggerContainer;
   const itemVariants = shouldReduceMotion ? {} : fadeInUp;
@@ -54,25 +51,11 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const hasFilter = query.trim().length > 0 || frameworks.length > 0 || statuses.length > 0;
   const hasResults = filteredSuites.length > 0;
 
-  const handleViewModeChange = (mode: ViewMode, language?: ConversionLanguage) => {
+  const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
-    if (language) {
-      setSpecLanguage(language);
-    }
   };
 
   const renderContent = () => {
-    if (viewMode === "spec") {
-      return (
-        <SpecView
-          commitSha={result.commitSha}
-          initialLanguage={specLanguage}
-          owner={result.owner}
-          repo={result.repo}
-        />
-      );
-    }
-
     if (hasFilter && !hasResults) {
       return <FilterEmptyState />;
     }
@@ -110,13 +93,11 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-semibold">{t("testSuites")}</h2>
-              {viewMode !== "spec" && (
-                <FilterSummary
-                  filteredCount={filteredTestCount}
-                  hasFilter={hasFilter}
-                  totalCount={result.summary.total}
-                />
-              )}
+              <FilterSummary
+                filteredCount={filteredTestCount}
+                hasFilter={hasFilter}
+                totalCount={result.summary.total}
+              />
             </div>
           </div>
           <FilterBar

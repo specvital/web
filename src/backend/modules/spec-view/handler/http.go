@@ -8,9 +8,7 @@ import (
 
 	"github.com/specvital/web/src/backend/common/logger"
 	"github.com/specvital/web/src/backend/internal/api"
-	"github.com/specvital/web/src/backend/modules/spec-view/adapter/mapper"
 	"github.com/specvital/web/src/backend/modules/spec-view/domain"
-	"github.com/specvital/web/src/backend/modules/spec-view/domain/entity"
 	"github.com/specvital/web/src/backend/modules/spec-view/usecase"
 )
 
@@ -51,43 +49,59 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 }
 
 func (h *Handler) ConvertSpecView(ctx context.Context, request api.ConvertSpecViewRequestObject) (api.ConvertSpecViewResponseObject, error) {
-	owner, repo, commitSHA := request.Owner, request.Repo, request.CommitSHA
-	log := h.logger.With("owner", owner, "repo", repo, "commitSHA", commitSHA)
+	// TODO: AI-powered spec view feature temporarily suspended pending Level 2 redesign
+	// Level 2 will introduce:
+	// - New 4-table DB schema (spec_documents → spec_domains → spec_features → spec_behaviors)
+	// - Domain-based organization (replacing file-based hierarchy)
+	// - Enhanced AI prompts for better accuracy
+	// - Executive summary generation
+	//
+	// Re-enable this functionality after Level 2 implementation is complete.
+	// Related: docs/work/WORK-SPEC-VIEW-UPGRADE/plan.md (Level 2)
+	return api.ConvertSpecView500ApplicationProblemPlusJSONResponse{
+		InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("Spec View feature is under maintenance. New AI-powered features coming soon."),
+	}, nil
 
-	if err := validateOwnerRepo(owner, repo); err != nil {
-		return api.ConvertSpecView400ApplicationProblemPlusJSONResponse{
-			BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest(err.Error()),
-		}, nil
-	}
+	// Original implementation (commented out):
+	/*
+		owner, repo, commitSHA := request.Owner, request.Repo, request.CommitSHA
+		log := h.logger.With("owner", owner, "repo", repo, "commitSHA", commitSHA)
 
-	if commitSHA == "" || !validCommitSHAPattern.MatchString(commitSHA) {
-		return api.ConvertSpecView400ApplicationProblemPlusJSONResponse{
-			BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid commitSHA format"),
-		}, nil
-	}
-
-	input := usecase.ConvertSpecViewInput{
-		CommitSHA: commitSHA,
-		Language:  entity.LanguageEn,
-		Owner:     owner,
-		Repo:      repo,
-	}
-
-	if request.Body != nil {
-		if request.Body.Language != nil {
-			input.Language = entity.Language(*request.Body.Language)
+		if err := validateOwnerRepo(owner, repo); err != nil {
+			return api.ConvertSpecView400ApplicationProblemPlusJSONResponse{
+				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest(err.Error()),
+			}, nil
 		}
-		if request.Body.IsForceRefresh != nil {
-			input.IsForceRefresh = *request.Body.IsForceRefresh
+
+		if commitSHA == "" || !validCommitSHAPattern.MatchString(commitSHA) {
+			return api.ConvertSpecView400ApplicationProblemPlusJSONResponse{
+				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid commitSHA format"),
+			}, nil
 		}
-	}
 
-	result, err := h.convertSpecView.Execute(ctx, input)
-	if err != nil {
-		return h.handleError(ctx, log, err)
-	}
+		input := usecase.ConvertSpecViewInput{
+			CommitSHA: commitSHA,
+			Language:  entity.LanguageEn,
+			Owner:     owner,
+			Repo:      repo,
+		}
 
-	return api.ConvertSpecView200JSONResponse(mapper.ToConvertSpecViewResponse(result)), nil
+		if request.Body != nil {
+			if request.Body.Language != nil {
+				input.Language = entity.Language(*request.Body.Language)
+			}
+			if request.Body.IsForceRefresh != nil {
+				input.IsForceRefresh = *request.Body.IsForceRefresh
+			}
+		}
+
+		result, err := h.convertSpecView.Execute(ctx, input)
+		if err != nil {
+			return h.handleError(ctx, log, err)
+		}
+
+		return api.ConvertSpecView200JSONResponse(mapper.ToConvertSpecViewResponse(result)), nil
+	*/
 }
 
 func (h *Handler) handleError(ctx context.Context, log *logger.Logger, err error) (api.ConvertSpecViewResponseObject, error) {
