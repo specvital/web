@@ -41,7 +41,7 @@ install-sqlc:
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.28.0
 
 install-oapi-codegen:
-    go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+    go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1
 
 kill-port port:
     #!/usr/bin/env bash
