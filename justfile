@@ -166,20 +166,20 @@ release:
     git checkout main
     echo "✅ Release triggered! Check GitHub Actions for progress."
 
-run-worker:
+run-analyzer:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [ ! -d "/tmp/collector" ]; then
-        echo "Cloning collector repository..."
-        git clone https://github.com/specvital/collector.git /tmp/collector
+    if [ ! -d "/tmp/worker" ]; then
+        echo "Cloning worker repository..."
+        git clone https://github.com/specvital/worker.git /tmp/worker
     else
-        echo "Updating collector repository..."
-        cd /tmp/collector && git pull
+        echo "Updating worker repository..."
+        cd /tmp/worker && git pull
     fi
-    cd /tmp/collector/src && \
+    cd /tmp/worker/src && \
     DATABASE_URL="$LOCAL_DATABASE_URL" \
     GITHUB_TOKEN="$GH_TOKEN" \
-    go run ./cmd/worker
+    go run ./cmd/analyzer
 
 test target="all":
     #!/usr/bin/env bash

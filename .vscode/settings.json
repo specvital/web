@@ -219,10 +219,10 @@
         },
         {
           "color": "",
-          "command": "just run-worker",
-          "name": "run-worker",
+          "command": "just run-analyzer",
+          "name": "run-analyzer",
           "shortcut": "w",
-          "terminalName": "run-worker",
+          "terminalName": "run-analyzer",
           "useVsCodeApi": false
         },
         {

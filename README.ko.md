@@ -63,12 +63,12 @@ SpecVital은 활발히 개발 중입니다. 현재 제공 기능:
 
 이 저장소는 웹 애플리케이션(프론트엔드 + 백엔드 API)을 포함합니다. 전체 시스템 구성:
 
-| 저장소                                                        | 역할                               |
-| ------------------------------------------------------------- | ---------------------------------- |
-| [specvital/web](https://github.com/specvital/web)             | 웹 대시보드 + REST API             |
-| [specvital/core](https://github.com/specvital/core)           | 파서 라이브러리 (Tree-sitter 기반) |
-| [specvital/collector](https://github.com/specvital/collector) | 분석 작업 백그라운드 워커          |
-| [specvital/infra](https://github.com/specvital/infra)         | 데이터베이스 스키마 및 인프라      |
+| 저장소                                                  | 역할                               |
+| ------------------------------------------------------- | ---------------------------------- |
+| [specvital/web](https://github.com/specvital/web)       | 웹 대시보드 + REST API             |
+| [specvital/core](https://github.com/specvital/core)     | 파서 라이브러리 (Tree-sitter 기반) |
+| [specvital/worker](https://github.com/specvital/worker) | 분석 작업 백그라운드 워커          |
+| [specvital/infra](https://github.com/specvital/infra)   | 데이터베이스 스키마 및 인프라      |
 
 ## 사용 사례
 

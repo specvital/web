@@ -63,12 +63,12 @@ SpecVital is in active development. Currently available:
 
 This repository contains the web application (Frontend + Backend API). The full system consists of:
 
-| Repository                                                    | Role                                |
-| ------------------------------------------------------------- | ----------------------------------- |
-| [specvital/web](https://github.com/specvital/web)             | Web dashboard + REST API            |
-| [specvital/core](https://github.com/specvital/core)           | Parser library (Tree-sitter based)  |
-| [specvital/collector](https://github.com/specvital/collector) | Background worker for analysis jobs |
-| [specvital/infra](https://github.com/specvital/infra)         | Database schema and infrastructure  |
+| Repository                                              | Role                                |
+| ------------------------------------------------------- | ----------------------------------- |
+| [specvital/web](https://github.com/specvital/web)       | Web dashboard + REST API            |
+| [specvital/core](https://github.com/specvital/core)     | Parser library (Tree-sitter based)  |
+| [specvital/worker](https://github.com/specvital/worker) | Background worker for analysis jobs |
+| [specvital/infra](https://github.com/specvital/infra)   | Database schema and infrastructure  |
 
 ## Use Cases
 
