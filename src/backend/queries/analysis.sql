@@ -48,12 +48,13 @@ WHERE id = $1;
 -- name: GetTestSuitesByAnalysisID :many
 SELECT
     ts.id,
-    ts.file_path,
-    ts.framework,
+    tf.file_path,
+    tf.framework,
     ts.name
 FROM test_suites ts
-WHERE ts.analysis_id = $1
-ORDER BY ts.file_path, ts.depth, ts.line_number;
+JOIN test_files tf ON ts.file_id = tf.id
+WHERE tf.analysis_id = $1
+ORDER BY tf.file_path, ts.depth, ts.line_number;
 
 -- name: GetTestCasesBySuiteIDs :many
 SELECT
@@ -157,7 +158,8 @@ JOIN LATERAL (
             COUNT(*) FILTER (WHERE tc.status = 'xfail') AS xfail_count
         FROM test_cases tc
         JOIN test_suites ts ON ts.id = tc.suite_id
-        WHERE ts.analysis_id = an.id
+        JOIN test_files tf ON ts.file_id = tf.id
+        WHERE tf.analysis_id = an.id
     ) tc_summary ON true
     WHERE an.codebase_id = c.id AND an.status = 'completed'
     ORDER BY an.created_at DESC
@@ -249,7 +251,8 @@ JOIN LATERAL (
             COUNT(*) FILTER (WHERE tc.status = 'xfail') AS xfail_count
         FROM test_cases tc
         JOIN test_suites ts ON ts.id = tc.suite_id
-        WHERE ts.analysis_id = an.id
+        JOIN test_files tf ON ts.file_id = tf.id
+        WHERE tf.analysis_id = an.id
     ) tc_summary ON true
     WHERE an.codebase_id = c.id AND an.status = 'completed'
     ORDER BY an.created_at DESC
@@ -341,7 +344,8 @@ JOIN LATERAL (
             COUNT(*) FILTER (WHERE tc.status = 'xfail') AS xfail_count
         FROM test_cases tc
         JOIN test_suites ts ON ts.id = tc.suite_id
-        WHERE ts.analysis_id = an.id
+        JOIN test_files tf ON ts.file_id = tf.id
+        WHERE tf.analysis_id = an.id
     ) tc_summary ON true
     WHERE an.codebase_id = c.id AND an.status = 'completed'
     ORDER BY an.created_at DESC
