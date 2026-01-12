@@ -17,9 +17,10 @@ func TestAnalyzeRepositoryUseCaseWithAuth(t *testing.T) {
 		repo := &mockRepository{}
 		queue := &mockQueueService{}
 		gitClient := &mockGitClient{commitSHAToken: "auth-sha"}
+		systemConfig := &mockSystemConfigReader{parserVersion: "v1.0.0"}
 		tokenProvider := &mockTokenProvider{token: "github-token"}
 
-		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, tokenProvider)
+		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, tokenProvider)
 
 		ctx := context.Background()
 		result, err := uc.Execute(ctx, usecase.AnalyzeRepositoryInput{
@@ -45,9 +46,10 @@ func TestAnalyzeRepositoryUseCaseWithAuth(t *testing.T) {
 		repo := &mockRepository{}
 		queue := &mockQueueService{}
 		gitClient := &mockGitClient{commitSHA: "public-sha"}
+		systemConfig := &mockSystemConfigReader{parserVersion: "v1.0.0"}
 		tokenProvider := &mockTokenProvider{err: authdomain.ErrNoGitHubToken}
 
-		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, tokenProvider)
+		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, tokenProvider)
 
 		ctx := context.Background()
 		result, err := uc.Execute(ctx, usecase.AnalyzeRepositoryInput{
@@ -75,9 +77,10 @@ func TestAnalyzeRepositoryUseCaseWithAuth(t *testing.T) {
 			commitSHA: "public-sha",
 			errToken:  errors.New("temporary API error"),
 		}
+		systemConfig := &mockSystemConfigReader{parserVersion: "v1.0.0"}
 		tokenProvider := &mockTokenProvider{token: "github-token"}
 
-		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, tokenProvider)
+		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, tokenProvider)
 
 		ctx := context.Background()
 		result, err := uc.Execute(ctx, usecase.AnalyzeRepositoryInput{
@@ -102,9 +105,10 @@ func TestAnalyzeRepositoryUseCaseWithAuth(t *testing.T) {
 			errToken: client.ErrForbidden,
 			err:      client.ErrForbidden,
 		}
+		systemConfig := &mockSystemConfigReader{parserVersion: "v1.0.0"}
 		tokenProvider := &mockTokenProvider{token: "github-token"}
 
-		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, tokenProvider)
+		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, tokenProvider)
 
 		ctx := context.Background()
 		_, err := uc.Execute(ctx, usecase.AnalyzeRepositoryInput{
@@ -125,9 +129,10 @@ func TestAnalyzeRepositoryUseCaseWithAuth(t *testing.T) {
 			errToken: client.ErrRepoNotFound,
 			err:      client.ErrRepoNotFound,
 		}
+		systemConfig := &mockSystemConfigReader{parserVersion: "v1.0.0"}
 		tokenProvider := &mockTokenProvider{token: "github-token"}
 
-		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, tokenProvider)
+		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, tokenProvider)
 
 		ctx := context.Background()
 		_, err := uc.Execute(ctx, usecase.AnalyzeRepositoryInput{
@@ -142,20 +147,23 @@ func TestAnalyzeRepositoryUseCaseWithAuth(t *testing.T) {
 	})
 
 	t.Run("returns cached result with authenticated SHA", func(t *testing.T) {
+		parserVersion := "v1.0.0"
 		completedAnalysis := &port.CompletedAnalysis{
-			ID:          "analysis-123",
-			Owner:       "owner",
-			Repo:        "repo",
-			CommitSHA:   "auth-sha",
-			TotalSuites: 5,
-			TotalTests:  10,
+			ID:            "analysis-123",
+			Owner:         "owner",
+			Repo:          "repo",
+			CommitSHA:     "auth-sha",
+			ParserVersion: &parserVersion,
+			TotalSuites:   5,
+			TotalTests:    10,
 		}
 		repo := &mockRepository{completedAnalysis: completedAnalysis}
 		queue := &mockQueueService{}
 		gitClient := &mockGitClient{commitSHAToken: "auth-sha"}
+		systemConfig := &mockSystemConfigReader{parserVersion: "v1.0.0"}
 		tokenProvider := &mockTokenProvider{token: "github-token"}
 
-		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, tokenProvider)
+		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, tokenProvider)
 
 		ctx := context.Background()
 		result, err := uc.Execute(ctx, usecase.AnalyzeRepositoryInput{
@@ -185,8 +193,9 @@ func TestAnalyzeRepositoryUseCaseWithAuth(t *testing.T) {
 		repo := &mockRepository{}
 		queue := &mockQueueService{}
 		gitClient := &mockGitClient{commitSHA: "public-sha"}
+		systemConfig := &mockSystemConfigReader{parserVersion: "v1.0.0"}
 
-		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, nil)
+		uc := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, nil)
 
 		ctx := context.Background()
 		result, err := uc.Execute(ctx, usecase.AnalyzeRepositoryInput{

@@ -46,15 +46,16 @@ type PaginatedRepository struct {
 }
 
 type CompletedAnalysis struct {
-	BranchName  *string
-	CommitSHA   string
-	CommittedAt *time.Time
-	CompletedAt time.Time
-	ID          string
-	Owner       string
-	Repo        string
-	TotalSuites int
-	TotalTests  int
+	BranchName    *string
+	CommitSHA     string
+	CommittedAt   *time.Time
+	CompletedAt   time.Time
+	ID            string
+	Owner         string
+	ParserVersion *string
+	Repo          string
+	TotalSuites   int
+	TotalTests    int
 }
 
 type TestSuiteWithCases struct {

@@ -73,15 +73,17 @@ func TestAnalyzeRepository(t *testing.T) {
 
 	t.Run("returns 200 with completed analysis when exists", func(t *testing.T) {
 		queue := &mockQueueService{}
+		parserVersion := "v1.0.0" // Must match mockSystemConfigReader.parserVersion
 		repo := &mockRepository{
 			completedAnalysis: &port.CompletedAnalysis{
-				ID:          "test-id",
-				Owner:       "owner",
-				Repo:        "repo",
-				CommitSHA:   "abc123",
-				CompletedAt: time.Now(),
-				TotalSuites: 5,
-				TotalTests:  10,
+				ID:            "test-id",
+				Owner:         "owner",
+				Repo:          "repo",
+				CommitSHA:     "abc123",
+				ParserVersion: &parserVersion,
+				CompletedAt:   time.Now(),
+				TotalSuites:   5,
+				TotalTests:    10,
 			},
 		}
 		gitClient := &mockGitClient{commitSHA: "abc123"}

@@ -104,17 +104,22 @@ func (r *PostgresRepository) GetLatestCompletedAnalysis(ctx context.Context, own
 		t := row.CommittedAt.Time
 		committedAt = &t
 	}
+	var parserVersion *string
+	if row.ParserVersion != "" {
+		parserVersion = &row.ParserVersion
+	}
 
 	return &port.CompletedAnalysis{
-		BranchName:  branchName,
-		CommitSHA:   row.CommitSha,
-		CommittedAt: committedAt,
-		CompletedAt: row.CompletedAt.Time,
-		ID:          uuidToString(row.ID),
-		Owner:       row.Owner,
-		Repo:        row.Repo,
-		TotalSuites: int(row.TotalSuites),
-		TotalTests:  int(row.TotalTests),
+		BranchName:    branchName,
+		CommitSHA:     row.CommitSha,
+		CommittedAt:   committedAt,
+		CompletedAt:   row.CompletedAt.Time,
+		ID:            uuidToString(row.ID),
+		Owner:         row.Owner,
+		ParserVersion: parserVersion,
+		Repo:          row.Repo,
+		TotalSuites:   int(row.TotalSuites),
+		TotalTests:    int(row.TotalTests),
 	}, nil
 }
 

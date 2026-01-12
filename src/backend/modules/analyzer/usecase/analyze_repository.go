@@ -21,6 +21,7 @@ type AnalyzeRepositoryUseCase struct {
 	gitClient     port.GitClient
 	queue         port.QueueService
 	repository    port.Repository
+	systemConfig  port.SystemConfigReader
 	tokenProvider port.TokenProvider
 }
 
@@ -28,12 +29,14 @@ func NewAnalyzeRepositoryUseCase(
 	gitClient port.GitClient,
 	queue port.QueueService,
 	repository port.Repository,
+	systemConfig port.SystemConfigReader,
 	tokenProvider port.TokenProvider,
 ) *AnalyzeRepositoryUseCase {
 	return &AnalyzeRepositoryUseCase{
 		gitClient:     gitClient,
 		queue:         queue,
 		repository:    repository,
+		systemConfig:  systemConfig,
 		tokenProvider: tokenProvider,
 	}
 }
@@ -52,7 +55,7 @@ func (uc *AnalyzeRepositoryUseCase) Execute(ctx context.Context, input AnalyzeRe
 
 	completed, err := uc.repository.GetLatestCompletedAnalysis(ctx, input.Owner, input.Repo)
 	if err == nil {
-		if completed.CommitSHA == latestSHA {
+		if uc.shouldReturnCachedAnalysis(ctx, completed, latestSHA) {
 			analysis, buildErr := buildAnalysisFromCompleted(ctx, uc.repository, completed)
 			if buildErr != nil {
 				return nil, fmt.Errorf("build analysis for %s/%s: %w", input.Owner, input.Repo, buildErr)
@@ -94,4 +97,28 @@ func (uc *AnalyzeRepositoryUseCase) Execute(ctx context.Context, input AnalyzeRe
 		Status:    entity.AnalysisStatusPending,
 	}
 	return &AnalyzeResult{Progress: progress}, nil
+}
+
+// shouldReturnCachedAnalysis determines if the cached analysis can be returned.
+// Returns false when re-analysis is needed:
+// - Different commit SHA
+// - NULL parser_version (legacy data before version tracking)
+// - Different parser version from current system config
+func (uc *AnalyzeRepositoryUseCase) shouldReturnCachedAnalysis(ctx context.Context, completed *port.CompletedAnalysis, latestSHA string) bool {
+	if completed.CommitSHA != latestSHA {
+		return false
+	}
+
+	// Legacy data without parser_version → needs re-analysis
+	if completed.ParserVersion == nil {
+		return false
+	}
+
+	currentVersion, err := uc.systemConfig.GetParserVersion(ctx)
+	if err != nil {
+		// System config unavailable → allow cached result to avoid blocking users
+		return true
+	}
+
+	return *completed.ParserVersion == currentVersion
 }

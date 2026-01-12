@@ -76,6 +76,21 @@ func (m *mockRepository) GetPaginatedRepositories(ctx context.Context, params po
 	return nil, nil
 }
 
+// mockSystemConfigReader is a test double for port.SystemConfigReader.
+type mockSystemConfigReader struct {
+	parserVersion string
+	err           error
+}
+
+var _ port.SystemConfigReader = (*mockSystemConfigReader)(nil)
+
+func (m *mockSystemConfigReader) GetParserVersion(ctx context.Context) (string, error) {
+	if m.err != nil {
+		return "", m.err
+	}
+	return m.parserVersion, nil
+}
+
 // mockQueueService is a test double for port.QueueService.
 type mockQueueService struct {
 	enqueueCalled     bool
@@ -163,8 +178,9 @@ func setupTestHandler() (*handler.Handler, *chi.Mux) {
 // setupTestHandlerWithMocks creates a Handler with provided mocks for more control in tests.
 func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gitClient *mockGitClient, tokenProvider port.TokenProvider) (*handler.Handler, *chi.Mux) {
 	log := logger.New()
+	systemConfig := &mockSystemConfigReader{parserVersion: "v1.0.0"}
 
-	analyzeRepositoryUC := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, tokenProvider)
+	analyzeRepositoryUC := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, tokenProvider)
 	getAnalysisUC := usecase.NewGetAnalysisUseCase(queue, repo)
 	listRepositoryCardsUC := usecase.NewListRepositoryCardsUseCase(gitClient, repo, tokenProvider)
 	getUpdateStatusUC := usecase.NewGetUpdateStatusUseCase(gitClient, repo, tokenProvider)

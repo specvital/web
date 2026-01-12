@@ -5,6 +5,7 @@ SELECT
     a.branch_name,
     a.committed_at,
     a.completed_at,
+    a.parser_version,
     a.total_suites,
     a.total_tests,
     c.owner,
