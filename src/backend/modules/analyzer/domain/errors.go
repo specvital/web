@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrInvalidCursor = entity.ErrInvalidCursor
-	ErrNotFound      = errors.New("analysis not found")
+	ErrInvalidCursor              = entity.ErrInvalidCursor
+	ErrNotFound                   = errors.New("analysis not found")
+	ErrParserVersionNotConfigured = errors.New("parser_version not configured in system_config")
 )
 
 func WrapNotFound(owner, repo string) error {
