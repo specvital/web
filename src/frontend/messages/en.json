@@ -114,7 +114,9 @@
     },
     "viewMode": {
       "list": "List view",
-      "tree": "Tree view"
+      "tree": "Tree view",
+      "document": "Document view",
+      "documentUnavailable": "Generate document first"
     },
     "status": {
       "loading": "Loading...",

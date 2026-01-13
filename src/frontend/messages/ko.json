@@ -114,7 +114,9 @@
     },
     "viewMode": {
       "list": "목록 보기",
-      "tree": "트리 보기"
+      "tree": "트리 보기",
+      "document": "문서 보기",
+      "documentUnavailable": "문서 생성이 필요합니다"
     },
     "status": {
       "loading": "로딩 중...",
