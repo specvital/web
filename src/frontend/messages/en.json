@@ -244,7 +244,8 @@
     "toc": {
       "title": "Table of Contents",
       "openToc": "Open table of contents",
-      "description": "Navigate through the specification document"
+      "description": "Navigate through the specification document",
+      "filterMatchCount": "{matched}/{total} behaviors"
     },
     "executiveSummary": {
       "title": "Executive Summary",
@@ -255,6 +256,17 @@
       "domains": "{count, plural, =1 {1 domain} other {# domains}}",
       "features": "{count, plural, =1 {1 feature} other {# features}}",
       "behaviors": "{count, plural, =1 {1 behavior} other {# behaviors}}"
+    },
+    "search": {
+      "placeholder": "Search behaviors...",
+      "dialogTitle": "Search Document",
+      "dialogDescription": "Search through all behaviors in this specification document",
+      "noResults": "No matching behaviors found",
+      "resultsHeading": "{count, plural, =1 {1 result} other {# results}}"
+    },
+    "filter": {
+      "clearFilters": "Clear filters",
+      "resultSummary": "{filtered} of {total} behaviors"
     }
   },
   "dashboard": {

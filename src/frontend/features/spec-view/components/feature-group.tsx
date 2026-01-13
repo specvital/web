@@ -7,17 +7,34 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import type { SpecFeature } from "../types";
 import { BehaviorItem } from "./behavior-item";
+import type { FilteredFeature } from "../hooks/use-document-filter";
 
 type FeatureGroupProps = {
   defaultOpen?: boolean;
-  feature: SpecFeature;
+  feature: FilteredFeature;
+  hasFilter?: boolean;
+  query?: string;
 };
 
-export const FeatureGroup = ({ defaultOpen = true, feature }: FeatureGroupProps) => {
+export const FeatureGroup = ({
+  defaultOpen = true,
+  feature,
+  hasFilter = false,
+  query = "",
+}: FeatureGroupProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const behaviorCount = feature.behaviors.length;
+
+  // Filter behaviors to only show matches when filtering
+  const visibleBehaviors = hasFilter
+    ? feature.behaviors.filter((b) => b.hasMatch)
+    : feature.behaviors;
+
+  const behaviorCount = visibleBehaviors.length;
+  const totalCount = feature.behaviors.length;
+
+  // Display count: show match/total when filtering
+  const displayCount = hasFilter ? `${feature.matchCount}/${totalCount}` : behaviorCount;
 
   return (
     <div className="border-l-2 border-muted-foreground/20 ml-2" id={`feature-${feature.id}`}>
@@ -36,7 +53,7 @@ export const FeatureGroup = ({ defaultOpen = true, feature }: FeatureGroupProps)
         )}
         <span className="flex-1 truncate">{feature.name}</span>
         <Badge className="text-xs" variant="secondary">
-          {behaviorCount}
+          {displayCount}
         </Badge>
       </Button>
 
@@ -45,8 +62,8 @@ export const FeatureGroup = ({ defaultOpen = true, feature }: FeatureGroupProps)
           {feature.description && (
             <p className="px-3 py-1.5 text-sm text-muted-foreground">{feature.description}</p>
           )}
-          {feature.behaviors.map((behavior) => (
-            <BehaviorItem behavior={behavior} key={behavior.id} />
+          {visibleBehaviors.map((behavior) => (
+            <BehaviorItem behavior={behavior} key={behavior.id} query={query} />
           ))}
         </div>
       )}

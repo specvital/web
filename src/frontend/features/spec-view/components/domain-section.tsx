@@ -9,12 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-import type { SpecDomain } from "../types";
 import { FeatureGroup } from "./feature-group";
+import type { FilteredDomain } from "../hooks/use-document-filter";
 
 type DomainSectionProps = {
   defaultOpen?: boolean;
-  domain: SpecDomain;
+  domain: FilteredDomain;
+  hasFilter?: boolean;
+  query?: string;
 };
 
 const formatConfidence = (confidence: number): string => {
@@ -27,11 +29,21 @@ const getConfidenceColor = (confidence: number): string => {
   return "bg-red-500/10 text-red-700 border-red-500/30";
 };
 
-export const DomainSection = ({ defaultOpen = true, domain }: DomainSectionProps) => {
+export const DomainSection = ({
+  defaultOpen = true,
+  domain,
+  hasFilter = false,
+  query = "",
+}: DomainSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const featureCount = domain.features.length;
   const behaviorCount = domain.features.reduce((sum, f) => sum + f.behaviors.length, 0);
+
+  // Show match count when filtering
+  const displayCount = hasFilter
+    ? `${domain.matchCount} / ${behaviorCount}`
+    : `${featureCount} features / ${behaviorCount} behaviors`;
 
   return (
     <Card className="overflow-hidden" id={`domain-${domain.id}`}>
@@ -65,9 +77,7 @@ export const DomainSection = ({ defaultOpen = true, domain }: DomainSectionProps
                 <TooltipContent>AI classification confidence</TooltipContent>
               </Tooltip>
             )}
-            <Badge variant="secondary">
-              {featureCount} features / {behaviorCount} behaviors
-            </Badge>
+            <Badge variant="secondary">{displayCount}</Badge>
           </div>
         </div>
 
@@ -79,7 +89,7 @@ export const DomainSection = ({ defaultOpen = true, domain }: DomainSectionProps
       {isOpen && (
         <CardContent className="pt-0 space-y-3">
           {domain.features.map((feature) => (
-            <FeatureGroup feature={feature} key={feature.id} />
+            <FeatureGroup feature={feature} hasFilter={hasFilter} key={feature.id} query={query} />
           ))}
         </CardContent>
       )}

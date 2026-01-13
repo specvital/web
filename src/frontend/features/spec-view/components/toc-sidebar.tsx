@@ -16,27 +16,59 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-import type { SpecDocument, SpecDomain, SpecFeature } from "../types";
+import type {
+  FilteredDocument,
+  FilteredDomain,
+  FilteredFeature,
+} from "../hooks/use-document-filter";
+import type { SpecDocument, SpecDomain } from "../types";
 import { calculateDocumentStats } from "../utils/stats";
+
+/**
+ * Convert SpecDomain to FilteredDomain with default filter values
+ */
+const toFilteredDomain = (domain: SpecDomain): FilteredDomain => ({
+  ...domain,
+  features: domain.features.map((feature) => ({
+    ...feature,
+    behaviors: feature.behaviors.map((behavior) => ({
+      ...behavior,
+      hasMatch: true,
+      highlightRanges: [],
+    })),
+    hasMatch: true,
+    matchCount: feature.behaviors.length,
+  })),
+  hasMatch: true,
+  matchCount: domain.features.reduce((sum, f) => sum + f.behaviors.length, 0),
+});
 
 type TocSidebarProps = {
   document: SpecDocument;
+  filteredDocument?: FilteredDocument | null;
+  hasFilter?: boolean;
   onNavigate?: (sectionId: string) => void;
 };
 
 type TocItemProps = {
   activeId: string | null;
-  domain: SpecDomain;
+  domain: FilteredDomain;
+  hasFilter?: boolean;
   onNavigate: (sectionId: string) => void;
 };
 
-const TocItem = ({ activeId, domain, onNavigate }: TocItemProps) => {
+const TocItem = ({ activeId, domain, hasFilter = false, onNavigate }: TocItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const domainId = `domain-${domain.id}`;
   const isDomainActive = activeId === domainId;
 
   const featureCount = domain.features.length;
   const behaviorCount = domain.features.reduce((sum, f) => sum + f.behaviors.length, 0);
+
+  // Display count: show match count when filtering
+  const displayCount = hasFilter
+    ? `${domain.matchCount}/${behaviorCount}`
+    : `${featureCount}/${behaviorCount}`;
 
   return (
     <div>
@@ -63,16 +95,17 @@ const TocItem = ({ activeId, domain, onNavigate }: TocItemProps) => {
           <span className="w-3" />
         )}
         <span className="flex-1 truncate">{domain.name}</span>
-        <span className="text-xs text-muted-foreground">
-          {featureCount}/{behaviorCount}
-        </span>
+        <span className="text-xs text-muted-foreground">{displayCount}</span>
       </button>
 
       {isExpanded && domain.features.length > 0 && (
         <div className="ml-5 mt-1 space-y-0.5">
-          {domain.features.map((feature: SpecFeature) => {
+          {domain.features.map((feature: FilteredFeature) => {
             const featureId = `feature-${feature.id}`;
             const isActive = activeId === featureId;
+            const featureDisplayCount = hasFilter
+              ? `${feature.matchCount}/${feature.behaviors.length}`
+              : feature.behaviors.length;
 
             return (
               <button
@@ -87,7 +120,7 @@ const TocItem = ({ activeId, domain, onNavigate }: TocItemProps) => {
                 type="button"
               >
                 <span className="truncate">{feature.name}</span>
-                <span className="text-muted-foreground ml-auto">{feature.behaviors.length}</span>
+                <span className="text-muted-foreground ml-auto">{featureDisplayCount}</span>
               </button>
             );
           })}
@@ -100,27 +133,57 @@ const TocItem = ({ activeId, domain, onNavigate }: TocItemProps) => {
 type TocContentProps = {
   activeId: string | null;
   document: SpecDocument;
+  filteredDocument?: FilteredDocument | null;
+  hasFilter?: boolean;
   onNavigate: (sectionId: string) => void;
   t: ReturnType<typeof useTranslations<"specView">>;
 };
 
-const TocContent = ({ activeId, document, onNavigate, t }: TocContentProps) => {
+const TocContent = ({
+  activeId,
+  document,
+  filteredDocument,
+  hasFilter = false,
+  onNavigate,
+  t,
+}: TocContentProps) => {
   const { behaviorCount, domainCount, featureCount } = calculateDocumentStats(document);
+
+  // Use filtered domains when available, or convert to FilteredDomain for consistent types
+  const displayDomains: FilteredDomain[] =
+    filteredDocument?.domains ?? document.domains.map(toFilteredDomain);
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b">
         <div className="text-sm font-medium">{t("toc.title")}</div>
         <div className="text-xs text-muted-foreground mt-0.5">
-          {t("stats.domains", { count: domainCount })} ·{" "}
-          {t("stats.features", { count: featureCount })} ·{" "}
-          {t("stats.behaviors", { count: behaviorCount })}
+          {hasFilter ? (
+            <>
+              {t("toc.filterMatchCount", {
+                matched: filteredDocument?.matchCount ?? 0,
+                total: behaviorCount,
+              })}
+            </>
+          ) : (
+            <>
+              {t("stats.domains", { count: domainCount })} ·{" "}
+              {t("stats.features", { count: featureCount })} ·{" "}
+              {t("stats.behaviors", { count: behaviorCount })}
+            </>
+          )}
         </div>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
-          {document.domains.map((domain) => (
-            <TocItem activeId={activeId} domain={domain} key={domain.id} onNavigate={onNavigate} />
+          {displayDomains.map((domain) => (
+            <TocItem
+              activeId={activeId}
+              domain={domain}
+              hasFilter={hasFilter}
+              key={domain.id}
+              onNavigate={onNavigate}
+            />
           ))}
         </div>
       </ScrollArea>
@@ -128,7 +191,12 @@ const TocContent = ({ activeId, document, onNavigate, t }: TocContentProps) => {
   );
 };
 
-export const TocSidebar = ({ document, onNavigate }: TocSidebarProps) => {
+export const TocSidebar = ({
+  document,
+  filteredDocument,
+  hasFilter = false,
+  onNavigate,
+}: TocSidebarProps) => {
   const t = useTranslations("specView");
   const [activeId, setActiveId] = useState<string | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -200,7 +268,14 @@ export const TocSidebar = ({ document, onNavigate }: TocSidebarProps) => {
       {/* Desktop: Fixed sidebar */}
       <div className="hidden lg:block w-64 flex-shrink-0">
         <div className="sticky top-20 h-[calc(100vh-6rem)] border rounded-lg overflow-hidden bg-card">
-          <TocContent activeId={activeId} document={document} onNavigate={handleNavigate} t={t} />
+          <TocContent
+            activeId={activeId}
+            document={document}
+            filteredDocument={filteredDocument}
+            hasFilter={hasFilter}
+            onNavigate={handleNavigate}
+            t={t}
+          />
         </div>
       </div>
 
@@ -218,7 +293,14 @@ export const TocSidebar = ({ document, onNavigate }: TocSidebarProps) => {
               <SheetTitle>{t("toc.title")}</SheetTitle>
               <SheetDescription>{t("toc.description")}</SheetDescription>
             </SheetHeader>
-            <TocContent activeId={activeId} document={document} onNavigate={handleNavigate} t={t} />
+            <TocContent
+              activeId={activeId}
+              document={document}
+              filteredDocument={filteredDocument}
+              hasFilter={hasFilter}
+              onNavigate={handleNavigate}
+              t={t}
+            />
           </SheetContent>
         </Sheet>
       </div>

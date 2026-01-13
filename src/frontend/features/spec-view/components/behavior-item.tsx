@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Circle, CircleDashed, Crosshair, RefreshCw, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { TestStatus } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-import type { SpecBehavior } from "../types";
+import { HighlightedText } from "./highlighted-text";
+import type { FilteredBehavior } from "../hooks/use-document-filter";
+import { findHighlightRanges } from "../utils/highlight";
 
 type BehaviorItemProps = {
-  behavior: SpecBehavior;
+  behavior: FilteredBehavior;
+  query?: string;
 };
 
 const STATUS_CONFIG: Record<TestStatus, { color: string; icon: typeof Check; label: string }> = {
@@ -43,11 +46,18 @@ const STATUS_CONFIG: Record<TestStatus, { color: string; icon: typeof Check; lab
   },
 } as const;
 
-export const BehaviorItem = ({ behavior }: BehaviorItemProps) => {
+export const BehaviorItem = ({ behavior, query = "" }: BehaviorItemProps) => {
   const [isShowingOriginal, setIsShowingOriginal] = useState(false);
   const sourceInfo = behavior.sourceInfo;
   const config = sourceInfo ? STATUS_CONFIG[sourceInfo.status] : null;
   const Icon = config?.icon ?? Check;
+
+  // Calculate highlight ranges for the displayed text
+  const displayText = isShowingOriginal ? behavior.originalName : behavior.convertedDescription;
+  const highlightRanges = useMemo(
+    () => (query ? findHighlightRanges(displayText, query) : behavior.highlightRanges),
+    [displayText, query, behavior.highlightRanges]
+  );
 
   return (
     <div
@@ -55,6 +65,7 @@ export const BehaviorItem = ({ behavior }: BehaviorItemProps) => {
         "flex items-start gap-3 px-3 py-2.5 rounded-md",
         "hover:bg-muted/50 transition-colors group"
       )}
+      id={`behavior-${behavior.id}`}
     >
       <Tooltip>
         <TooltipTrigger asChild>
@@ -70,7 +81,7 @@ export const BehaviorItem = ({ behavior }: BehaviorItemProps) => {
 
       <div className="flex-1 min-w-0 space-y-1">
         <p className="text-sm leading-relaxed">
-          {isShowingOriginal ? behavior.originalName : behavior.convertedDescription}
+          <HighlightedText ranges={highlightRanges} text={displayText} />
         </p>
 
         {sourceInfo && (

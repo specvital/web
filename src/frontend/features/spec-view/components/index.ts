@@ -1,9 +1,13 @@
 export { BehaviorItem } from "./behavior-item";
+export { DocumentFilter } from "./document-filter";
+export { DocumentSearch } from "./document-search";
 export { DocumentView } from "./document-view";
 export { DomainSection } from "./domain-section";
 export { DomainStatsBadge } from "./domain-stats-badge";
 export { EmptyDocument } from "./empty-document";
 export { ExecutiveSummary } from "./executive-summary";
 export { FeatureGroup } from "./feature-group";
+export { FilterEmptyState } from "./filter-empty-state";
 export { GenerationStatus } from "./generation-status";
+export { HighlightedText } from "./highlighted-text";
 export { TocSidebar } from "./toc-sidebar";
