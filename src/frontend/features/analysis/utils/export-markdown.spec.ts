@@ -11,6 +11,7 @@ const createMockAnalysisResult = (overrides: Partial<AnalysisResult> = {}): Anal
   branchName: "main",
   commitSha: "abc123def456",
   committedAt: "2024-01-14T09:00:00Z",
+  id: "550e8400-e29b-41d4-a716-446655440000",
   owner: "facebook",
   repo: "react",
   suites: [

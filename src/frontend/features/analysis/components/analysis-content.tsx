@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
+import { DocumentView, EmptyDocument, GenerationStatus, useSpecView } from "@/features/spec-view";
 import type { AnalysisResult } from "@/lib/api";
 import { createStaggerContainer, fadeInUp, useReducedMotion } from "@/lib/motion";
 
@@ -29,6 +30,14 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const { frameworks, query, setFrameworks, setQuery, setStatuses, statuses } = useFilterState();
   const { setViewMode, viewMode } = useViewMode();
   const shouldReduceMotion = useReducedMotion();
+
+  const {
+    data: specDocument,
+    generationStatus,
+    isGenerating,
+    isLoading: isSpecLoading,
+    requestGenerate,
+  } = useSpecView(result.id);
 
   const containerVariants = shouldReduceMotion ? {} : pageStaggerContainer;
   const itemVariants = shouldReduceMotion ? {} : fadeInUp;
@@ -56,6 +65,18 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   };
 
   const renderContent = () => {
+    if (viewMode === "document") {
+      if (specDocument) {
+        return <DocumentView document={specDocument} />;
+      }
+
+      if (isGenerating && generationStatus) {
+        return <GenerationStatus onRetry={() => requestGenerate()} status={generationStatus} />;
+      }
+
+      return <EmptyDocument isLoading={isSpecLoading} onGenerate={() => requestGenerate()} />;
+    }
+
     if (hasFilter && !hasResults) {
       return <FilterEmptyState />;
     }

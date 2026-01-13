@@ -165,6 +165,9 @@ type AnalysisResult struct {
 	// CommittedAt ISO 8601 timestamp of the commit
 	CommittedAt *time.Time `json:"committedAt,omitempty"`
 
+	// ID Analysis ID (UUID)
+	ID openapi_types.UUID `json:"id"`
+
 	// IsInMyHistory Whether this analysis is in the current user's dashboard history
 	IsInMyHistory *bool `json:"isInMyHistory,omitempty"`
 

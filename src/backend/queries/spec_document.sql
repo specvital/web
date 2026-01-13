@@ -65,7 +65,7 @@ SELECT
     rj.finalized_at,
     rj.errors
 FROM river_job rj
-WHERE rj.kind = 'spec_generation'
+WHERE rj.kind = 'specview:generate'
   AND rj.args->>'analysis_id' = $1
 ORDER BY rj.created_at DESC
 LIMIT 1;

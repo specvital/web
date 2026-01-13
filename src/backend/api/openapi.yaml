@@ -931,6 +931,7 @@ components:
     AnalysisResult:
       type: object
       required:
+        - id
         - analyzedAt
         - commitSha
         - owner
@@ -938,6 +939,11 @@ components:
         - suites
         - summary
       properties:
+        id:
+          type: string
+          format: uuid
+          description: Analysis ID (UUID)
+          example: "550e8400-e29b-41d4-a716-446655440000"
         analyzedAt:
           type: string
           format: date-time

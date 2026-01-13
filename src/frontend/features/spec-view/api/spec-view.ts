@@ -16,6 +16,16 @@ export async function fetchSpecDocument(analysisId: string): Promise<SpecDocumen
   }
 
   if (response.status === 404) {
+    // 문서가 없으면 큐 상태 확인
+    const statusResponse = await apiFetch(`/api/spec-view/status/${analysisId}`);
+    if (statusResponse.ok) {
+      const statusData: SpecGenerationStatusResponse = await statusResponse.json();
+      return {
+        generationStatus: { status: statusData.status },
+        status: "generating",
+      };
+    }
+    // 큐에도 없으면 not_found
     return {
       generationStatus: { status: "not_found" },
       status: "generating",

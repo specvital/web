@@ -636,6 +636,12 @@ export interface components {
         };
         AnalysisResult: {
             /**
+             * Format: uuid
+             * @description Analysis ID (UUID)
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            id: string;
+            /**
              * Format: date-time
              * @description ISO 8601 timestamp of analysis completion
              * @example 2024-01-15T10:30:00Z

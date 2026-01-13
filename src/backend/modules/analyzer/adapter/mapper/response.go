@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/google/uuid"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/analyzer/domain/entity"
 )
@@ -85,6 +86,7 @@ func ToCompletedResponse(analysis *entity.Analysis, opts ...CompletedResponseOpt
 		BranchName:    analysis.BranchName,
 		CommitSHA:     analysis.CommitSHA,
 		CommittedAt:   analysis.CommittedAt,
+		ID:            uuid.MustParse(analysis.ID),
 		IsInMyHistory: options.IsInMyHistory,
 		Owner:         analysis.Owner,
 		ParserVersion: analysis.ParserVersion,

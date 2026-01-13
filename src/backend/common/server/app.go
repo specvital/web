@@ -217,7 +217,7 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 	}
 
 	specViewRepo := specviewadapter.NewPostgresRepository(queries)
-	specViewQueue := specviewadapter.NewNoopQueueService(log)
+	specViewQueue := specviewadapter.NewRiverQueueService(container.River.Client())
 
 	getSpecDocumentUC := specviewusecase.NewGetSpecDocumentUseCase(specViewRepo)
 	requestGenerationUC := specviewusecase.NewRequestGenerationUseCase(specViewRepo, specViewQueue)
