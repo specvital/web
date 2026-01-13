@@ -52,6 +52,12 @@ type GitHubAppHandlers interface {
 	GetUserGitHubAppInstallations(ctx context.Context, request GetUserGitHubAppInstallationsRequestObject) (GetUserGitHubAppInstallationsResponseObject, error)
 }
 
+type SpecViewHandlers interface {
+	GetSpecDocument(ctx context.Context, request GetSpecDocumentRequestObject) (GetSpecDocumentResponseObject, error)
+	GetSpecGenerationStatus(ctx context.Context, request GetSpecGenerationStatusRequestObject) (GetSpecGenerationStatusResponseObject, error)
+	RequestSpecGeneration(ctx context.Context, request RequestSpecGenerationRequestObject) (RequestSpecGenerationResponseObject, error)
+}
+
 type APIHandlers struct {
 	analyzer        AnalyzerHandlers
 	analysisHistory AnalysisHistoryHandlers
@@ -60,6 +66,7 @@ type APIHandlers struct {
 	github          GitHubHandlers
 	githubApp       GitHubAppHandlers
 	repository      RepositoryHandlers
+	specView        SpecViewHandlers
 	webhook         WebhookHandlers
 }
 
@@ -73,6 +80,7 @@ func NewAPIHandlers(
 	github GitHubHandlers,
 	githubApp GitHubAppHandlers,
 	repository RepositoryHandlers,
+	specView SpecViewHandlers,
 	webhook WebhookHandlers,
 ) *APIHandlers {
 	return &APIHandlers{
@@ -83,6 +91,7 @@ func NewAPIHandlers(
 		github:          github,
 		githubApp:       githubApp,
 		repository:      repository,
+		specView:        specView,
 		webhook:         webhook,
 	}
 }
@@ -195,8 +204,29 @@ func (h *APIHandlers) WebhookHandler() WebhookHandlers {
 	return h.webhook
 }
 
-func (h *APIHandlers) ConvertSpecView(_ context.Context, _ ConvertSpecViewRequestObject) (ConvertSpecViewResponseObject, error) {
-	return ConvertSpecView500ApplicationProblemPlusJSONResponse{
-		InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View feature has been removed"),
-	}, nil
+func (h *APIHandlers) GetSpecDocument(ctx context.Context, request GetSpecDocumentRequestObject) (GetSpecDocumentResponseObject, error) {
+	if h.specView == nil {
+		return GetSpecDocument500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View feature not configured"),
+		}, nil
+	}
+	return h.specView.GetSpecDocument(ctx, request)
+}
+
+func (h *APIHandlers) GetSpecGenerationStatus(ctx context.Context, request GetSpecGenerationStatusRequestObject) (GetSpecGenerationStatusResponseObject, error) {
+	if h.specView == nil {
+		return GetSpecGenerationStatus500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View feature not configured"),
+		}, nil
+	}
+	return h.specView.GetSpecGenerationStatus(ctx, request)
+}
+
+func (h *APIHandlers) RequestSpecGeneration(ctx context.Context, request RequestSpecGenerationRequestObject) (RequestSpecGenerationResponseObject, error) {
+	if h.specView == nil {
+		return RequestSpecGeneration500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View feature not configured"),
+		}, nil
+	}
+	return h.specView.RequestSpecGeneration(ctx, request)
 }

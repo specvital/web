@@ -688,51 +688,111 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  # Spec View - AI Test Name Conversion
-  /api/spec-view/convert/{owner}/{repo}/{commitSha}:
+  # Spec View Level 2 - Domain-based Specification Document
+  /api/spec-view/{analysisId}:
     parameters:
-      - $ref: "#/components/parameters/Owner"
-      - $ref: "#/components/parameters/Repo"
-      - name: commitSha
+      - name: analysisId
         in: path
         required: true
-        description: Git commit SHA of the analysis to convert
+        description: Analysis ID (UUID) to fetch spec document for
         schema:
           type: string
-          pattern: "^[a-f0-9]{7,40}$"
-        example: abc123def456
-    post:
-      operationId: convertSpecView
-      summary: Convert test names to natural language spec view
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+    get:
+      operationId: getSpecDocument
+      summary: Get specification document for analysis
       description: |
-        Converts all test names from a specific analysis to human-readable natural language.
-        Uses AI (Gemini) with aggressive caching for efficiency.
-        Tests are grouped by file for batch processing.
+        Retrieves the AI-generated specification document for a given analysis.
+        Returns full document hierarchy: domains → features → behaviors.
+        If document is being generated, returns status with progress.
+      tags:
+        - Spec View
+      security:
+        - cookieAuth: []
+        - {}
+      responses:
+        "200":
+          description: Spec document retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpecDocumentResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/spec-view/generate:
+    post:
+      operationId: requestSpecGeneration
+      summary: Request spec document generation
+      description: |
+        Requests generation of a specification document for an analysis.
+        Enqueues a River job for async AI processing.
+        Returns immediately with job status.
       tags:
         - Spec View
       security:
         - cookieAuth: []
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConvertSpecViewRequest"
+              $ref: "#/components/schemas/RequestSpecGenerationRequest"
       responses:
-        "200":
-          description: Test names converted successfully
+        "202":
+          description: Generation request accepted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConvertSpecViewResponse"
+                $ref: "#/components/schemas/RequestSpecGenerationResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-        "429":
-          $ref: "#/components/responses/TooManyRequests"
+        "409":
+          description: Generation already in progress or completed
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/spec-view/status/{analysisId}:
+    parameters:
+      - name: analysisId
+        in: path
+        required: true
+        description: Analysis ID (UUID) to check generation status for
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+    get:
+      operationId: getSpecGenerationStatus
+      summary: Get spec generation status
+      description: |
+        Returns the current status of spec document generation.
+        Useful for polling during generation.
+      tags:
+        - Spec View
+      security:
+        - cookieAuth: []
+        - {}
+      responses:
+        "200":
+          description: Generation status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpecGenerationStatusResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -1760,179 +1820,310 @@ components:
           type: string
           description: Optional message about the processing result
 
-    # Spec View - Test Name Conversion Schemas
-    ConvertSpecViewRequest:
-      type: object
-      properties:
-        isForceRefresh:
-          type: boolean
-          default: false
-          description: Bypass cache and force new AI conversion for all tests
-        language:
-          $ref: "#/components/schemas/ConversionLanguage"
+    # Spec View Level 2 - Domain-based Specification Document Schemas
+    SpecDocumentResponse:
+      oneOf:
+        - $ref: "#/components/schemas/SpecDocumentCompleted"
+        - $ref: "#/components/schemas/SpecDocumentGenerating"
+      discriminator:
+        propertyName: status
+        mapping:
+          completed: "#/components/schemas/SpecDocumentCompleted"
+          generating: "#/components/schemas/SpecDocumentGenerating"
 
-    ConvertSpecViewResponse:
+    SpecDocumentCompleted:
       type: object
       required:
+        - status
         - data
-        - summary
       properties:
+        status:
+          type: string
+          const: completed
         data:
+          $ref: "#/components/schemas/SpecDocument"
+
+    SpecDocumentGenerating:
+      type: object
+      required:
+        - status
+        - generationStatus
+      properties:
+        status:
+          type: string
+          const: generating
+        generationStatus:
+          $ref: "#/components/schemas/SpecGenerationStatus"
+
+    SpecDocument:
+      type: object
+      required:
+        - id
+        - analysisId
+        - language
+        - domains
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Spec document ID
+        analysisId:
+          type: string
+          format: uuid
+          description: Associated analysis ID
+        language:
+          $ref: "#/components/schemas/SpecLanguage"
+        executiveSummary:
+          type: string
+          description: AI-generated executive summary of the test suite
+          example: "This repository contains a comprehensive authentication system with 45 test behaviors covering user login, session management, and password recovery."
+        modelId:
+          type: string
+          description: AI model ID used for generation
+          example: "gemini-2.0-flash"
+        domains:
           type: array
           items:
-            $ref: "#/components/schemas/ConvertedTestFile"
-          description: Converted tests grouped by file
-        summary:
-          $ref: "#/components/schemas/ConversionSummary"
+            $ref: "#/components/schemas/SpecDomain"
+          description: Domain classifications
+        createdAt:
+          type: string
+          format: date-time
+          description: Document creation timestamp
 
-    ConvertedTestFile:
+    SpecDomain:
+      type: object
+      required:
+        - id
+        - name
+        - sortOrder
+        - features
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Domain ID
+        name:
+          type: string
+          description: Domain name
+          example: "Authentication"
+        description:
+          type: string
+          description: Domain description
+          example: "User authentication and session management"
+        classificationConfidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: AI classification confidence score (0-1)
+          example: 0.92
+        sortOrder:
+          type: integer
+          minimum: 0
+          description: Display order within document
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpecFeature"
+          description: Features within this domain
+
+    SpecFeature:
+      type: object
+      required:
+        - id
+        - name
+        - sortOrder
+        - behaviors
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Feature ID
+        name:
+          type: string
+          description: Feature name
+          example: "Login"
+        description:
+          type: string
+          description: Feature description
+          example: "User login with various authentication methods"
+        sortOrder:
+          type: integer
+          minimum: 0
+          description: Display order within domain
+        behaviors:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpecBehavior"
+          description: Behaviors (converted test cases) within this feature
+
+    SpecBehavior:
+      type: object
+      required:
+        - id
+        - originalName
+        - convertedDescription
+        - sortOrder
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Behavior ID
+        originalName:
+          type: string
+          description: Original test case name
+          example: "should create session when credentials are valid"
+        convertedDescription:
+          type: string
+          description: AI-converted natural language description
+          example: "Creates a new session when valid credentials are provided"
+        sortOrder:
+          type: integer
+          minimum: 0
+          description: Display order within feature
+        sourceTestCaseId:
+          type: string
+          format: uuid
+          description: Reference to original test case
+        sourceInfo:
+          $ref: "#/components/schemas/SpecBehaviorSourceInfo"
+
+    SpecBehaviorSourceInfo:
       type: object
       required:
         - filePath
+        - lineNumber
+        - status
         - framework
-        - suites
       properties:
         filePath:
           type: string
-          description: Path to the test file
-          example: src/__tests__/auth.spec.ts
-        framework:
-          $ref: "#/components/schemas/Framework"
-        suites:
-          type: array
-          items:
-            $ref: "#/components/schemas/ConvertedTestSuite"
-
-    ConvertedTestSuite:
-      type: object
-      required:
-        - suiteHierarchy
-        - suiteName
-        - tests
-      properties:
-        suiteHierarchy:
-          type: string
-          description: Full suite hierarchy
-          example: AuthService > Login
-        suiteName:
-          type: string
-          description: Name of the test suite
-          example: Login
-        tests:
-          type: array
-          items:
-            $ref: "#/components/schemas/ConvertedTestItem"
-
-    ConvertedTestItem:
-      type: object
-      required:
-        - convertedName
-        - isFromCache
-        - line
-        - originalName
-        - status
-      properties:
-        convertedName:
-          type: string
-          description: AI-converted natural language description
-          example: Session creation on login
-        isFromCache:
-          type: boolean
-          description: Whether this result was retrieved from cache
-        line:
+          description: Test file path
+          example: "src/__tests__/auth.test.ts"
+        lineNumber:
           type: integer
           minimum: 1
-          description: Line number where the test is defined
-        modifier:
-          type: string
-          description: Test modifier (e.g., only, skip)
-        originalName:
-          type: string
-          description: Original technical test name
-          example: should create session when credentials valid
+          description: Line number in the test file
         status:
           $ref: "#/components/schemas/TestStatus"
+        framework:
+          $ref: "#/components/schemas/Framework"
 
-    ConversionSummary:
-      type: object
-      required:
-        - cachedCount
-        - convertedAt
-        - convertedCount
-        - totalTests
-      properties:
-        cachedCount:
-          type: integer
-          minimum: 0
-          description: Number of tests retrieved from cache
-          example: 280
-        convertedAt:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp of conversion completion
-          example: "2026-01-05T10:30:00Z"
-        convertedCount:
-          type: integer
-          minimum: 0
-          description: Number of tests newly converted by AI
-          example: 32
-        totalTests:
-          type: integer
-          minimum: 0
-          description: Total number of tests in the repository
-          example: 312
-
-    ConversionLanguage:
+    SpecLanguage:
       type: string
       enum:
-        - ar
-        - cs
-        - da
-        - de
-        - el
-        - en
-        - es
-        - fi
-        - fr
-        - hi
-        - id
-        - it
-        - ja
-        - ko
-        - nl
-        - pl
-        - pt
-        - ru
-        - sv
-        - th
-        - tr
-        - uk
-        - vi
-        - zh
-      default: en
+        - Arabic
+        - Chinese
+        - Czech
+        - Danish
+        - Dutch
+        - English
+        - Finnish
+        - French
+        - German
+        - Greek
+        - Hindi
+        - Indonesian
+        - Italian
+        - Japanese
+        - Korean
+        - Polish
+        - Portuguese
+        - Russian
+        - Spanish
+        - Swedish
+        - Thai
+        - Turkish
+        - Ukrainian
+        - Vietnamese
+      default: English
+      description: Target language for spec document generation (24 languages supported)
+
+    RequestSpecGenerationRequest:
+      type: object
+      required:
+        - analysisId
+      properties:
+        analysisId:
+          type: string
+          format: uuid
+          description: Analysis ID to generate spec document for
+        language:
+          $ref: "#/components/schemas/SpecLanguage"
+        isForceRegenerate:
+          type: boolean
+          default: false
+          description: Force regeneration even if document exists
+
+    RequestSpecGenerationResponse:
+      type: object
+      required:
+        - status
+        - analysisId
+      properties:
+        status:
+          $ref: "#/components/schemas/SpecGenerationStatusEnum"
+        analysisId:
+          type: string
+          format: uuid
+          description: Analysis ID for tracking
+        message:
+          type: string
+          description: Optional status message
+
+    SpecGenerationStatusResponse:
+      type: object
+      required:
+        - status
+        - analysisId
+      properties:
+        status:
+          $ref: "#/components/schemas/SpecGenerationStatusEnum"
+        analysisId:
+          type: string
+          format: uuid
+        startedAt:
+          type: string
+          format: date-time
+          description: When generation started
+        completedAt:
+          type: string
+          format: date-time
+          description: When generation completed (if completed)
+        errorMessage:
+          type: string
+          description: Error message if generation failed
+
+    SpecGenerationStatus:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/SpecGenerationStatusEnum"
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        errorMessage:
+          type: string
+
+    SpecGenerationStatusEnum:
+      type: string
+      enum:
+        - pending
+        - running
+        - completed
+        - failed
+        - not_found
       description: |
-        Target language for AI conversion (24 languages, alphabetically sorted):
-        - ar: Arabic (العربية)
-        - cs: Czech (Čeština)
-        - da: Danish (Dansk)
-        - de: German (Deutsch)
-        - el: Greek (Ελληνικά)
-        - en: English
-        - es: Spanish (Español)
-        - fi: Finnish (Suomi)
-        - fr: French (Français)
-        - hi: Hindi (हिन्दी)
-        - id: Indonesian (Bahasa Indonesia)
-        - it: Italian (Italiano)
-        - ja: Japanese (日本語)
-        - ko: Korean (한국어)
-        - nl: Dutch (Nederlands)
-        - pl: Polish (Polski)
-        - pt: Portuguese (Português)
-        - ru: Russian (Русский)
-        - sv: Swedish (Svenska)
-        - th: Thai (ไทย)
-        - tr: Turkish (Türkçe)
-        - uk: Ukrainian (Українська)
-        - vi: Vietnamese (Tiếng Việt)
-        - zh: Chinese (中文)
+        Generation status:
+        - pending: Job queued but not started
+        - running: AI generation in progress
+        - completed: Document successfully generated
+        - failed: Generation failed
+        - not_found: No generation request exists

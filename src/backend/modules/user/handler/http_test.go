@@ -14,6 +14,7 @@ import (
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	authhandler "github.com/specvital/web/src/backend/modules/auth/handler"
+	specviewhandler "github.com/specvital/web/src/backend/modules/spec-view/handler"
 	domainentity "github.com/specvital/web/src/backend/modules/user/domain/entity"
 	"github.com/specvital/web/src/backend/modules/user/domain/port"
 	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
@@ -89,6 +90,7 @@ func setupTestRouter(handler *Handler) *chi.Mux {
 		&mockGitHubHandler{},
 		&mockGitHubAppHandler{},
 		&mockRepositoryHandler{},
+		specviewhandler.NewMockHandler(),
 		nil, // webhook
 	)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)

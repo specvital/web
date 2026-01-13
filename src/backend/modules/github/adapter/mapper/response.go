@@ -25,11 +25,11 @@ func ToGitHubOrganization(org entity.Organization) api.GitHubOrganization {
 func toAPIAccessStatus(status entity.AccessStatus) api.OrganizationAccessStatus {
 	switch status {
 	case entity.AccessStatusAccessible:
-		return api.Accessible
+		return api.OrganizationAccessStatusAccessible
 	case entity.AccessStatusPending:
-		return api.Pending
+		return api.OrganizationAccessStatusPending
 	default:
-		return api.Restricted
+		return api.OrganizationAccessStatusRestricted
 	}
 }
 

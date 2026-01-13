@@ -518,39 +518,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/spec-view/convert/{owner}/{repo}/{commitSha}": {
+    "/api/spec-view/{analysisId}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 /**
-                 * @description GitHub repository owner (user or organization)
-                 * @example facebook
+                 * @description Analysis ID (UUID) to fetch spec document for
+                 * @example 550e8400-e29b-41d4-a716-446655440000
                  */
-                owner: components["parameters"]["Owner"];
-                /**
-                 * @description GitHub repository name
-                 * @example react
-                 */
-                repo: components["parameters"]["Repo"];
-                /**
-                 * @description Git commit SHA of the analysis to convert
-                 * @example abc123def456
-                 */
-                commitSha: string;
+                analysisId: string;
             };
+            cookie?: never;
+        };
+        /**
+         * Get specification document for analysis
+         * @description Retrieves the AI-generated specification document for a given analysis.
+         *     Returns full document hierarchy: domains → features → behaviors.
+         *     If document is being generated, returns status with progress.
+         *
+         */
+        get: operations["getSpecDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/spec-view/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
         /**
-         * Convert test names to natural language spec view
-         * @description Converts all test names from a specific analysis to human-readable natural language.
-         *     Uses AI (Gemini) with aggressive caching for efficiency.
-         *     Tests are grouped by file for batch processing.
+         * Request spec document generation
+         * @description Requests generation of a specification document for an analysis.
+         *     Enqueues a River job for async AI processing.
+         *     Returns immediately with job status.
          *
          */
-        post: operations["convertSpecView"];
+        post: operations["requestSpecGeneration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/spec-view/status/{analysisId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Analysis ID (UUID) to check generation status for
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                analysisId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Get spec generation status
+         * @description Returns the current status of spec document generation.
+         *     Useful for polling during generation.
+         *
+         */
+        get: operations["getSpecGenerationStatus"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1162,114 +1203,202 @@ export interface components {
             /** @description Optional message about the processing result */
             message?: string;
         };
-        ConvertSpecViewRequest: {
+        SpecDocumentResponse: components["schemas"]["SpecDocumentCompleted"] | components["schemas"]["SpecDocumentGenerating"];
+        SpecDocumentCompleted: {
             /**
-             * @description Bypass cache and force new AI conversion for all tests
-             * @default false
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
              */
-            isForceRefresh: boolean;
-            language?: components["schemas"]["ConversionLanguage"];
+            status: "completed";
+            data: components["schemas"]["SpecDocument"];
         };
-        ConvertSpecViewResponse: {
-            /** @description Converted tests grouped by file */
-            data: components["schemas"]["ConvertedTestFile"][];
-            summary: components["schemas"]["ConversionSummary"];
+        SpecDocumentGenerating: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "generating";
+            generationStatus: components["schemas"]["SpecGenerationStatus"];
         };
-        ConvertedTestFile: {
+        SpecDocument: {
             /**
-             * @description Path to the test file
-             * @example src/__tests__/auth.spec.ts
+             * Format: uuid
+             * @description Spec document ID
              */
-            filePath: string;
-            framework: components["schemas"]["Framework"];
-            suites: components["schemas"]["ConvertedTestSuite"][];
-        };
-        ConvertedTestSuite: {
+            id: string;
             /**
-             * @description Full suite hierarchy
-             * @example AuthService > Login
+             * Format: uuid
+             * @description Associated analysis ID
              */
-            suiteHierarchy: string;
+            analysisId: string;
+            language: components["schemas"]["SpecLanguage"];
             /**
-             * @description Name of the test suite
-             * @example Login
+             * @description AI-generated executive summary of the test suite
+             * @example This repository contains a comprehensive authentication system with 45 test behaviors covering user login, session management, and password recovery.
              */
-            suiteName: string;
-            tests: components["schemas"]["ConvertedTestItem"][];
-        };
-        ConvertedTestItem: {
+            executiveSummary?: string;
             /**
-             * @description AI-converted natural language description
-             * @example Session creation on login
+             * @description AI model ID used for generation
+             * @example gemini-2.0-flash
              */
-            convertedName: string;
-            /** @description Whether this result was retrieved from cache */
-            isFromCache: boolean;
-            /** @description Line number where the test is defined */
-            line: number;
-            /** @description Test modifier (e.g., only, skip) */
-            modifier?: string;
-            /**
-             * @description Original technical test name
-             * @example should create session when credentials valid
-             */
-            originalName: string;
-            status: components["schemas"]["TestStatus"];
-        };
-        ConversionSummary: {
-            /**
-             * @description Number of tests retrieved from cache
-             * @example 280
-             */
-            cachedCount: number;
+            modelId?: string;
+            /** @description Domain classifications */
+            domains: components["schemas"]["SpecDomain"][];
             /**
              * Format: date-time
-             * @description ISO 8601 timestamp of conversion completion
-             * @example 2026-01-05T10:30:00Z
+             * @description Document creation timestamp
              */
-            convertedAt: string;
+            createdAt: string;
+        };
+        SpecDomain: {
             /**
-             * @description Number of tests newly converted by AI
-             * @example 32
+             * Format: uuid
+             * @description Domain ID
              */
-            convertedCount: number;
+            id: string;
             /**
-             * @description Total number of tests in the repository
-             * @example 312
+             * @description Domain name
+             * @example Authentication
              */
-            totalTests: number;
+            name: string;
+            /**
+             * @description Domain description
+             * @example User authentication and session management
+             */
+            description?: string;
+            /**
+             * Format: float
+             * @description AI classification confidence score (0-1)
+             * @example 0.92
+             */
+            classificationConfidence?: number;
+            /** @description Display order within document */
+            sortOrder: number;
+            /** @description Features within this domain */
+            features: components["schemas"]["SpecFeature"][];
+        };
+        SpecFeature: {
+            /**
+             * Format: uuid
+             * @description Feature ID
+             */
+            id: string;
+            /**
+             * @description Feature name
+             * @example Login
+             */
+            name: string;
+            /**
+             * @description Feature description
+             * @example User login with various authentication methods
+             */
+            description?: string;
+            /** @description Display order within domain */
+            sortOrder: number;
+            /** @description Behaviors (converted test cases) within this feature */
+            behaviors: components["schemas"]["SpecBehavior"][];
+        };
+        SpecBehavior: {
+            /**
+             * Format: uuid
+             * @description Behavior ID
+             */
+            id: string;
+            /**
+             * @description Original test case name
+             * @example should create session when credentials are valid
+             */
+            originalName: string;
+            /**
+             * @description AI-converted natural language description
+             * @example Creates a new session when valid credentials are provided
+             */
+            convertedDescription: string;
+            /** @description Display order within feature */
+            sortOrder: number;
+            /**
+             * Format: uuid
+             * @description Reference to original test case
+             */
+            sourceTestCaseId?: string;
+            sourceInfo?: components["schemas"]["SpecBehaviorSourceInfo"];
+        };
+        SpecBehaviorSourceInfo: {
+            /**
+             * @description Test file path
+             * @example src/__tests__/auth.test.ts
+             */
+            filePath: string;
+            /** @description Line number in the test file */
+            lineNumber: number;
+            status: components["schemas"]["TestStatus"];
+            framework: components["schemas"]["Framework"];
         };
         /**
-         * @description Target language for AI conversion (24 languages, alphabetically sorted):
-         *     - ar: Arabic (العربية)
-         *     - cs: Czech (Čeština)
-         *     - da: Danish (Dansk)
-         *     - de: German (Deutsch)
-         *     - el: Greek (Ελληνικά)
-         *     - en: English
-         *     - es: Spanish (Español)
-         *     - fi: Finnish (Suomi)
-         *     - fr: French (Français)
-         *     - hi: Hindi (हिन्दी)
-         *     - id: Indonesian (Bahasa Indonesia)
-         *     - it: Italian (Italiano)
-         *     - ja: Japanese (日本語)
-         *     - ko: Korean (한국어)
-         *     - nl: Dutch (Nederlands)
-         *     - pl: Polish (Polski)
-         *     - pt: Portuguese (Português)
-         *     - ru: Russian (Русский)
-         *     - sv: Swedish (Svenska)
-         *     - th: Thai (ไทย)
-         *     - tr: Turkish (Türkçe)
-         *     - uk: Ukrainian (Українська)
-         *     - vi: Vietnamese (Tiếng Việt)
-         *     - zh: Chinese (中文)
-         *
-         * @default en
+         * @description Target language for spec document generation (24 languages supported)
+         * @default English
          * @enum {string}
          */
-        ConversionLanguage: "ar" | "cs" | "da" | "de" | "el" | "en" | "es" | "fi" | "fr" | "hi" | "id" | "it" | "ja" | "ko" | "nl" | "pl" | "pt" | "ru" | "sv" | "th" | "tr" | "uk" | "vi" | "zh";
+        SpecLanguage: "Arabic" | "Chinese" | "Czech" | "Danish" | "Dutch" | "English" | "Finnish" | "French" | "German" | "Greek" | "Hindi" | "Indonesian" | "Italian" | "Japanese" | "Korean" | "Polish" | "Portuguese" | "Russian" | "Spanish" | "Swedish" | "Thai" | "Turkish" | "Ukrainian" | "Vietnamese";
+        RequestSpecGenerationRequest: {
+            /**
+             * Format: uuid
+             * @description Analysis ID to generate spec document for
+             */
+            analysisId: string;
+            language?: components["schemas"]["SpecLanguage"];
+            /**
+             * @description Force regeneration even if document exists
+             * @default false
+             */
+            isForceRegenerate: boolean;
+        };
+        RequestSpecGenerationResponse: {
+            status: components["schemas"]["SpecGenerationStatusEnum"];
+            /**
+             * Format: uuid
+             * @description Analysis ID for tracking
+             */
+            analysisId: string;
+            /** @description Optional status message */
+            message?: string;
+        };
+        SpecGenerationStatusResponse: {
+            status: components["schemas"]["SpecGenerationStatusEnum"];
+            /** Format: uuid */
+            analysisId: string;
+            /**
+             * Format: date-time
+             * @description When generation started
+             */
+            startedAt?: string;
+            /**
+             * Format: date-time
+             * @description When generation completed (if completed)
+             */
+            completedAt?: string;
+            /** @description Error message if generation failed */
+            errorMessage?: string;
+        };
+        SpecGenerationStatus: {
+            status: components["schemas"]["SpecGenerationStatusEnum"];
+            /** Format: date-time */
+            startedAt?: string;
+            /** Format: date-time */
+            completedAt?: string;
+            errorMessage?: string;
+        };
+        /**
+         * @description Generation status:
+         *     - pending: Job queued but not started
+         *     - running: AI generation in progress
+         *     - completed: Document successfully generated
+         *     - failed: Generation failed
+         *     - not_found: No generation request exists
+         *
+         * @enum {string}
+         */
+        SpecGenerationStatusEnum: "pending" | "running" | "completed" | "failed" | "not_found";
     };
     responses: {
         /** @description Invalid request parameters */
@@ -2019,48 +2148,96 @@ export interface operations {
             500: components["responses"]["InternalError"];
         };
     };
-    convertSpecView: {
+    getSpecDocument: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 /**
-                 * @description GitHub repository owner (user or organization)
-                 * @example facebook
+                 * @description Analysis ID (UUID) to fetch spec document for
+                 * @example 550e8400-e29b-41d4-a716-446655440000
                  */
-                owner: components["parameters"]["Owner"];
-                /**
-                 * @description GitHub repository name
-                 * @example react
-                 */
-                repo: components["parameters"]["Repo"];
-                /**
-                 * @description Git commit SHA of the analysis to convert
-                 * @example abc123def456
-                 */
-                commitSha: string;
+                analysisId: string;
             };
             cookie?: never;
         };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ConvertSpecViewRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Test names converted successfully */
+            /** @description Spec document retrieved successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConvertSpecViewResponse"];
+                    "application/json": components["schemas"]["SpecDocumentResponse"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    requestSpecGeneration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestSpecGenerationRequest"];
+            };
+        };
+        responses: {
+            /** @description Generation request accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestSpecGenerationResponse"];
                 };
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
-            429: components["responses"]["TooManyRequests"];
+            /** @description Generation already in progress or completed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getSpecGenerationStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Analysis ID (UUID) to check generation status for
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                analysisId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Generation status retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpecGenerationStatusResponse"];
+                };
+            };
+            404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };
     };

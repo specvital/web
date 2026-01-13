@@ -17,6 +17,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	"github.com/specvital/web/src/backend/modules/auth/domain/port"
 	"github.com/specvital/web/src/backend/modules/auth/usecase"
+	specviewhandler "github.com/specvital/web/src/backend/modules/spec-view/handler"
 	"github.com/specvital/web/src/backend/modules/user"
 )
 
@@ -241,7 +242,7 @@ func createTestHandler(
 
 func setupTestRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, user.NewMockHandler(), handler, user.NewMockHandler(), &mockGitHubHandler{}, &mockGitHubAppHandler{}, &mockRepositoryHandler{}, nil)
+	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, user.NewMockHandler(), handler, user.NewMockHandler(), &mockGitHubHandler{}, &mockGitHubAppHandler{}, &mockRepositoryHandler{}, specviewhandler.NewMockHandler(), nil)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 	return r

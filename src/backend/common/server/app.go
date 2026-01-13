@@ -29,6 +29,10 @@ import (
 	userhandler "github.com/specvital/web/src/backend/modules/user/handler"
 	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
 	historyuc "github.com/specvital/web/src/backend/modules/user/usecase/history"
+
+	specviewadapter "github.com/specvital/web/src/backend/modules/spec-view/adapter"
+	specviewhandler "github.com/specvital/web/src/backend/modules/spec-view/handler"
+	specviewusecase "github.com/specvital/web/src/backend/modules/spec-view/usecase"
 )
 
 type Handlers struct {
@@ -212,7 +216,24 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 		return nil, nil, fmt.Errorf("create github-app api handler: %w", err)
 	}
 
-	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, analyzerHandler, webhookHandler)
+	specViewRepo := specviewadapter.NewPostgresRepository(queries)
+	specViewQueue := specviewadapter.NewNoopQueueService(log)
+
+	getSpecDocumentUC := specviewusecase.NewGetSpecDocumentUseCase(specViewRepo)
+	requestGenerationUC := specviewusecase.NewRequestGenerationUseCase(specViewRepo, specViewQueue)
+	getGenerationStatusUC := specviewusecase.NewGetGenerationStatusUseCase(specViewRepo)
+
+	specViewHandler, err := specviewhandler.NewHandler(&specviewhandler.HandlerConfig{
+		GetGenerationStatus: getGenerationStatusUC,
+		GetSpecDocument:     getSpecDocumentUC,
+		Logger:              log,
+		RequestGeneration:   requestGenerationUC,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("create spec-view handler: %w", err)
+	}
+
+	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, analyzerHandler, specViewHandler, webhookHandler)
 
 	return &Handlers{
 		API:     apiHandlers,

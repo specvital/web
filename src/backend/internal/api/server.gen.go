@@ -21,34 +21,6 @@ const (
 	CookieAuthScopes = "cookieAuth.Scopes"
 )
 
-// Defines values for ConversionLanguage.
-const (
-	Ar ConversionLanguage = "ar"
-	Cs ConversionLanguage = "cs"
-	Da ConversionLanguage = "da"
-	De ConversionLanguage = "de"
-	El ConversionLanguage = "el"
-	En ConversionLanguage = "en"
-	Es ConversionLanguage = "es"
-	Fi ConversionLanguage = "fi"
-	Fr ConversionLanguage = "fr"
-	Hi ConversionLanguage = "hi"
-	ID ConversionLanguage = "id"
-	It ConversionLanguage = "it"
-	Ja ConversionLanguage = "ja"
-	Ko ConversionLanguage = "ko"
-	Nl ConversionLanguage = "nl"
-	Pl ConversionLanguage = "pl"
-	Pt ConversionLanguage = "pt"
-	Ru ConversionLanguage = "ru"
-	Sv ConversionLanguage = "sv"
-	Th ConversionLanguage = "th"
-	Tr ConversionLanguage = "tr"
-	Uk ConversionLanguage = "uk"
-	Vi ConversionLanguage = "vi"
-	Zh ConversionLanguage = "zh"
-)
-
 // Defines values for GitHubAppInstallationAccountType.
 const (
 	GitHubAppInstallationAccountTypeOrganization GitHubAppInstallationAccountType = "organization"
@@ -57,9 +29,9 @@ const (
 
 // Defines values for OrganizationAccessStatus.
 const (
-	Accessible OrganizationAccessStatus = "accessible"
-	Pending    OrganizationAccessStatus = "pending"
-	Restricted OrganizationAccessStatus = "restricted"
+	OrganizationAccessStatusAccessible OrganizationAccessStatus = "accessible"
+	OrganizationAccessStatusPending    OrganizationAccessStatus = "pending"
+	OrganizationAccessStatusRestricted OrganizationAccessStatus = "restricted"
 )
 
 // Defines values for OwnershipFilterParam.
@@ -81,6 +53,43 @@ const (
 const (
 	Asc  SortOrderParam = "asc"
 	Desc SortOrderParam = "desc"
+)
+
+// Defines values for SpecGenerationStatusEnum.
+const (
+	SpecGenerationStatusEnumCompleted SpecGenerationStatusEnum = "completed"
+	SpecGenerationStatusEnumFailed    SpecGenerationStatusEnum = "failed"
+	SpecGenerationStatusEnumNotFound  SpecGenerationStatusEnum = "not_found"
+	SpecGenerationStatusEnumPending   SpecGenerationStatusEnum = "pending"
+	SpecGenerationStatusEnumRunning   SpecGenerationStatusEnum = "running"
+)
+
+// Defines values for SpecLanguage.
+const (
+	Arabic     SpecLanguage = "Arabic"
+	Chinese    SpecLanguage = "Chinese"
+	Czech      SpecLanguage = "Czech"
+	Danish     SpecLanguage = "Danish"
+	Dutch      SpecLanguage = "Dutch"
+	English    SpecLanguage = "English"
+	Finnish    SpecLanguage = "Finnish"
+	French     SpecLanguage = "French"
+	German     SpecLanguage = "German"
+	Greek      SpecLanguage = "Greek"
+	Hindi      SpecLanguage = "Hindi"
+	Indonesian SpecLanguage = "Indonesian"
+	Italian    SpecLanguage = "Italian"
+	Japanese   SpecLanguage = "Japanese"
+	Korean     SpecLanguage = "Korean"
+	Polish     SpecLanguage = "Polish"
+	Portuguese SpecLanguage = "Portuguese"
+	Russian    SpecLanguage = "Russian"
+	Spanish    SpecLanguage = "Spanish"
+	Swedish    SpecLanguage = "Swedish"
+	Thai       SpecLanguage = "Thai"
+	Turkish    SpecLanguage = "Turkish"
+	Ukrainian  SpecLanguage = "Ukrainian"
+	Vietnamese SpecLanguage = "Vietnamese"
 )
 
 // Defines values for TestStatus.
@@ -211,134 +220,6 @@ type BookmarkedRepositoriesResponse struct {
 type CompletedResponse struct {
 	Data   AnalysisResult `json:"data"`
 	Status string         `json:"status"`
-}
-
-// ConversionLanguage Target language for AI conversion (24 languages, alphabetically sorted):
-// - ar: Arabic (العربية)
-// - cs: Czech (Čeština)
-// - da: Danish (Dansk)
-// - de: German (Deutsch)
-// - el: Greek (Ελληνικά)
-// - en: English
-// - es: Spanish (Español)
-// - fi: Finnish (Suomi)
-// - fr: French (Français)
-// - hi: Hindi (हिन्दी)
-// - id: Indonesian (Bahasa Indonesia)
-// - it: Italian (Italiano)
-// - ja: Japanese (日本語)
-// - ko: Korean (한국어)
-// - nl: Dutch (Nederlands)
-// - pl: Polish (Polski)
-// - pt: Portuguese (Português)
-// - ru: Russian (Русский)
-// - sv: Swedish (Svenska)
-// - th: Thai (ไทย)
-// - tr: Turkish (Türkçe)
-// - uk: Ukrainian (Українська)
-// - vi: Vietnamese (Tiếng Việt)
-// - zh: Chinese (中文)
-type ConversionLanguage string
-
-// ConversionSummary defines model for ConversionSummary.
-type ConversionSummary struct {
-	// CachedCount Number of tests retrieved from cache
-	CachedCount int `json:"cachedCount"`
-
-	// ConvertedAt ISO 8601 timestamp of conversion completion
-	ConvertedAt time.Time `json:"convertedAt"`
-
-	// ConvertedCount Number of tests newly converted by AI
-	ConvertedCount int `json:"convertedCount"`
-
-	// TotalTests Total number of tests in the repository
-	TotalTests int `json:"totalTests"`
-}
-
-// ConvertSpecViewRequest defines model for ConvertSpecViewRequest.
-type ConvertSpecViewRequest struct {
-	// IsForceRefresh Bypass cache and force new AI conversion for all tests
-	IsForceRefresh *bool `json:"isForceRefresh,omitempty"`
-
-	// Language Target language for AI conversion (24 languages, alphabetically sorted):
-	// - ar: Arabic (العربية)
-	// - cs: Czech (Čeština)
-	// - da: Danish (Dansk)
-	// - de: German (Deutsch)
-	// - el: Greek (Ελληνικά)
-	// - en: English
-	// - es: Spanish (Español)
-	// - fi: Finnish (Suomi)
-	// - fr: French (Français)
-	// - hi: Hindi (हिन्दी)
-	// - id: Indonesian (Bahasa Indonesia)
-	// - it: Italian (Italiano)
-	// - ja: Japanese (日本語)
-	// - ko: Korean (한국어)
-	// - nl: Dutch (Nederlands)
-	// - pl: Polish (Polski)
-	// - pt: Portuguese (Português)
-	// - ru: Russian (Русский)
-	// - sv: Swedish (Svenska)
-	// - th: Thai (ไทย)
-	// - tr: Turkish (Türkçe)
-	// - uk: Ukrainian (Українська)
-	// - vi: Vietnamese (Tiếng Việt)
-	// - zh: Chinese (中文)
-	Language *ConversionLanguage `json:"language,omitempty"`
-}
-
-// ConvertSpecViewResponse defines model for ConvertSpecViewResponse.
-type ConvertSpecViewResponse struct {
-	// Data Converted tests grouped by file
-	Data    []ConvertedTestFile `json:"data"`
-	Summary ConversionSummary   `json:"summary"`
-}
-
-// ConvertedTestFile defines model for ConvertedTestFile.
-type ConvertedTestFile struct {
-	// FilePath Path to the test file
-	FilePath string `json:"filePath"`
-
-	// Framework Testing framework identifier
-	Framework Framework            `json:"framework"`
-	Suites    []ConvertedTestSuite `json:"suites"`
-}
-
-// ConvertedTestItem defines model for ConvertedTestItem.
-type ConvertedTestItem struct {
-	// ConvertedName AI-converted natural language description
-	ConvertedName string `json:"convertedName"`
-
-	// IsFromCache Whether this result was retrieved from cache
-	IsFromCache bool `json:"isFromCache"`
-
-	// Line Line number where the test is defined
-	Line int `json:"line"`
-
-	// Modifier Test modifier (e.g., only, skip)
-	Modifier *string `json:"modifier,omitempty"`
-
-	// OriginalName Original technical test name
-	OriginalName string `json:"originalName"`
-
-	// Status Test status indicator:
-	// - active: Normal test that will run
-	// - focused: Test marked to run exclusively (e.g., it.only)
-	// - skipped: Test marked to be skipped (e.g., it.skip)
-	// - todo: Placeholder test to be implemented
-	// - xfail: Expected to fail (pytest xfail)
-	Status TestStatus `json:"status"`
-}
-
-// ConvertedTestSuite defines model for ConvertedTestSuite.
-type ConvertedTestSuite struct {
-	// SuiteHierarchy Full suite hierarchy
-	SuiteHierarchy string `json:"suiteHierarchy"`
-
-	// SuiteName Name of the test suite
-	SuiteName string              `json:"suiteName"`
-	Tests     []ConvertedTestItem `json:"tests"`
 }
 
 // DevLoginRequest defines model for DevLoginRequest.
@@ -615,6 +496,35 @@ type RepositoryStatsResponse struct {
 	TotalTests int `json:"totalTests"`
 }
 
+// RequestSpecGenerationRequest defines model for RequestSpecGenerationRequest.
+type RequestSpecGenerationRequest struct {
+	// AnalysisID Analysis ID to generate spec document for
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+
+	// IsForceRegenerate Force regeneration even if document exists
+	IsForceRegenerate *bool `json:"isForceRegenerate,omitempty"`
+
+	// Language Target language for spec document generation (24 languages supported)
+	Language *SpecLanguage `json:"language,omitempty"`
+}
+
+// RequestSpecGenerationResponse defines model for RequestSpecGenerationResponse.
+type RequestSpecGenerationResponse struct {
+	// AnalysisID Analysis ID for tracking
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+
+	// Message Optional status message
+	Message *string `json:"message,omitempty"`
+
+	// Status Generation status:
+	// - pending: Job queued but not started
+	// - running: AI generation in progress
+	// - completed: Document successfully generated
+	// - failed: Generation failed
+	// - not_found: No generation request exists
+	Status SpecGenerationStatusEnum `json:"status"`
+}
+
 // SortByParam Field to sort repositories by:
 // - name: Repository name (alphabetical)
 // - recent: Analysis timestamp (most recent first)
@@ -626,6 +536,173 @@ type SortByParam string
 // - desc: Descending order
 // Defaults depend on sortBy (desc for recent/tests, asc for name)
 type SortOrderParam string
+
+// SpecBehavior defines model for SpecBehavior.
+type SpecBehavior struct {
+	// ConvertedDescription AI-converted natural language description
+	ConvertedDescription string `json:"convertedDescription"`
+
+	// ID Behavior ID
+	ID openapi_types.UUID `json:"id"`
+
+	// OriginalName Original test case name
+	OriginalName string `json:"originalName"`
+
+	// SortOrder Display order within feature
+	SortOrder  int                     `json:"sortOrder"`
+	SourceInfo *SpecBehaviorSourceInfo `json:"sourceInfo,omitempty"`
+
+	// SourceTestCaseID Reference to original test case
+	SourceTestCaseID *openapi_types.UUID `json:"sourceTestCaseId,omitempty"`
+}
+
+// SpecBehaviorSourceInfo defines model for SpecBehaviorSourceInfo.
+type SpecBehaviorSourceInfo struct {
+	// FilePath Test file path
+	FilePath string `json:"filePath"`
+
+	// Framework Testing framework identifier
+	Framework Framework `json:"framework"`
+
+	// LineNumber Line number in the test file
+	LineNumber int `json:"lineNumber"`
+
+	// Status Test status indicator:
+	// - active: Normal test that will run
+	// - focused: Test marked to run exclusively (e.g., it.only)
+	// - skipped: Test marked to be skipped (e.g., it.skip)
+	// - todo: Placeholder test to be implemented
+	// - xfail: Expected to fail (pytest xfail)
+	Status TestStatus `json:"status"`
+}
+
+// SpecDocument defines model for SpecDocument.
+type SpecDocument struct {
+	// AnalysisID Associated analysis ID
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+
+	// CreatedAt Document creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Domains Domain classifications
+	Domains []SpecDomain `json:"domains"`
+
+	// ExecutiveSummary AI-generated executive summary of the test suite
+	ExecutiveSummary *string `json:"executiveSummary,omitempty"`
+
+	// ID Spec document ID
+	ID openapi_types.UUID `json:"id"`
+
+	// Language Target language for spec document generation (24 languages supported)
+	Language SpecLanguage `json:"language"`
+
+	// ModelID AI model ID used for generation
+	ModelID *string `json:"modelId,omitempty"`
+}
+
+// SpecDocumentCompleted defines model for SpecDocumentCompleted.
+type SpecDocumentCompleted struct {
+	Data   SpecDocument `json:"data"`
+	Status string       `json:"status"`
+}
+
+// SpecDocumentGenerating defines model for SpecDocumentGenerating.
+type SpecDocumentGenerating struct {
+	GenerationStatus SpecGenerationStatus `json:"generationStatus"`
+	Status           string               `json:"status"`
+}
+
+// SpecDocumentResponse defines model for SpecDocumentResponse.
+type SpecDocumentResponse struct {
+	union json.RawMessage
+}
+
+// SpecDomain defines model for SpecDomain.
+type SpecDomain struct {
+	// ClassificationConfidence AI classification confidence score (0-1)
+	ClassificationConfidence *float32 `json:"classificationConfidence,omitempty"`
+
+	// Description Domain description
+	Description *string `json:"description,omitempty"`
+
+	// Features Features within this domain
+	Features []SpecFeature `json:"features"`
+
+	// ID Domain ID
+	ID openapi_types.UUID `json:"id"`
+
+	// Name Domain name
+	Name string `json:"name"`
+
+	// SortOrder Display order within document
+	SortOrder int `json:"sortOrder"`
+}
+
+// SpecFeature defines model for SpecFeature.
+type SpecFeature struct {
+	// Behaviors Behaviors (converted test cases) within this feature
+	Behaviors []SpecBehavior `json:"behaviors"`
+
+	// Description Feature description
+	Description *string `json:"description,omitempty"`
+
+	// ID Feature ID
+	ID openapi_types.UUID `json:"id"`
+
+	// Name Feature name
+	Name string `json:"name"`
+
+	// SortOrder Display order within domain
+	SortOrder int `json:"sortOrder"`
+}
+
+// SpecGenerationStatus defines model for SpecGenerationStatus.
+type SpecGenerationStatus struct {
+	CompletedAt  *time.Time `json:"completedAt,omitempty"`
+	ErrorMessage *string    `json:"errorMessage,omitempty"`
+	StartedAt    *time.Time `json:"startedAt,omitempty"`
+
+	// Status Generation status:
+	// - pending: Job queued but not started
+	// - running: AI generation in progress
+	// - completed: Document successfully generated
+	// - failed: Generation failed
+	// - not_found: No generation request exists
+	Status SpecGenerationStatusEnum `json:"status"`
+}
+
+// SpecGenerationStatusEnum Generation status:
+// - pending: Job queued but not started
+// - running: AI generation in progress
+// - completed: Document successfully generated
+// - failed: Generation failed
+// - not_found: No generation request exists
+type SpecGenerationStatusEnum string
+
+// SpecGenerationStatusResponse defines model for SpecGenerationStatusResponse.
+type SpecGenerationStatusResponse struct {
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+
+	// CompletedAt When generation completed (if completed)
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+
+	// ErrorMessage Error message if generation failed
+	ErrorMessage *string `json:"errorMessage,omitempty"`
+
+	// StartedAt When generation started
+	StartedAt *time.Time `json:"startedAt,omitempty"`
+
+	// Status Generation status:
+	// - pending: Job queued but not started
+	// - running: AI generation in progress
+	// - completed: Document successfully generated
+	// - failed: Generation failed
+	// - not_found: No generation request exists
+	Status SpecGenerationStatusEnum `json:"status"`
+}
+
+// SpecLanguage Target language for spec document generation (24 languages supported)
+type SpecLanguage string
 
 // Summary defines model for Summary.
 type Summary struct {
@@ -935,8 +1012,8 @@ type HandleGitHubAppWebhookParams struct {
 // AuthDevLoginJSONRequestBody defines body for AuthDevLogin for application/json ContentType.
 type AuthDevLoginJSONRequestBody = DevLoginRequest
 
-// ConvertSpecViewJSONRequestBody defines body for ConvertSpecView for application/json ContentType.
-type ConvertSpecViewJSONRequestBody = ConvertSpecViewRequest
+// RequestSpecGenerationJSONRequestBody defines body for RequestSpecGeneration for application/json ContentType.
+type RequestSpecGenerationJSONRequestBody = RequestSpecGenerationRequest
 
 // AddUserAnalyzedRepositoryJSONRequestBody defines body for AddUserAnalyzedRepository for application/json ContentType.
 type AddUserAnalyzedRepositoryJSONRequestBody = AddAnalyzedRepositoryRequest
@@ -1093,6 +1170,95 @@ func (t *AnalysisResponse) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsSpecDocumentCompleted returns the union data inside the SpecDocumentResponse as a SpecDocumentCompleted
+func (t SpecDocumentResponse) AsSpecDocumentCompleted() (SpecDocumentCompleted, error) {
+	var body SpecDocumentCompleted
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSpecDocumentCompleted overwrites any union data inside the SpecDocumentResponse as the provided SpecDocumentCompleted
+func (t *SpecDocumentResponse) FromSpecDocumentCompleted(v SpecDocumentCompleted) error {
+	v.Status = "completed"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSpecDocumentCompleted performs a merge with any union data inside the SpecDocumentResponse, using the provided SpecDocumentCompleted
+func (t *SpecDocumentResponse) MergeSpecDocumentCompleted(v SpecDocumentCompleted) error {
+	v.Status = "completed"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSpecDocumentGenerating returns the union data inside the SpecDocumentResponse as a SpecDocumentGenerating
+func (t SpecDocumentResponse) AsSpecDocumentGenerating() (SpecDocumentGenerating, error) {
+	var body SpecDocumentGenerating
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSpecDocumentGenerating overwrites any union data inside the SpecDocumentResponse as the provided SpecDocumentGenerating
+func (t *SpecDocumentResponse) FromSpecDocumentGenerating(v SpecDocumentGenerating) error {
+	v.Status = "generating"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSpecDocumentGenerating performs a merge with any union data inside the SpecDocumentResponse, using the provided SpecDocumentGenerating
+func (t *SpecDocumentResponse) MergeSpecDocumentGenerating(v SpecDocumentGenerating) error {
+	v.Status = "generating"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t SpecDocumentResponse) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"status"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t SpecDocumentResponse) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "completed":
+		return t.AsSpecDocumentCompleted()
+	case "generating":
+		return t.AsSpecDocumentGenerating()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t SpecDocumentResponse) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *SpecDocumentResponse) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Analyze repository test specifications
@@ -1137,9 +1303,15 @@ type ServerInterface interface {
 	// Check repository update status
 	// (GET /api/repositories/{owner}/{repo}/update-status)
 	GetUpdateStatus(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo)
-	// Convert test names to natural language spec view
-	// (POST /api/spec-view/convert/{owner}/{repo}/{commitSha})
-	ConvertSpecView(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo, commitSHA string)
+	// Request spec document generation
+	// (POST /api/spec-view/generate)
+	RequestSpecGeneration(w http.ResponseWriter, r *http.Request)
+	// Get spec generation status
+	// (GET /api/spec-view/status/{analysisId})
+	GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID)
+	// Get specification document for analysis
+	// (GET /api/spec-view/{analysisId})
+	GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID)
 	// Get user's analyzed repositories
 	// (GET /api/user/analyzed-repositories)
 	GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request, params GetUserAnalyzedRepositoriesParams)
@@ -1257,9 +1429,21 @@ func (_ Unimplemented) GetUpdateStatus(w http.ResponseWriter, r *http.Request, o
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Convert test names to natural language spec view
-// (POST /api/spec-view/convert/{owner}/{repo}/{commitSha})
-func (_ Unimplemented) ConvertSpecView(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo, commitSHA string) {
+// Request spec document generation
+// (POST /api/spec-view/generate)
+func (_ Unimplemented) RequestSpecGeneration(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get spec generation status
+// (GET /api/spec-view/status/{analysisId})
+func (_ Unimplemented) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get specification document for analysis
+// (GET /api/spec-view/{analysisId})
+func (_ Unimplemented) GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1778,35 +1962,37 @@ func (siw *ServerInterfaceWrapper) GetUpdateStatus(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
-// ConvertSpecView operation middleware
-func (siw *ServerInterfaceWrapper) ConvertSpecView(w http.ResponseWriter, r *http.Request) {
+// RequestSpecGeneration operation middleware
+func (siw *ServerInterfaceWrapper) RequestSpecGeneration(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestSpecGeneration(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpecGenerationStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// ------------- Path parameter "owner" -------------
-	var owner Owner
+	// ------------- Path parameter "analysisId" -------------
+	var analysisID openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "analysisId", chi.URLParam(r, "analysisId"), &analysisID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "repo" -------------
-	var repo Repo
-
-	err = runtime.BindStyledParameterWithOptions("simple", "repo", chi.URLParam(r, "repo"), &repo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "commitSha" -------------
-	var commitSHA string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "commitSha", chi.URLParam(r, "commitSha"), &commitSHA, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commitSha", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "analysisId", Err: err})
 		return
 	}
 
@@ -1817,7 +2003,38 @@ func (siw *ServerInterfaceWrapper) ConvertSpecView(w http.ResponseWriter, r *htt
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ConvertSpecView(w, r, owner, repo, commitSHA)
+		siw.Handler.GetSpecGenerationStatus(w, r, analysisID)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpecDocument operation middleware
+func (siw *ServerInterfaceWrapper) GetSpecDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "analysisId" -------------
+	var analysisID openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "analysisId", chi.URLParam(r, "analysisId"), &analysisID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "analysisId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpecDocument(w, r, analysisID)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2310,7 +2527,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/repositories/{owner}/{repo}/update-status", wrapper.GetUpdateStatus)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/api/spec-view/convert/{owner}/{repo}/{commitSha}", wrapper.ConvertSpecView)
+		r.Post(options.BaseURL+"/api/spec-view/generate", wrapper.RequestSpecGeneration)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/spec-view/status/{analysisId}", wrapper.GetSpecGenerationStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/spec-view/{analysisId}", wrapper.GetSpecDocument)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/analyzed-repositories", wrapper.GetUserAnalyzedRepositories)
@@ -3026,75 +3249,148 @@ func (response GetUpdateStatus500ApplicationProblemPlusJSONResponse) VisitGetUpd
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ConvertSpecViewRequestObject struct {
-	Owner     Owner  `json:"owner"`
-	Repo      Repo   `json:"repo"`
-	CommitSHA string `json:"commitSha"`
-	Body      *ConvertSpecViewJSONRequestBody
+type RequestSpecGenerationRequestObject struct {
+	Body *RequestSpecGenerationJSONRequestBody
 }
 
-type ConvertSpecViewResponseObject interface {
-	VisitConvertSpecViewResponse(w http.ResponseWriter) error
+type RequestSpecGenerationResponseObject interface {
+	VisitRequestSpecGenerationResponse(w http.ResponseWriter) error
 }
 
-type ConvertSpecView200JSONResponse ConvertSpecViewResponse
+type RequestSpecGeneration202JSONResponse RequestSpecGenerationResponse
 
-func (response ConvertSpecView200JSONResponse) VisitConvertSpecViewResponse(w http.ResponseWriter) error {
+func (response RequestSpecGeneration202JSONResponse) VisitRequestSpecGenerationResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(202)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ConvertSpecView400ApplicationProblemPlusJSONResponse struct {
+type RequestSpecGeneration400ApplicationProblemPlusJSONResponse struct {
 	BadRequestApplicationProblemPlusJSONResponse
 }
 
-func (response ConvertSpecView400ApplicationProblemPlusJSONResponse) VisitConvertSpecViewResponse(w http.ResponseWriter) error {
+func (response RequestSpecGeneration400ApplicationProblemPlusJSONResponse) VisitRequestSpecGenerationResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ConvertSpecView401ApplicationProblemPlusJSONResponse struct {
+type RequestSpecGeneration401ApplicationProblemPlusJSONResponse struct {
 	UnauthorizedApplicationProblemPlusJSONResponse
 }
 
-func (response ConvertSpecView401ApplicationProblemPlusJSONResponse) VisitConvertSpecViewResponse(w http.ResponseWriter) error {
+func (response RequestSpecGeneration401ApplicationProblemPlusJSONResponse) VisitRequestSpecGenerationResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(401)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ConvertSpecView404ApplicationProblemPlusJSONResponse struct {
+type RequestSpecGeneration404ApplicationProblemPlusJSONResponse struct {
 	NotFoundApplicationProblemPlusJSONResponse
 }
 
-func (response ConvertSpecView404ApplicationProblemPlusJSONResponse) VisitConvertSpecViewResponse(w http.ResponseWriter) error {
+func (response RequestSpecGeneration404ApplicationProblemPlusJSONResponse) VisitRequestSpecGenerationResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ConvertSpecView429ApplicationProblemPlusJSONResponse struct {
-	TooManyRequestsApplicationProblemPlusJSONResponse
-}
+type RequestSpecGeneration409ApplicationProblemPlusJSONResponse ProblemDetail
 
-func (response ConvertSpecView429ApplicationProblemPlusJSONResponse) VisitConvertSpecViewResponse(w http.ResponseWriter) error {
+func (response RequestSpecGeneration409ApplicationProblemPlusJSONResponse) VisitRequestSpecGenerationResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(429)
+	w.WriteHeader(409)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ConvertSpecView500ApplicationProblemPlusJSONResponse struct {
+type RequestSpecGeneration500ApplicationProblemPlusJSONResponse struct {
 	InternalErrorApplicationProblemPlusJSONResponse
 }
 
-func (response ConvertSpecView500ApplicationProblemPlusJSONResponse) VisitConvertSpecViewResponse(w http.ResponseWriter) error {
+func (response RequestSpecGeneration500ApplicationProblemPlusJSONResponse) VisitRequestSpecGenerationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecGenerationStatusRequestObject struct {
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+}
+
+type GetSpecGenerationStatusResponseObject interface {
+	VisitGetSpecGenerationStatusResponse(w http.ResponseWriter) error
+}
+
+type GetSpecGenerationStatus200JSONResponse SpecGenerationStatusResponse
+
+func (response GetSpecGenerationStatus200JSONResponse) VisitGetSpecGenerationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecGenerationStatus404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecGenerationStatus404ApplicationProblemPlusJSONResponse) VisitGetSpecGenerationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecGenerationStatus500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecGenerationStatus500ApplicationProblemPlusJSONResponse) VisitGetSpecGenerationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocumentRequestObject struct {
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+}
+
+type GetSpecDocumentResponseObject interface {
+	VisitGetSpecDocumentResponse(w http.ResponseWriter) error
+}
+
+type GetSpecDocument200JSONResponse SpecDocumentResponse
+
+func (response GetSpecDocument200JSONResponse) VisitGetSpecDocumentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocument404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecDocument404ApplicationProblemPlusJSONResponse) VisitGetSpecDocumentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocument500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecDocument500ApplicationProblemPlusJSONResponse) VisitGetSpecDocumentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(500)
 
@@ -3581,9 +3877,15 @@ type StrictServerInterface interface {
 	// Check repository update status
 	// (GET /api/repositories/{owner}/{repo}/update-status)
 	GetUpdateStatus(ctx context.Context, request GetUpdateStatusRequestObject) (GetUpdateStatusResponseObject, error)
-	// Convert test names to natural language spec view
-	// (POST /api/spec-view/convert/{owner}/{repo}/{commitSha})
-	ConvertSpecView(ctx context.Context, request ConvertSpecViewRequestObject) (ConvertSpecViewResponseObject, error)
+	// Request spec document generation
+	// (POST /api/spec-view/generate)
+	RequestSpecGeneration(ctx context.Context, request RequestSpecGenerationRequestObject) (RequestSpecGenerationResponseObject, error)
+	// Get spec generation status
+	// (GET /api/spec-view/status/{analysisId})
+	GetSpecGenerationStatus(ctx context.Context, request GetSpecGenerationStatusRequestObject) (GetSpecGenerationStatusResponseObject, error)
+	// Get specification document for analysis
+	// (GET /api/spec-view/{analysisId})
+	GetSpecDocument(ctx context.Context, request GetSpecDocumentRequestObject) (GetSpecDocumentResponseObject, error)
 	// Get user's analyzed repositories
 	// (GET /api/user/analyzed-repositories)
 	GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error)
@@ -4007,15 +4309,11 @@ func (sh *strictHandler) GetUpdateStatus(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-// ConvertSpecView operation middleware
-func (sh *strictHandler) ConvertSpecView(w http.ResponseWriter, r *http.Request, owner Owner, repo Repo, commitSHA string) {
-	var request ConvertSpecViewRequestObject
+// RequestSpecGeneration operation middleware
+func (sh *strictHandler) RequestSpecGeneration(w http.ResponseWriter, r *http.Request) {
+	var request RequestSpecGenerationRequestObject
 
-	request.Owner = owner
-	request.Repo = repo
-	request.CommitSHA = commitSHA
-
-	var body ConvertSpecViewJSONRequestBody
+	var body RequestSpecGenerationJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
@@ -4023,18 +4321,70 @@ func (sh *strictHandler) ConvertSpecView(w http.ResponseWriter, r *http.Request,
 	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ConvertSpecView(ctx, request.(ConvertSpecViewRequestObject))
+		return sh.ssi.RequestSpecGeneration(ctx, request.(RequestSpecGenerationRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ConvertSpecView")
+		handler = middleware(handler, "RequestSpecGeneration")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ConvertSpecViewResponseObject); ok {
-		if err := validResponse.VisitConvertSpecViewResponse(w); err != nil {
+	} else if validResponse, ok := response.(RequestSpecGenerationResponseObject); ok {
+		if err := validResponse.VisitRequestSpecGenerationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpecGenerationStatus operation middleware
+func (sh *strictHandler) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+	var request GetSpecGenerationStatusRequestObject
+
+	request.AnalysisID = analysisID
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpecGenerationStatus(ctx, request.(GetSpecGenerationStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpecGenerationStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpecGenerationStatusResponseObject); ok {
+		if err := validResponse.VisitGetSpecGenerationStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpecDocument operation middleware
+func (sh *strictHandler) GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+	var request GetSpecDocumentRequestObject
+
+	request.AnalysisID = analysisID
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpecDocument(ctx, request.(GetSpecDocumentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpecDocument")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpecDocumentResponseObject); ok {
+		if err := validResponse.VisitGetSpecDocumentResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
