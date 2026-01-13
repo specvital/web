@@ -1,6 +1,9 @@
 export { BehaviorItem } from "./behavior-item";
 export { DocumentView } from "./document-view";
 export { DomainSection } from "./domain-section";
+export { DomainStatsBadge } from "./domain-stats-badge";
 export { EmptyDocument } from "./empty-document";
+export { ExecutiveSummary } from "./executive-summary";
 export { FeatureGroup } from "./feature-group";
 export { GenerationStatus } from "./generation-status";
+export { TocSidebar } from "./toc-sidebar";

@@ -2,12 +2,17 @@ export {
   BehaviorItem,
   DocumentView,
   DomainSection,
+  DomainStatsBadge,
   EmptyDocument,
+  ExecutiveSummary,
   FeatureGroup,
   GenerationStatus,
+  TocSidebar,
 } from "./components";
 
-export { specViewKeys, useSpecView } from "./hooks";
+export { specViewKeys, useScrollSync, useSpecView } from "./hooks";
+
+export { calculateDocumentStats, calculateDomainStats } from "./utils";
 
 export type {
   SpecBehavior,

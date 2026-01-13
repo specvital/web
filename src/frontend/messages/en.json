@@ -240,6 +240,23 @@
     "dashboard": "Dashboard",
     "explore": "Explore"
   },
+  "specView": {
+    "toc": {
+      "title": "Table of Contents",
+      "openToc": "Open table of contents",
+      "description": "Navigate through the specification document"
+    },
+    "executiveSummary": {
+      "title": "Executive Summary",
+      "modelTooltip": "AI model used for generation",
+      "dateTooltip": "Document generated at"
+    },
+    "stats": {
+      "domains": "{count, plural, =1 {1 domain} other {# domains}}",
+      "features": "{count, plural, =1 {1 feature} other {# features}}",
+      "behaviors": "{count, plural, =1 {1 behavior} other {# behaviors}}"
+    }
+  },
   "dashboard": {
     "title": "Dashboard",
     "summary": {

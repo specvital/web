@@ -20,7 +20,7 @@ export const FeatureGroup = ({ defaultOpen = true, feature }: FeatureGroupProps)
   const behaviorCount = feature.behaviors.length;
 
   return (
-    <div className="border-l-2 border-muted-foreground/20 ml-2">
+    <div className="border-l-2 border-muted-foreground/20 ml-2" id={`feature-${feature.id}`}>
       <Button
         className={cn(
           "w-full justify-start gap-2 px-3 py-2 h-auto",

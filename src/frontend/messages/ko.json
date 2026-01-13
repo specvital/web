@@ -240,6 +240,23 @@
     "dashboard": "대시보드",
     "explore": "탐색"
   },
+  "specView": {
+    "toc": {
+      "title": "목차",
+      "openToc": "목차 열기",
+      "description": "스펙 문서를 탐색합니다"
+    },
+    "executiveSummary": {
+      "title": "요약",
+      "modelTooltip": "생성에 사용된 AI 모델",
+      "dateTooltip": "문서 생성 시각"
+    },
+    "stats": {
+      "domains": "도메인 {count}개",
+      "features": "기능 {count}개",
+      "behaviors": "동작 {count}개"
+    }
+  },
   "dashboard": {
     "title": "대시보드",
     "summary": {
