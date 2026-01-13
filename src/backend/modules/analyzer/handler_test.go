@@ -76,7 +76,7 @@ func TestAnalyzeRepository(t *testing.T) {
 		parserVersion := "v1.0.0" // Must match mockSystemConfigReader.parserVersion
 		repo := &mockRepository{
 			completedAnalysis: &port.CompletedAnalysis{
-				ID:            "test-id",
+				ID:            "550e8400-e29b-41d4-a716-446655440000",
 				Owner:         "owner",
 				Repo:          "repo",
 				CommitSHA:     "abc123",
@@ -180,7 +180,7 @@ func TestGetAnalysisStatus(t *testing.T) {
 		queue := &mockQueueService{}
 		repo := &mockRepository{
 			completedAnalysis: &port.CompletedAnalysis{
-				ID:          "test-id",
+				ID:          "550e8400-e29b-41d4-a716-446655440001",
 				Owner:       "testowner",
 				Repo:        "testrepo",
 				CommitSHA:   "def456",
