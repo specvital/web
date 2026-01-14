@@ -81,7 +81,7 @@ export const BehaviorItem = ({ behavior }: BehaviorItemProps) => {
       )}
       id={`behavior-${behavior.id}`}
       role="listitem"
-      tabIndex={-1}
+      tabIndex={0}
     >
       {/* Status icon with background */}
       <Tooltip>
