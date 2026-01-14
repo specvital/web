@@ -1,10 +1,12 @@
 "use client";
 
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
 
 import { FrameworkBadge } from "@/components/ui/framework-badge";
 import type { TestSuite } from "@/lib/api";
+import { collapseTransition, expandCollapse, useReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 import { StatusMiniBar } from "./status-mini-bar";
@@ -17,6 +19,7 @@ type TestSuiteAccordionProps = {
 
 export const TestSuiteAccordion = ({ suite }: TestSuiteAccordionProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const shouldReduceMotion = useReducedMotion();
 
   const toggleExpanded = () => {
     setIsExpanded((prev) => !prev);
@@ -66,17 +69,29 @@ export const TestSuiteAccordion = ({ suite }: TestSuiteAccordionProps) => {
         </span>
       </button>
 
-      {isExpanded && (
-        <div className="border-t border-accent/20 bg-accent/10 px-4 py-2">
-          <div className="space-y-1 pl-6">
-            {suite.tests.length === 0 ? (
-              <div className="py-2 text-sm text-muted-foreground">No tests in this suite.</div>
-            ) : (
-              suite.tests.map((test) => <TestItem key={`${test.line}-${test.name}`} test={test} />)
-            )}
-          </div>
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            animate={shouldReduceMotion ? {} : "expanded"}
+            exit={shouldReduceMotion ? {} : "collapsed"}
+            initial={shouldReduceMotion ? false : "collapsed"}
+            transition={shouldReduceMotion ? undefined : collapseTransition}
+            variants={shouldReduceMotion ? undefined : expandCollapse}
+          >
+            <div className="border-t border-accent/20 bg-accent/10 px-4 py-2">
+              <div className="space-y-1 pl-6">
+                {suite.tests.length === 0 ? (
+                  <div className="py-2 text-sm text-muted-foreground">No tests in this suite.</div>
+                ) : (
+                  suite.tests.map((test) => (
+                    <TestItem key={`${test.line}-${test.name}`} test={test} />
+                  ))
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,10 +1,12 @@
 "use client";
 
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { collapseTransition, expandCollapse, useReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 import { BehaviorItem } from "./behavior-item";
@@ -23,6 +25,7 @@ export const FeatureGroup = ({
   hasFilter = false,
 }: FeatureGroupProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const shouldReduceMotion = useReducedMotion();
 
   const visibleBehaviors = hasFilter
     ? feature.behaviors.filter((b) => b.hasMatch)
@@ -74,22 +77,32 @@ export const FeatureGroup = ({
         </Badge>
       </Button>
 
-      {isOpen && (
-        <div className="mt-1 space-y-0.5 pb-1" id={`feature-content-${feature.id}`}>
-          {feature.description && (
-            <p className="px-3 py-1.5 text-sm text-muted-foreground">{feature.description}</p>
-          )}
-          {visibleBehaviors.length >= VIRTUALIZATION_THRESHOLD ? (
-            <VirtualizedBehaviorList behaviors={visibleBehaviors} />
-          ) : (
-            <div className="space-y-0.5" role="list">
-              {visibleBehaviors.map((behavior) => (
-                <BehaviorItem behavior={behavior} key={behavior.id} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            animate={shouldReduceMotion ? {} : "expanded"}
+            className="mt-1 space-y-0.5 pb-1"
+            exit={shouldReduceMotion ? {} : "collapsed"}
+            id={`feature-content-${feature.id}`}
+            initial={shouldReduceMotion ? false : "collapsed"}
+            transition={shouldReduceMotion ? undefined : collapseTransition}
+            variants={shouldReduceMotion ? undefined : expandCollapse}
+          >
+            {feature.description && (
+              <p className="px-3 py-1.5 text-sm text-muted-foreground">{feature.description}</p>
+            )}
+            {visibleBehaviors.length >= VIRTUALIZATION_THRESHOLD ? (
+              <VirtualizedBehaviorList behaviors={visibleBehaviors} />
+            ) : (
+              <div className="space-y-0.5" role="list">
+                {visibleBehaviors.map((behavior) => (
+                  <BehaviorItem behavior={behavior} key={behavior.id} />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

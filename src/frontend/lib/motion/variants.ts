@@ -83,3 +83,23 @@ export const staggerItem: Variants = {
     y: 0,
   },
 };
+
+export const collapseTransition: Transition = {
+  duration: 0.2,
+  ease: [0.4, 0, 0.2, 1],
+  type: "tween",
+};
+
+export const expandCollapse: Variants = {
+  collapsed: {
+    height: 0,
+    opacity: 0,
+    overflow: "hidden",
+  },
+  expanded: {
+    height: "auto",
+    opacity: 1,
+    overflow: "visible",
+    transition: collapseTransition,
+  },
+};

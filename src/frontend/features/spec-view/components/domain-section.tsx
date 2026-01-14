@@ -1,12 +1,14 @@
 "use client";
 
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { collapseTransition, expandCollapse, useReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 import { FeatureGroup } from "./feature-group";
@@ -48,6 +50,7 @@ export const DomainSection = ({
   hasFilter = false,
 }: DomainSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const shouldReduceMotion = useReducedMotion();
 
   const featureCount = domain.features.length;
   const behaviorCount = domain.features.reduce((sum, f) => sum + f.behaviors.length, 0);
@@ -130,16 +133,26 @@ export const DomainSection = ({
         )}
       </CardHeader>
 
-      {isOpen && (
-        <CardContent
-          className="!px-4 sm:!px-6 pt-0 pb-4 space-y-3"
-          id={`domain-content-${domain.id}`}
-        >
-          {domain.features.map((feature) => (
-            <FeatureGroup feature={feature} hasFilter={hasFilter} key={feature.id} />
-          ))}
-        </CardContent>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            animate={shouldReduceMotion ? {} : "expanded"}
+            exit={shouldReduceMotion ? {} : "collapsed"}
+            initial={shouldReduceMotion ? false : "collapsed"}
+            transition={shouldReduceMotion ? undefined : collapseTransition}
+            variants={shouldReduceMotion ? undefined : expandCollapse}
+          >
+            <CardContent
+              className="!px-4 sm:!px-6 pt-0 pb-4 space-y-3"
+              id={`domain-content-${domain.id}`}
+            >
+              {domain.features.map((feature) => (
+                <FeatureGroup feature={feature} hasFilter={hasFilter} key={feature.id} />
+              ))}
+            </CardContent>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Card>
   );
 };
