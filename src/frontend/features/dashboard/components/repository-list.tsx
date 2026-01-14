@@ -26,7 +26,7 @@ export const RepositoryList = ({
   if (isLoading) {
     return (
       <RepositoryGrid ariaLabel="Loading repositories" isLoading>
-        {Array.from({ length: 8 }).map((_, index) => (
+        {Array.from({ length: 12 }).map((_, index) => (
           <li key={index}>
             <RepositorySkeleton />
           </li>
