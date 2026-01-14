@@ -59,55 +59,57 @@ export const DomainHeaderRow = ({
       : null;
 
   return (
-    <div
-      className="bg-card border rounded-lg overflow-hidden"
-      id={`domain-${domain.id}`}
-      role="region"
-    >
-      <div className="px-4 py-3 sm:px-6 sm:py-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <Button
-            aria-expanded={isExpanded}
-            className="justify-start gap-2 px-0 h-auto hover:bg-transparent min-w-0"
-            onClick={onToggle}
-            variant="ghost"
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-            )}
-            <h3 className="text-lg font-semibold tracking-tight">{domain.name}</h3>
-          </Button>
+    <div className="pb-6">
+      <div
+        className="bg-card border rounded-lg overflow-hidden"
+        id={`domain-${domain.id}`}
+        role="region"
+      >
+        <div className="px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              aria-expanded={isExpanded}
+              className="justify-start gap-2 px-0 h-auto hover:bg-transparent min-w-0"
+              onClick={onToggle}
+              variant="ghost"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+              )}
+              <h3 className="text-lg font-semibold tracking-tight">{domain.name}</h3>
+            </Button>
 
-          <div className="flex items-center gap-2 flex-wrap ml-7 sm:ml-0 sm:flex-shrink-0">
-            {confidenceVariant && domain.classificationConfidence !== undefined && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    className={cn(
-                      "text-xs font-medium tabular-nums",
-                      confidenceVariant.bg,
-                      confidenceVariant.text,
-                      confidenceVariant.border
-                    )}
-                    variant="outline"
-                  >
-                    {formatConfidence(domain.classificationConfidence)}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>AI classification confidence</TooltipContent>
-              </Tooltip>
-            )}
-            <span className="text-xs text-muted-foreground">{displayCount}</span>
+            <div className="flex items-center gap-2 flex-wrap ml-7 sm:ml-0 sm:flex-shrink-0">
+              {confidenceVariant && domain.classificationConfidence !== undefined && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      className={cn(
+                        "text-xs font-medium tabular-nums",
+                        confidenceVariant.bg,
+                        confidenceVariant.text,
+                        confidenceVariant.border
+                      )}
+                      variant="outline"
+                    >
+                      {formatConfidence(domain.classificationConfidence)}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>AI classification confidence</TooltipContent>
+                </Tooltip>
+              )}
+              <span className="text-xs text-muted-foreground">{displayCount}</span>
+            </div>
           </div>
-        </div>
 
-        {domain.description && (
-          <p className="text-sm text-muted-foreground mt-2 ml-7 leading-relaxed">
-            {domain.description}
-          </p>
-        )}
+          {domain.description && (
+            <p className="text-sm text-muted-foreground mt-2 ml-7 leading-relaxed">
+              {domain.description}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

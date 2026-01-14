@@ -72,16 +72,22 @@ export const DOMAIN_HEADER_HEIGHT = 80;
 export const FEATURE_HEADER_HEIGHT = 56;
 export const BEHAVIOR_ITEM_HEIGHT = 72;
 
+// Gap between items for virtualized layout (must be applied via padding/margin on each item)
+export const DOMAIN_GAP = 24; // gap between domain cards (space-y-6 equivalent)
+export const FEATURE_GAP = 12; // gap between features (space-y-3 equivalent)
+export const BEHAVIOR_GAP = 2; // minimal gap between behaviors (space-y-0.5 equivalent)
+
 /**
- * Returns estimated height for a flat spec item
+ * Returns estimated height for a flat spec item including gap
+ * Gap is included in the height estimate and applied via padding on each row
  */
 export const getItemHeight = (item: FlatSpecItem): number => {
   switch (item.type) {
     case "domain-header":
-      return DOMAIN_HEADER_HEIGHT;
+      return DOMAIN_HEADER_HEIGHT + DOMAIN_GAP;
     case "feature-header":
-      return FEATURE_HEADER_HEIGHT;
+      return FEATURE_HEADER_HEIGHT + FEATURE_GAP;
     case "behavior":
-      return BEHAVIOR_ITEM_HEIGHT;
+      return BEHAVIOR_ITEM_HEIGHT + BEHAVIOR_GAP;
   }
 };
