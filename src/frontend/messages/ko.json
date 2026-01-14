@@ -260,6 +260,19 @@
     },
     "behavior": {
       "original": "원본 테스트명"
+    },
+    "statusLegend": {
+      "title": "상태 범례",
+      "active": "활성",
+      "activeDescription": "테스트가 활성화되어 정상 실행됨",
+      "skipped": "건너뜀",
+      "skippedDescription": "테스트가 일시적으로 비활성화됨",
+      "todo": "할 일",
+      "todoDescription": "테스트가 계획되었으나 아직 구현되지 않음",
+      "focused": "집중",
+      "focusedDescription": "이 테스트만 실행됨 (디버깅 모드)",
+      "xfail": "예상 실패",
+      "xfailDescription": "테스트가 실패할 것으로 예상됨 (알려진 문제)"
     }
   },
   "dashboard": {

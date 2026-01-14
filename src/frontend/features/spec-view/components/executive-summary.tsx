@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { StatusLegend } from "./status-legend";
 import type { SpecDocument } from "../types";
 import { calculateDocumentStats } from "../utils/stats";
 
@@ -70,8 +71,9 @@ export const ExecutiveSummary = ({ document }: ExecutiveSummaryProps) => {
           {t("stats.behaviors", { count: behaviorCount })}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <p className="text-sm leading-relaxed whitespace-pre-line">{document.executiveSummary}</p>
+        <StatusLegend />
       </CardContent>
     </Card>
   );

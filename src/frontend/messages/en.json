@@ -260,6 +260,19 @@
     },
     "behavior": {
       "original": "Original Test Name"
+    },
+    "statusLegend": {
+      "title": "Status Legend",
+      "active": "Active",
+      "activeDescription": "Test is enabled and running normally",
+      "skipped": "Skipped",
+      "skippedDescription": "Test is temporarily disabled",
+      "todo": "Todo",
+      "todoDescription": "Test is planned but not implemented yet",
+      "focused": "Focused",
+      "focusedDescription": "Only this test runs (debugging mode)",
+      "xfail": "Expected Fail",
+      "xfailDescription": "Test is expected to fail (known issue)"
     }
   },
   "dashboard": {
