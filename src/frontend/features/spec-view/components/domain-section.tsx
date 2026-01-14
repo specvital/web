@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Layers } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -64,17 +64,18 @@ export const DomainSection = ({
   return (
     <Card
       aria-labelledby={`domain-title-${domain.id}`}
-      className="overflow-hidden border-border/60"
+      className="overflow-hidden border-border/60 py-0"
       id={`domain-${domain.id}`}
       role="region"
       tabIndex={-1}
     >
-      <CardHeader className="pb-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <CardHeader className="!px-4 !py-3 sm:!px-6 sm:!py-4">
+        {/* Header: desktop=horizontal, mobile=vertical */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Button
             aria-controls={isOpen ? `domain-content-${domain.id}` : undefined}
             aria-expanded={isOpen}
-            className="flex-1 justify-start gap-3 px-0 h-auto hover:bg-transparent group min-w-0"
+            className="justify-start gap-2 px-0 h-auto hover:bg-transparent min-w-0"
             onClick={() => setIsOpen(!isOpen)}
             variant="ghost"
           >
@@ -89,22 +90,16 @@ export const DomainSection = ({
                 className="h-5 w-5 flex-shrink-0 text-muted-foreground"
               />
             )}
-
-            {/* Icon with subtle background */}
-            <span className="flex items-center justify-center w-7 h-7 rounded-md bg-primary/10 flex-shrink-0">
-              <Layers aria-hidden="true" className="h-4 w-4 text-primary" />
-            </span>
-
             <CardTitle
-              className="text-lg font-semibold tracking-tight truncate"
+              className="text-lg font-semibold tracking-tight"
               id={`domain-title-${domain.id}`}
             >
               {domain.name}
             </CardTitle>
           </Button>
 
-          {/* Metadata badges */}
-          <div className="flex items-center gap-2 flex-wrap ml-[3.25rem] sm:ml-0 sm:flex-shrink-0">
+          {/* Metadata: mobile=aligned with title, desktop=right aligned */}
+          <div className="flex items-center gap-2 flex-wrap ml-7 sm:ml-0 sm:flex-shrink-0">
             {confidenceVariant && domain.classificationConfidence !== undefined && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -123,24 +118,23 @@ export const DomainSection = ({
                 <TooltipContent>AI classification confidence</TooltipContent>
               </Tooltip>
             )}
-            <Badge
-              className="text-xs font-medium text-muted-foreground bg-muted/60"
-              variant="secondary"
-            >
-              {displayCount}
-            </Badge>
+            <span className="text-xs text-muted-foreground">{displayCount}</span>
           </div>
         </div>
 
+        {/* Description: aligned with title (chevron width + gap = ml-7) */}
         {domain.description && (
-          <p className="text-sm text-muted-foreground mt-2 ml-0 sm:ml-[3.75rem] leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-2 ml-7 leading-relaxed">
             {domain.description}
           </p>
         )}
       </CardHeader>
 
       {isOpen && (
-        <CardContent className="pt-2 pb-4 space-y-3" id={`domain-content-${domain.id}`}>
+        <CardContent
+          className="!px-4 sm:!px-6 pt-0 pb-4 space-y-3"
+          id={`domain-content-${domain.id}`}
+        >
           {domain.features.map((feature) => (
             <FeatureGroup feature={feature} hasFilter={hasFilter} key={feature.id} />
           ))}
