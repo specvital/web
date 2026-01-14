@@ -145,7 +145,7 @@ export const BehaviorItem = ({ behavior }: BehaviorItemProps) => {
     <ResponsiveTooltip
       content={
         <div className="flex flex-col gap-1.5 max-w-xs">
-          <span className="text-xs font-medium text-muted-foreground">{t("original")}</span>
+          <span className="text-xs font-medium opacity-70">{t("original")}</span>
           <span className="font-mono text-xs leading-relaxed">{behavior.originalName}</span>
         </div>
       }

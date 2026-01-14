@@ -259,7 +259,7 @@
       "resultSummary": "{filtered} of {total} behaviors"
     },
     "behavior": {
-      "original": "Original"
+      "original": "Original Test Name"
     }
   },
   "dashboard": {

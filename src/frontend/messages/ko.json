@@ -259,7 +259,7 @@
       "resultSummary": "{total}개 중 {filtered}개 동작"
     },
     "behavior": {
-      "original": "원본"
+      "original": "원본 테스트명"
     }
   },
   "dashboard": {
