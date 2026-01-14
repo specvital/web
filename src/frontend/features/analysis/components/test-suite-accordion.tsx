@@ -3,10 +3,10 @@
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { FrameworkBadge } from "@/components/ui/framework-badge";
 import type { TestSuite } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-import { FrameworkBadge } from "./framework-badge";
 import { StatusMiniBar } from "./status-mini-bar";
 import { TestItem } from "./test-item";
 import { calculateStatusCounts } from "../utils/calculate-status-counts";

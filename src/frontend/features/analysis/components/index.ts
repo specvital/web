@@ -5,7 +5,6 @@ export { EmptyState } from "./empty-state";
 export { ExportButton } from "./export-button";
 export { FilterBar, FilterSummary } from "./filter-bar";
 export { FilterEmptyState } from "./filter-empty-state";
-export { FrameworkBadge } from "./framework-badge";
 export { FrameworkFilter } from "./framework-filter";
 export { SearchInput } from "./search-input";
 export { ShareButton } from "./share-button";

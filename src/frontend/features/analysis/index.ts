@@ -3,7 +3,6 @@ export {
   AnalysisHeader,
   AnalysisSkeleton,
   EmptyState,
-  FrameworkBadge,
   StatsCard,
   StatsCardSkeleton,
   TestItem,

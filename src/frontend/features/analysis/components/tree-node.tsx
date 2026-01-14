@@ -3,9 +3,9 @@
 import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen } from "lucide-react";
 import { useMemo } from "react";
 
+import { FrameworkBadge } from "@/components/ui/framework-badge";
 import { cn } from "@/lib/utils";
 
-import { FrameworkBadge } from "./framework-badge";
 import { StatusMiniBar } from "./status-mini-bar";
 import { TestItem } from "./test-item";
 import type { FlatTreeItem } from "../types";
