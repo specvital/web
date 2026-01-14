@@ -70,11 +70,11 @@ export const DomainSection = ({
       tabIndex={-1}
     >
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <Button
             aria-controls={isOpen ? `domain-content-${domain.id}` : undefined}
             aria-expanded={isOpen}
-            className="flex-1 justify-start gap-3 px-0 h-auto hover:bg-transparent group"
+            className="flex-1 justify-start gap-3 px-0 h-auto hover:bg-transparent group min-w-0"
             onClick={() => setIsOpen(!isOpen)}
             variant="ghost"
           >
@@ -91,12 +91,12 @@ export const DomainSection = ({
             )}
 
             {/* Icon with subtle background */}
-            <span className="flex items-center justify-center w-7 h-7 rounded-md bg-primary/10">
+            <span className="flex items-center justify-center w-7 h-7 rounded-md bg-primary/10 flex-shrink-0">
               <Layers aria-hidden="true" className="h-4 w-4 text-primary" />
             </span>
 
             <CardTitle
-              className="text-lg font-semibold tracking-tight"
+              className="text-lg font-semibold tracking-tight truncate"
               id={`domain-title-${domain.id}`}
             >
               {domain.name}
@@ -104,7 +104,7 @@ export const DomainSection = ({
           </Button>
 
           {/* Metadata badges */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-wrap ml-[3.25rem] sm:ml-0 sm:flex-shrink-0">
             {confidenceVariant && domain.classificationConfidence !== undefined && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -133,7 +133,7 @@ export const DomainSection = ({
         </div>
 
         {domain.description && (
-          <p className="text-sm text-muted-foreground mt-2 ml-[3.75rem] leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-2 ml-0 sm:ml-[3.75rem] leading-relaxed">
             {domain.description}
           </p>
         )}
