@@ -51,7 +51,7 @@ export const DomainSection = ({
       role="region"
       tabIndex={-1}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <Button
             aria-controls={isOpen ? `domain-content-${domain.id}` : undefined}
@@ -101,7 +101,7 @@ export const DomainSection = ({
       </CardHeader>
 
       {isOpen && (
-        <CardContent className="pt-0 space-y-3" id={`domain-content-${domain.id}`}>
+        <CardContent className="pt-2 space-y-4" id={`domain-content-${domain.id}`}>
           {domain.features.map((feature) => (
             <FeatureGroup feature={feature} hasFilter={hasFilter} key={feature.id} />
           ))}

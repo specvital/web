@@ -283,7 +283,10 @@ export const TocSidebar = ({
       <div className="lg:hidden">
         <Sheet>
           <SheetTrigger asChild>
-            <Button className="fixed bottom-4 right-4 z-50 shadow-lg" size="icon">
+            <Button
+              className="fixed bottom-20 right-4 z-[100] shadow-lg rounded-full h-12 w-12"
+              size="icon"
+            >
               <List className="h-5 w-5" />
               <span className="sr-only">{t("toc.openToc")}</span>
             </Button>

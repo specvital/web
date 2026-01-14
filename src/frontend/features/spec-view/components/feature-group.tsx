@@ -38,7 +38,10 @@ export const FeatureGroup = ({
   return (
     <div
       aria-labelledby={`feature-title-${feature.id}`}
-      className="border-l-2 border-muted-foreground/20 ml-2"
+      className={cn(
+        "border-l-2 border-primary/25 ml-3 pl-1",
+        "hover:border-primary/40 transition-colors"
+      )}
       id={`feature-${feature.id}`}
       role="region"
       tabIndex={-1}
@@ -67,7 +70,7 @@ export const FeatureGroup = ({
       </Button>
 
       {isOpen && (
-        <div className="pl-4 space-y-0.5" id={`feature-content-${feature.id}`}>
+        <div className="pl-3 space-y-1" id={`feature-content-${feature.id}`}>
           {feature.description && (
             <p className="px-3 py-1.5 text-sm text-muted-foreground">{feature.description}</p>
           )}

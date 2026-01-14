@@ -81,12 +81,16 @@ export const BehaviorItem = ({ behavior }: BehaviorItemProps) => {
         </p>
 
         {sourceInfo && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="font-mono truncate max-w-[200px]">{sourceInfo.filePath}</span>
-            <span className="font-mono">L:{sourceInfo.lineNumber}</span>
-            <Badge className="text-[10px] px-1.5" variant="outline">
-              {sourceInfo.framework}
-            </Badge>
+          <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1 text-xs text-muted-foreground">
+            <span className="font-mono truncate max-w-full sm:max-w-[180px] md:max-w-[250px]">
+              {sourceInfo.filePath}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono opacity-80">L:{sourceInfo.lineNumber}</span>
+              <Badge className="text-[10px] px-1.5 w-fit" variant="outline">
+                {sourceInfo.framework}
+              </Badge>
+            </div>
           </div>
         )}
       </div>

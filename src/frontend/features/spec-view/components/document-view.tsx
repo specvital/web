@@ -36,7 +36,7 @@ export const DocumentView = ({ document }: DocumentViewProps) => {
             title={t("noResults")}
           />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filteredDocument?.domains.map((domain) => (
               <DomainSection domain={domain} hasFilter={hasFilter} key={domain.id} />
             ))}
