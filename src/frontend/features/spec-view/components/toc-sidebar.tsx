@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ResponsiveTooltip } from "@/components/ui/responsive-tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
@@ -14,6 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useTruncateDetection } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 import type {
@@ -59,6 +61,42 @@ type TocItemProps = {
   onNavigate: (sectionId: string) => void;
 };
 
+const TocDomainName = ({ name }: { name: string }) => {
+  const { isTruncated, ref } = useTruncateDetection<HTMLSpanElement>();
+
+  const nameElement = (
+    <span className="flex-1 min-w-0 lg:truncate" ref={ref}>
+      {name}
+    </span>
+  );
+
+  return isTruncated ? (
+    <ResponsiveTooltip content={name} side="right">
+      {nameElement}
+    </ResponsiveTooltip>
+  ) : (
+    nameElement
+  );
+};
+
+const TocFeatureName = ({ name }: { name: string }) => {
+  const { isTruncated, ref } = useTruncateDetection<HTMLSpanElement>();
+
+  const nameElement = (
+    <span className="flex-1 min-w-0 lg:truncate" ref={ref}>
+      {name}
+    </span>
+  );
+
+  return isTruncated ? (
+    <ResponsiveTooltip content={name} side="right">
+      {nameElement}
+    </ResponsiveTooltip>
+  ) : (
+    nameElement
+  );
+};
+
 const TocItem = ({
   activeId,
   domain,
@@ -84,7 +122,7 @@ const TocItem = ({
       <button
         aria-current={isDomainActive ? "location" : undefined}
         className={cn(
-          "w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors text-left",
+          "w-full max-w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors text-left overflow-hidden",
           "hover:bg-muted/50",
           isDomainActive && "bg-primary/10 text-primary font-medium"
         )}
@@ -103,8 +141,8 @@ const TocItem = ({
         ) : (
           <span className="w-3" />
         )}
-        <span className="flex-1 truncate">{domain.name}</span>
-        <span className="text-xs text-muted-foreground">{displayCount}</span>
+        <TocDomainName name={domain.name} />
+        <span className="text-xs text-muted-foreground flex-shrink-0">{displayCount}</span>
       </button>
 
       {isExpanded && domain.features.length > 0 && (
@@ -120,7 +158,7 @@ const TocItem = ({
               <button
                 aria-current={isActive ? "location" : undefined}
                 className={cn(
-                  "w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors text-left",
+                  "w-full max-w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors text-left overflow-hidden",
                   "hover:bg-muted/50",
                   isActive && "bg-primary/10 text-primary font-medium"
                 )}
@@ -128,8 +166,10 @@ const TocItem = ({
                 onClick={() => onNavigate(featureId)}
                 type="button"
               >
-                <span className="truncate">{feature.name}</span>
-                <span className="text-muted-foreground ml-auto">{featureDisplayCount}</span>
+                <TocFeatureName name={feature.name} />
+                <span className="text-muted-foreground ml-auto flex-shrink-0">
+                  {featureDisplayCount}
+                </span>
               </button>
             );
           })}
@@ -187,7 +227,7 @@ const TocContent = ({
           )}
         </div>
       </div>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 [&>div>div]:!block [&>div>div]:!w-full">
         <div className="p-2 space-y-1">
           {displayDomains.map((domain) => (
             <TocItem
