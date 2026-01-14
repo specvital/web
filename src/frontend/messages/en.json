@@ -73,21 +73,11 @@
     }
   },
   "analyze": {
-    "aiAnalysis": {
-      "badge": "Soon",
-      "button": "AI Analysis",
-      "modal": {
-        "cta": "Follow our progress on GitHub",
-        "description": "Transform your test suites into human-readable specification documents with AI.",
-        "dismiss": "Got it",
-        "feature1": "Domain-organized spec documents",
-        "feature2": "Executive summary for stakeholders",
-        "feature3": "Smart search and filtering",
-        "feature4": "Gap analysis and coverage insights",
-        "starOnGitHub": "Star on GitHub",
-        "subtitle": "Coming Soon",
-        "title": "AI-Powered Analysis"
-      }
+    "generateSpec": {
+      "generate": "Generate AI Spec",
+      "generating": "Generating...",
+      "aiSpecDocument": "AI Spec Document",
+      "ariaLabel": "Generate test specification document with AI"
     },
     "viewOnGitHub": "View on GitHub",
     "analyzedAt": "Analyzed: {date}",

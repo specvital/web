@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { DocumentView, EmptyDocument, GenerationStatus, useSpecView } from "@/features/spec-view";
 import type { AnalysisResult } from "@/lib/api";
@@ -30,6 +30,7 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const { frameworks, query, setFrameworks, setQuery, setStatuses, statuses } = useFilterState();
   const { setViewMode, viewMode } = useViewMode();
   const shouldReduceMotion = useReducedMotion();
+  const previousDocumentRef = useRef<boolean>(false);
 
   const {
     data: specDocument,
@@ -38,6 +39,16 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
     isLoading: isSpecLoading,
     requestGenerate,
   } = useSpecView(result.id);
+
+  const isDocumentAvailable = Boolean(specDocument);
+
+  // Auto-switch to document view when document becomes available
+  useEffect(() => {
+    if (specDocument && !previousDocumentRef.current) {
+      setViewMode("document");
+    }
+    previousDocumentRef.current = Boolean(specDocument);
+  }, [specDocument, setViewMode]);
 
   const containerVariants = shouldReduceMotion ? {} : pageStaggerContainer;
   const itemVariants = shouldReduceMotion ? {} : fadeInUp;
@@ -60,9 +71,22 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const hasFilter = query.trim().length > 0 || frameworks.length > 0 || statuses.length > 0;
   const hasResults = filteredSuites.length > 0;
 
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
-  };
+  const handleViewModeChange = useCallback(
+    (mode: ViewMode) => {
+      setViewMode(mode);
+    },
+    [setViewMode]
+  );
+
+  const handleGenerateSpec = useCallback(() => {
+    if (isDocumentAvailable) {
+      // Document already exists, switch to document view
+      setViewMode("document");
+    } else {
+      // Trigger generation
+      requestGenerate();
+    }
+  }, [isDocumentAvailable, requestGenerate, setViewMode]);
 
   const renderContent = () => {
     if (viewMode === "document") {
@@ -125,7 +149,11 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
           <FilterBar
             availableFrameworks={availableFrameworks}
             frameworks={frameworks}
+            isDocumentAvailable={isDocumentAvailable}
+            isGenerating={isGenerating}
+            isViewingDocument={viewMode === "document"}
             onFrameworksChange={setFrameworks}
+            onGenerateSpec={handleGenerateSpec}
             onQueryChange={setQuery}
             onStatusesChange={setStatuses}
             onViewModeChange={handleViewModeChange}

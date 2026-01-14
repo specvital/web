@@ -1,2 +1,1 @@
-export { AIAnalysisButton } from "./ai-analysis-button";
-export { AIComingSoonModal } from "./ai-coming-soon-modal";
+export { GenerateSpecButton } from "./generate-spec-button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, GitBranch, List } from "lucide-react";
+import { GitBranch, List } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -10,16 +10,11 @@ import type { ViewMode } from "../types";
 import { VIEW_MODES } from "../types";
 
 type ViewModeToggleProps = {
-  isDocumentAvailable?: boolean;
   onChange: (value: ViewMode) => void;
   value: ViewMode;
 };
 
-export const ViewModeToggle = ({
-  isDocumentAvailable = true,
-  onChange,
-  value,
-}: ViewModeToggleProps) => {
+export const ViewModeToggle = ({ onChange, value }: ViewModeToggleProps) => {
   const t = useTranslations("analyze.viewMode");
 
   const handleValueChange = (newValue: string) => {
@@ -27,12 +22,15 @@ export const ViewModeToggle = ({
     onChange(newValue as ViewMode);
   };
 
+  // Document 뷰일 때 토글은 선택 해제 상태로 표시
+  const toggleValue = value === "document" ? undefined : value;
+
   return (
     <ToggleGroup
       onValueChange={handleValueChange}
       size="default"
       type="single"
-      value={value}
+      value={toggleValue}
       variant="outline"
     >
       <Tooltip>
@@ -50,20 +48,6 @@ export const ViewModeToggle = ({
           </ToggleGroupItem>
         </TooltipTrigger>
         <TooltipContent>{t("tree")}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <ToggleGroupItem
-            aria-label={t("document")}
-            disabled={!isDocumentAvailable}
-            value="document"
-          >
-            <FileText className="h-4 w-4" />
-          </ToggleGroupItem>
-        </TooltipTrigger>
-        <TooltipContent>
-          {isDocumentAvailable ? t("document") : t("documentUnavailable")}
-        </TooltipContent>
       </Tooltip>
     </ToggleGroup>
   );

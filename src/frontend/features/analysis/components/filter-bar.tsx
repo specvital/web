@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import type { TestStatus } from "@/lib/api";
 
-import { AIAnalysisButton } from "./ai-analysis";
+import { GenerateSpecButton } from "./ai-analysis";
 import { FrameworkFilter } from "./framework-filter";
 import { SearchInput } from "./search-input";
 import { StatusFilter } from "./status-filter";
@@ -14,7 +14,11 @@ import type { ViewMode } from "../types";
 type FilterBarProps = {
   availableFrameworks: string[];
   frameworks: string[];
+  isDocumentAvailable: boolean;
+  isGenerating: boolean;
+  isViewingDocument: boolean;
   onFrameworksChange: (value: string[]) => void;
+  onGenerateSpec: () => void;
   onQueryChange: (value: string) => void;
   onStatusesChange: (value: TestStatus[]) => void;
   onViewModeChange: (value: ViewMode) => void;
@@ -47,7 +51,11 @@ export const FilterSummary = ({ filteredCount, hasFilter, totalCount }: FilterSu
 export const FilterBar = ({
   availableFrameworks,
   frameworks,
+  isDocumentAvailable,
+  isGenerating,
+  isViewingDocument,
   onFrameworksChange,
+  onGenerateSpec,
   onQueryChange,
   onStatusesChange,
   onViewModeChange,
@@ -75,13 +83,24 @@ export const FilterBar = ({
           </div>
           <ViewModeToggle onChange={onViewModeChange} value={viewMode} />
           <div className="hidden sm:block">
-            <AIAnalysisButton />
+            <GenerateSpecButton
+              isActive={isViewingDocument}
+              isDocumentAvailable={isDocumentAvailable}
+              isGenerating={isGenerating}
+              onClick={onGenerateSpec}
+            />
           </div>
         </div>
       </div>
-      {/* AI Analysis button: full width on mobile only */}
+      {/* Generate Spec button: full width on mobile only */}
       <div className="block sm:hidden">
-        <AIAnalysisButton className="w-full" />
+        <GenerateSpecButton
+          className="w-full"
+          isActive={isViewingDocument}
+          isDocumentAvailable={isDocumentAvailable}
+          isGenerating={isGenerating}
+          onClick={onGenerateSpec}
+        />
       </div>
     </>
   );
