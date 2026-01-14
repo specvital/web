@@ -85,30 +85,7 @@ export const useDocumentFilter = (document: SpecDocument | null) => {
     [rawStatuses]
   );
 
-  const setStatuses = useCallback(
-    (value: TestStatus[] | null) => {
-      setRawStatuses(value);
-    },
-    [setRawStatuses]
-  );
-
   const hasFilter = query.length > 0 || statuses.length > 0 || frameworks.length > 0;
-
-  const availableFrameworks = useMemo(() => {
-    if (!document) return [];
-
-    const frameworkSet = new Set<string>();
-    for (const domain of document.domains) {
-      for (const feature of domain.features) {
-        for (const behavior of feature.behaviors) {
-          if (behavior.sourceInfo?.framework) {
-            frameworkSet.add(behavior.sourceInfo.framework);
-          }
-        }
-      }
-    }
-    return Array.from(frameworkSet).sort();
-  }, [document]);
 
   const filteredDocument = useMemo((): FilteredDocument | null => {
     if (!document) return null;
@@ -181,17 +158,10 @@ export const useDocumentFilter = (document: SpecDocument | null) => {
   }, [setQuery, setRawStatuses, setFrameworks]);
 
   return {
-    availableFrameworks,
     clearFilters,
     filteredDocument,
-    frameworks,
     hasFilter,
     matchCount: filteredDocument?.matchCount ?? 0,
     query,
-    setFrameworks,
-    setQuery,
-    setStatuses,
-    statuses,
-    totalCount: filteredDocument?.totalCount ?? 0,
   } as const;
 };

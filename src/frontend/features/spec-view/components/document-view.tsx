@@ -2,8 +2,6 @@
 
 import { useTranslations } from "next-intl";
 
-import { DocumentFilter } from "./document-filter";
-import { DocumentSearch } from "./document-search";
 import { DomainSection } from "./domain-section";
 import { ExecutiveSummary } from "./executive-summary";
 import { FilterEmptyState } from "./filter-empty-state";
@@ -20,20 +18,8 @@ export const DocumentView = ({ document }: DocumentViewProps) => {
   const t = useTranslations("analyze.filter");
   useScrollSync();
 
-  const {
-    availableFrameworks,
-    clearFilters,
-    filteredDocument,
-    frameworks,
-    hasFilter,
-    matchCount,
-    query,
-    setFrameworks,
-    setQuery,
-    setStatuses,
-    statuses,
-    totalCount,
-  } = useDocumentFilter(document);
+  const { clearFilters, filteredDocument, hasFilter, matchCount, query } =
+    useDocumentFilter(document);
 
   const showEmptyState = hasFilter && matchCount === 0;
 
@@ -43,28 +29,6 @@ export const DocumentView = ({ document }: DocumentViewProps) => {
 
       <div className="flex-1 space-y-6 min-w-0">
         <ExecutiveSummary document={document} />
-
-        {/* Search & Filter Bar */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <DocumentSearch
-            filteredDocument={filteredDocument}
-            onQueryChange={setQuery}
-            query={query}
-          />
-          <div className="flex-1">
-            <DocumentFilter
-              availableFrameworks={availableFrameworks}
-              frameworks={frameworks}
-              hasFilter={hasFilter}
-              matchCount={matchCount}
-              onClearFilters={clearFilters}
-              onFrameworksChange={setFrameworks}
-              onStatusesChange={setStatuses}
-              statuses={statuses}
-              totalCount={totalCount}
-            />
-          </div>
-        </div>
 
         {/* Content */}
         {showEmptyState ? (

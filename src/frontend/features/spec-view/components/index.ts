@@ -1,6 +1,4 @@
 export { BehaviorItem } from "./behavior-item";
-export { DocumentFilter } from "./document-filter";
-export { DocumentSearch } from "./document-search";
 export { DocumentView } from "./document-view";
 export { DomainSection } from "./domain-section";
 export { DomainStatsBadge } from "./domain-stats-badge";
