@@ -125,11 +125,3 @@ export const getFrameworkSolidColor = (framework: string): string => {
   const index = hashString(normalized) % FALLBACK_SOLID_PALETTE.length;
   return FALLBACK_SOLID_PALETTE[index];
 };
-
-/** @deprecated Use getFrameworkSolidColor instead */
-export const getFrameworkColor = (index: number, fallbackName?: string): string => {
-  if (fallbackName) {
-    return getFrameworkSolidColor(fallbackName);
-  }
-  return FALLBACK_SOLID_PALETTE[index % FALLBACK_SOLID_PALETTE.length];
-};
