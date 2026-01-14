@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ResponsiveTooltip } from "@/components/ui/responsive-tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyRepositories, usePaginatedRepositories } from "@/features/dashboard";
 import { Link } from "@/i18n/navigation";
@@ -129,9 +130,15 @@ export const MyReposTab = ({ className }: MyReposTabProps) => {
               <li key={repo.id}>
                 <div className="flex items-start gap-3 p-3 rounded-lg border bg-card shadow-sm hover:shadow-md hover:bg-accent/50 transition-all">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-sm truncate">{repo.fullName}</h4>
-                      {repo.isPrivate && <Lock className="size-3 text-muted-foreground shrink-0" />}
+                    <div className="flex items-start gap-2">
+                      <ResponsiveTooltip content={repo.fullName}>
+                        <h4 className="font-medium text-sm line-clamp-2 break-all h-10">
+                          {repo.fullName}
+                        </h4>
+                      </ResponsiveTooltip>
+                      {repo.isPrivate && (
+                        <Lock className="size-3 text-muted-foreground shrink-0 mt-0.5" />
+                      )}
                       {!isLoadingAnalyzed && (
                         <span
                           className={`text-xs px-1.5 py-0.5 rounded ${
