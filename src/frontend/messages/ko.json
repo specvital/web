@@ -257,6 +257,9 @@
     "filter": {
       "clearFilters": "필터 초기화",
       "resultSummary": "{total}개 중 {filtered}개 동작"
+    },
+    "behavior": {
+      "original": "원본"
     }
   },
   "dashboard": {

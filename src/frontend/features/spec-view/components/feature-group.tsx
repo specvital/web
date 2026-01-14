@@ -15,14 +15,12 @@ type FeatureGroupProps = {
   defaultOpen?: boolean;
   feature: FilteredFeature;
   hasFilter?: boolean;
-  query?: string;
 };
 
 export const FeatureGroup = ({
   defaultOpen = true,
   feature,
   hasFilter = false,
-  query = "",
 }: FeatureGroupProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -74,11 +72,11 @@ export const FeatureGroup = ({
             <p className="px-3 py-1.5 text-sm text-muted-foreground">{feature.description}</p>
           )}
           {visibleBehaviors.length >= VIRTUALIZATION_THRESHOLD ? (
-            <VirtualizedBehaviorList behaviors={visibleBehaviors} query={query} />
+            <VirtualizedBehaviorList behaviors={visibleBehaviors} />
           ) : (
             <div role="list">
               {visibleBehaviors.map((behavior) => (
-                <BehaviorItem behavior={behavior} key={behavior.id} query={query} />
+                <BehaviorItem behavior={behavior} key={behavior.id} />
               ))}
             </div>
           )}

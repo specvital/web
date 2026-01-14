@@ -18,8 +18,7 @@ export const DocumentView = ({ document }: DocumentViewProps) => {
   const t = useTranslations("analyze.filter");
   useScrollSync();
 
-  const { clearFilters, filteredDocument, hasFilter, matchCount, query } =
-    useDocumentFilter(document);
+  const { clearFilters, filteredDocument, hasFilter, matchCount } = useDocumentFilter(document);
 
   const showEmptyState = hasFilter && matchCount === 0;
 
@@ -30,7 +29,6 @@ export const DocumentView = ({ document }: DocumentViewProps) => {
       <div className="flex-1 space-y-6 min-w-0">
         <ExecutiveSummary document={document} />
 
-        {/* Content */}
         {showEmptyState ? (
           <FilterEmptyState
             description={t("noResultsDescription")}
@@ -40,7 +38,7 @@ export const DocumentView = ({ document }: DocumentViewProps) => {
         ) : (
           <div className="space-y-4">
             {filteredDocument?.domains.map((domain) => (
-              <DomainSection domain={domain} hasFilter={hasFilter} key={domain.id} query={query} />
+              <DomainSection domain={domain} hasFilter={hasFilter} key={domain.id} />
             ))}
           </div>
         )}

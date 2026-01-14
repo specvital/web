@@ -16,7 +16,6 @@ type DomainSectionProps = {
   defaultOpen?: boolean;
   domain: FilteredDomain;
   hasFilter?: boolean;
-  query?: string;
 };
 
 const formatConfidence = (confidence: number): string => {
@@ -33,7 +32,6 @@ export const DomainSection = ({
   defaultOpen = true,
   domain,
   hasFilter = false,
-  query = "",
 }: DomainSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -105,7 +103,7 @@ export const DomainSection = ({
       {isOpen && (
         <CardContent className="pt-0 space-y-3" id={`domain-content-${domain.id}`}>
           {domain.features.map((feature) => (
-            <FeatureGroup feature={feature} hasFilter={hasFilter} key={feature.id} query={query} />
+            <FeatureGroup feature={feature} hasFilter={hasFilter} key={feature.id} />
           ))}
         </CardContent>
       )}

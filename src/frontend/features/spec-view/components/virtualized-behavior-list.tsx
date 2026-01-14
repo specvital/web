@@ -8,7 +8,6 @@ import type { FilteredBehavior } from "../hooks/use-document-filter";
 
 type VirtualizedBehaviorListProps = {
   behaviors: FilteredBehavior[];
-  query?: string;
 };
 
 const ITEM_HEIGHT_ESTIMATE = 72;
@@ -18,10 +17,7 @@ const OVERSCAN = 5;
  * Virtualized behavior list for large documents (100+ behaviors)
  * Only renders visible items for performance
  */
-export const VirtualizedBehaviorList = ({
-  behaviors,
-  query = "",
-}: VirtualizedBehaviorListProps) => {
+export const VirtualizedBehaviorList = ({ behaviors }: VirtualizedBehaviorListProps) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
@@ -55,7 +51,7 @@ export const VirtualizedBehaviorList = ({
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              <BehaviorItem behavior={behavior} query={query} />
+              <BehaviorItem behavior={behavior} />
             </div>
           );
         })}

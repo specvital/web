@@ -257,6 +257,9 @@
     "filter": {
       "clearFilters": "Clear filters",
       "resultSummary": "{filtered} of {total} behaviors"
+    },
+    "behavior": {
+      "original": "Original"
     }
   },
   "dashboard": {
