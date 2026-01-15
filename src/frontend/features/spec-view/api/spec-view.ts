@@ -7,6 +7,18 @@ import type {
   SpecGenerationStatusResponse,
 } from "../types";
 
+export class QuotaExceededError extends Error {
+  limit: number;
+  used: number;
+
+  constructor(message: string, used: number, limit: number) {
+    super(message);
+    this.name = "QuotaExceededError";
+    this.used = used;
+    this.limit = limit;
+  }
+}
+
 export async function fetchSpecDocument(analysisId: string): Promise<SpecDocumentResponse> {
   const response = await apiFetch(`/api/spec-view/${analysisId}`);
 
@@ -42,6 +54,15 @@ export async function requestSpecGeneration(
     body: JSON.stringify(request),
     method: "POST",
   });
+
+  if (response.status === 429) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new QuotaExceededError(
+      errorBody.detail || "Quota exceeded",
+      errorBody.used ?? 0,
+      errorBody.limit ?? 0
+    );
+  }
 
   if (!response.ok && response.status !== 202 && response.status !== 409) {
     const errorBody = await response.json().catch(() => ({}));

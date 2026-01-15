@@ -4,12 +4,15 @@ import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
+import { useUsage } from "@/features/account";
 import { useAuth, useSpecLoginDialog } from "@/features/auth";
 import {
   DocumentView,
   EmptyDocument,
   GenerationStatus,
+  QuotaConfirmDialog,
   useDocumentFilter,
+  useQuotaConfirmDialog,
   useSpecView,
 } from "@/features/spec-view";
 import type { AnalysisResult } from "@/lib/api";
@@ -41,6 +44,8 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
 
   const { isAuthenticated } = useAuth();
   const { open: openSpecLoginDialog } = useSpecLoginDialog();
+  const { data: usageData } = useUsage(isAuthenticated);
+  const { open: openQuotaConfirmDialog } = useQuotaConfirmDialog();
 
   const {
     data: specDocument,
@@ -92,7 +97,7 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
       return;
     }
 
-    requestGenerate();
+    openQuotaConfirmDialog(usageData ?? null, () => requestGenerate(), result.summary.total);
   };
 
   const renderContent = () => {
@@ -105,7 +110,21 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
         return <GenerationStatus onRetry={() => requestGenerate()} status={generationStatus} />;
       }
 
-      return <EmptyDocument isLoading={isSpecLoading} onGenerate={handleGenerateSpec} />;
+      const specviewQuota = usageData?.specview
+        ? {
+            limit: usageData.specview.limit ?? null,
+            percentage: usageData.specview.percentage ?? null,
+            used: usageData.specview.used,
+          }
+        : null;
+
+      return (
+        <EmptyDocument
+          isLoading={isSpecLoading}
+          onGenerate={handleGenerateSpec}
+          quota={specviewQuota}
+        />
+      );
     }
 
     if (hasFilter && !hasResults) {
@@ -120,62 +139,65 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   };
 
   return (
-    <motion.main
-      animate="visible"
-      className="container mx-auto px-4 py-8"
-      initial={shouldReduceMotion ? false : "hidden"}
-      variants={containerVariants}
-    >
-      <div className="space-y-6">
-        <AnalysisHeader
-          analyzedAt={result.analyzedAt}
-          branchName={result.branchName}
-          commitSha={result.commitSha}
-          committedAt={result.committedAt}
-          data={result}
-          owner={result.owner}
-          parserVersion={result.parserVersion}
-          repo={result.repo}
-        />
-
-        <motion.div variants={itemVariants}>
-          <StatsCard summary={result.summary} />
-        </motion.div>
-
-        <motion.section className="space-y-4" variants={itemVariants}>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold">{t("testSuites")}</h2>
-              <FilterSummary
-                filteredCount={filteredTestCount}
-                hasFilter={hasFilter}
-                totalCount={result.summary.total}
-              />
-            </div>
-          </div>
-          <FilterBar
-            availableFrameworks={availableFrameworks}
-            frameworks={frameworks}
-            isDocumentAvailable={isDocumentAvailable}
-            isGenerating={isGenerating}
-            isViewingDocument={viewMode === "document"}
-            matchCount={
-              viewMode === "document" && specDocument && documentQuery
-                ? documentMatchCount
-                : undefined
-            }
-            onFrameworksChange={setFrameworks}
-            onGenerateSpec={handleGenerateSpec}
-            onQueryChange={setQuery}
-            onStatusesChange={setStatuses}
-            onViewModeChange={handleViewModeChange}
-            query={query}
-            statuses={statuses}
-            viewMode={viewMode}
+    <>
+      <QuotaConfirmDialog />
+      <motion.main
+        animate="visible"
+        className="container mx-auto px-4 py-8"
+        initial={shouldReduceMotion ? false : "hidden"}
+        variants={containerVariants}
+      >
+        <div className="space-y-6">
+          <AnalysisHeader
+            analyzedAt={result.analyzedAt}
+            branchName={result.branchName}
+            commitSha={result.commitSha}
+            committedAt={result.committedAt}
+            data={result}
+            owner={result.owner}
+            parserVersion={result.parserVersion}
+            repo={result.repo}
           />
-          {renderContent()}
-        </motion.section>
-      </div>
-    </motion.main>
+
+          <motion.div variants={itemVariants}>
+            <StatsCard summary={result.summary} />
+          </motion.div>
+
+          <motion.section className="space-y-4" variants={itemVariants}>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-semibold">{t("testSuites")}</h2>
+                <FilterSummary
+                  filteredCount={filteredTestCount}
+                  hasFilter={hasFilter}
+                  totalCount={result.summary.total}
+                />
+              </div>
+            </div>
+            <FilterBar
+              availableFrameworks={availableFrameworks}
+              frameworks={frameworks}
+              isDocumentAvailable={isDocumentAvailable}
+              isGenerating={isGenerating}
+              isViewingDocument={viewMode === "document"}
+              matchCount={
+                viewMode === "document" && specDocument && documentQuery
+                  ? documentMatchCount
+                  : undefined
+              }
+              onFrameworksChange={setFrameworks}
+              onGenerateSpec={handleGenerateSpec}
+              onQueryChange={setQuery}
+              onStatusesChange={setStatuses}
+              onViewModeChange={handleViewModeChange}
+              query={query}
+              statuses={statuses}
+              viewMode={viewMode}
+            />
+            {renderContent()}
+          </motion.section>
+        </div>
+      </motion.main>
+    </>
   );
 };

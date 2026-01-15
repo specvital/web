@@ -291,6 +291,40 @@
       "description": "Generate an AI-powered specification document from your test cases. The document will organize your tests into domains, features, and behaviors.",
       "generateButton": "Generate Document",
       "generating": "Generating..."
+    },
+    "quota": {
+      "thisMonth": "this month",
+      "unlimited": "(No limit)",
+      "warning": "Running low",
+      "almostFull": "Almost at limit",
+      "viewAccount": "View Account"
+    },
+    "quotaConfirm": {
+      "title": "Generate AI Specification",
+      "description": "This will use your SpecView generation quota. Please review your current usage before proceeding.",
+      "specviewUsage": "SpecView Usage",
+      "used": "used",
+      "unlimited": "Unlimited",
+      "thisMonth": "this month",
+      "estimatedCost": "This generation will use ~{count} quota",
+      "afterGeneration": "After: {after} / {limit}",
+      "warningMessage": "You're running low on your monthly quota. Consider upgrading your plan for more generations.",
+      "dangerMessage": "You're almost at your monthly limit. This generation will use most of your remaining quota.",
+      "exceededMessage": "You've reached your monthly quota limit. Please upgrade your plan or wait until next month.",
+      "wouldExceedMessage": "This generation would exceed your monthly quota limit.",
+      "viewAccount": "View Account →",
+      "cancel": "Cancel",
+      "generate": "Generate Document"
+    },
+    "toast": {
+      "quotaExceeded": {
+        "title": "Quota Exceeded",
+        "description": "You've used {used} of {limit} SpecView generations this month.",
+        "viewAccount": "View Account"
+      },
+      "generateFailed": {
+        "title": "Failed to generate spec"
+      }
     }
   },
   "dashboard": {

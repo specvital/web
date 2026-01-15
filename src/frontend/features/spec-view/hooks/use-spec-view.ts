@@ -1,10 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
-import { fetchSpecDocument, requestSpecGeneration } from "../api";
+import { fetchSpecDocument, QuotaExceededError, requestSpecGeneration } from "../api";
 import type {
   SpecDocument,
   SpecDocumentResponse,
@@ -33,6 +34,7 @@ type UseSpecViewReturn = {
 };
 
 export const useSpecView = (analysisId: string): UseSpecViewReturn => {
+  const t = useTranslations("specView.toast");
   const queryClient = useQueryClient();
   const pollingStartTimeRef = useRef<number | null>(null);
 
@@ -94,7 +96,23 @@ export const useSpecView = (analysisId: string): UseSpecViewReturn => {
         language,
       }),
     onError: (error) => {
-      toast.error("Failed to generate spec", {
+      if (error instanceof QuotaExceededError) {
+        toast.error(t("quotaExceeded.title"), {
+          action: {
+            label: t("quotaExceeded.viewAccount"),
+            onClick: () => {
+              window.location.href = "/account";
+            },
+          },
+          description: t("quotaExceeded.description", {
+            limit: error.limit.toLocaleString(),
+            used: error.used.toLocaleString(),
+          }),
+        });
+        return;
+      }
+
+      toast.error(t("generateFailed.title"), {
         description: error instanceof Error ? error.message : String(error),
       });
     },

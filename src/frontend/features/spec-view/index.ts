@@ -7,12 +7,20 @@ export {
   ExecutiveSummary,
   FeatureGroup,
   GenerationStatus,
+  QuotaConfirmDialog,
+  QuotaIndicator,
   TocSidebar,
 } from "./components";
 
-export { specViewKeys, useDocumentFilter, useScrollSync, useSpecView } from "./hooks";
+export {
+  specViewKeys,
+  useDocumentFilter,
+  useQuotaConfirmDialog,
+  useScrollSync,
+  useSpecView,
+} from "./hooks";
 
-export { calculateDocumentStats, calculateDomainStats } from "./utils";
+export { calculateDocumentStats, calculateDomainStats, isQuotaExceeded } from "./utils";
 
 export type {
   SpecBehavior,

@@ -1,1 +1,6 @@
-export { fetchGenerationStatus, fetchSpecDocument, requestSpecGeneration } from "./spec-view";
+export {
+  fetchGenerationStatus,
+  fetchSpecDocument,
+  QuotaExceededError,
+  requestSpecGeneration,
+} from "./spec-view";

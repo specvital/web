@@ -6,13 +6,25 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { QuotaIndicator } from "./quota-indicator";
+import { isQuotaExceeded } from "../utils/quota";
+
+type QuotaInfo = {
+  limit: number | null;
+  percentage: number | null;
+  used: number;
+};
+
 type EmptyDocumentProps = {
   isLoading?: boolean;
   onGenerate: () => void;
+  quota?: QuotaInfo | null;
 };
 
-export const EmptyDocument = ({ isLoading = false, onGenerate }: EmptyDocumentProps) => {
+export const EmptyDocument = ({ isLoading = false, onGenerate, quota }: EmptyDocumentProps) => {
   const t = useTranslations("specView.emptyDocument");
+
+  const isDisabled = isLoading || Boolean(quota && isQuotaExceeded(quota.percentage));
 
   return (
     <Card className="border-dashed">
@@ -23,8 +35,13 @@ export const EmptyDocument = ({ isLoading = false, onGenerate }: EmptyDocumentPr
         <CardTitle>{t("title")}</CardTitle>
         <CardDescription className="max-w-sm mx-auto">{t("description")}</CardDescription>
       </CardHeader>
-      <CardContent className="flex justify-center pt-2">
-        <Button disabled={isLoading} onClick={onGenerate} size="lg">
+      <CardContent className="flex flex-col items-center gap-4 pt-2">
+        {quota && (
+          <div className="w-full max-w-sm">
+            <QuotaIndicator limit={quota.limit} percentage={quota.percentage} used={quota.used} />
+          </div>
+        )}
+        <Button disabled={isDisabled} onClick={onGenerate} size="lg">
           <Sparkles className="h-4 w-4 mr-2" />
           {isLoading ? t("generating") : t("generateButton")}
         </Button>
