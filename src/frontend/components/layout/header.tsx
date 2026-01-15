@@ -53,7 +53,7 @@ export const Header = () => {
 
           <div className="hidden items-center gap-2 md:flex">
             {!isHomePage && <AnalyzeDialog variant="header" />}
-            <div className="flex items-center gap-1 rounded-full border border-border bg-transparent p-1 dark:border-transparent dark:bg-secondary">
+            <div className="flex items-center gap-0.5 rounded-full border border-border bg-transparent dark:border-transparent dark:bg-secondary">
               <LanguageSelector />
               <ThemeToggle />
             </div>
