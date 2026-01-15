@@ -42,6 +42,14 @@ const (
 	OwnershipFilterParamOthers       OwnershipFilterParam = "others"
 )
 
+// Defines values for PlanTier.
+const (
+	Enterprise PlanTier = "enterprise"
+	Free       PlanTier = "free"
+	Pro        PlanTier = "pro"
+	ProPlus    PlanTier = "pro_plus"
+)
+
 // Defines values for SortByParam.
 const (
 	Name   SortByParam = "name"
@@ -106,6 +114,12 @@ const (
 	NewCommits UpdateStatus = "new-commits"
 	Unknown    UpdateStatus = "unknown"
 	UpToDate   UpdateStatus = "up-to-date"
+)
+
+// Defines values for UsageEventType.
+const (
+	Analysis UsageEventType = "analysis"
+	Specview UsageEventType = "specview"
 )
 
 // Defines values for ViewFilterParam.
@@ -217,6 +231,32 @@ type BookmarkResponse struct {
 type BookmarkedRepositoriesResponse struct {
 	// Data Bookmarked repositories
 	Data []RepositoryCard `json:"data"`
+}
+
+// CheckQuotaRequest defines model for CheckQuotaRequest.
+type CheckQuotaRequest struct {
+	// Amount Number of operations to check quota for
+	Amount *int `json:"amount,omitempty"`
+
+	// EventType Type of usage event:
+	// - specview: SpecView generation
+	// - analysis: Repository analysis
+	EventType UsageEventType `json:"eventType"`
+}
+
+// CheckQuotaResponse defines model for CheckQuotaResponse.
+type CheckQuotaResponse struct {
+	// IsAllowed Whether the requested operation is allowed
+	IsAllowed bool `json:"isAllowed"`
+
+	// Limit Usage limit (null for unlimited/enterprise)
+	Limit *int `json:"limit"`
+
+	// ResetAt When the usage period resets
+	ResetAt time.Time `json:"resetAt"`
+
+	// Used Current usage count for the event type
+	Used int `json:"used"`
 }
 
 // CompletedResponse defines model for CompletedResponse.
@@ -419,6 +459,32 @@ type PaginatedRepositoriesResponse struct {
 	// NextCursor Cursor for fetching the next page (null if no more pages)
 	NextCursor *string `json:"nextCursor"`
 }
+
+// PlanInfo defines model for PlanInfo.
+type PlanInfo struct {
+	// AnalysisMonthlyLimit Monthly analysis limit (null for unlimited)
+	AnalysisMonthlyLimit *int `json:"analysisMonthlyLimit"`
+
+	// RetentionDays Data retention in days (null for unlimited)
+	RetentionDays *int `json:"retentionDays"`
+
+	// SpecviewMonthlyLimit Monthly SpecView limit (null for unlimited)
+	SpecviewMonthlyLimit *int `json:"specviewMonthlyLimit"`
+
+	// Tier Subscription plan tier:
+	// - free: Free tier with limited quotas
+	// - pro: Pro tier with expanded limits
+	// - pro_plus: Pro Plus tier with higher limits
+	// - enterprise: Enterprise tier with unlimited usage
+	Tier PlanTier `json:"tier"`
+}
+
+// PlanTier Subscription plan tier:
+// - free: Free tier with limited quotas
+// - pro: Pro tier with expanded limits
+// - pro_plus: Pro Plus tier with higher limits
+// - enterprise: Enterprise tier with unlimited usage
+type PlanTier string
 
 // ProblemDetail defines model for ProblemDetail.
 type ProblemDetail struct {
@@ -815,6 +881,33 @@ type UpdateStatusResponse struct {
 	Status UpdateStatus `json:"status"`
 }
 
+// UsageEventType Type of usage event:
+// - specview: SpecView generation
+// - analysis: Repository analysis
+type UsageEventType string
+
+// UsageMetric defines model for UsageMetric.
+type UsageMetric struct {
+	// Limit Usage limit (null for unlimited/enterprise)
+	Limit *int `json:"limit"`
+
+	// Percentage Usage percentage (null for unlimited/enterprise)
+	Percentage *float32 `json:"percentage"`
+
+	// Used Current usage count
+	Used int `json:"used"`
+}
+
+// UsageStatusResponse defines model for UsageStatusResponse.
+type UsageStatusResponse struct {
+	Analysis UsageMetric `json:"analysis"`
+	Plan     PlanInfo    `json:"plan"`
+
+	// ResetAt When the current usage period resets
+	ResetAt  time.Time   `json:"resetAt"`
+	Specview UsageMetric `json:"specview"`
+}
+
 // UserAnalyzedRepositoriesResponse defines model for UserAnalyzedRepositoriesResponse.
 type UserAnalyzedRepositoriesResponse struct {
 	// Data Analyzed repositories in the current page
@@ -1017,6 +1110,9 @@ type AuthDevLoginJSONRequestBody = DevLoginRequest
 
 // RequestSpecGenerationJSONRequestBody defines body for RequestSpecGeneration for application/json ContentType.
 type RequestSpecGenerationJSONRequestBody = RequestSpecGenerationRequest
+
+// CheckQuotaJSONRequestBody defines body for CheckQuota for application/json ContentType.
+type CheckQuotaJSONRequestBody = CheckQuotaRequest
 
 // AddUserAnalyzedRepositoryJSONRequestBody defines body for AddUserAnalyzedRepository for application/json ContentType.
 type AddUserAnalyzedRepositoryJSONRequestBody = AddAnalyzedRepositoryRequest
@@ -1315,6 +1411,12 @@ type ServerInterface interface {
 	// Get specification document for analysis
 	// (GET /api/spec-view/{analysisId})
 	GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID)
+	// Check usage quota before operation
+	// (POST /api/usage/check-quota)
+	CheckQuota(w http.ResponseWriter, r *http.Request)
+	// Get current usage status
+	// (GET /api/usage/current)
+	GetCurrentUsage(w http.ResponseWriter, r *http.Request)
 	// Get user's analyzed repositories
 	// (GET /api/user/analyzed-repositories)
 	GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request, params GetUserAnalyzedRepositoriesParams)
@@ -1447,6 +1549,18 @@ func (_ Unimplemented) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Re
 // Get specification document for analysis
 // (GET /api/spec-view/{analysisId})
 func (_ Unimplemented) GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Check usage quota before operation
+// (POST /api/usage/check-quota)
+func (_ Unimplemented) CheckQuota(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get current usage status
+// (GET /api/usage/current)
+func (_ Unimplemented) GetCurrentUsage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2047,6 +2161,46 @@ func (siw *ServerInterfaceWrapper) GetSpecDocument(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// CheckQuota operation middleware
+func (siw *ServerInterfaceWrapper) CheckQuota(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CheckQuota(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCurrentUsage operation middleware
+func (siw *ServerInterfaceWrapper) GetCurrentUsage(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCurrentUsage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetUserAnalyzedRepositories operation middleware
 func (siw *ServerInterfaceWrapper) GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request) {
 
@@ -2537,6 +2691,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/spec-view/{analysisId}", wrapper.GetSpecDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/usage/check-quota", wrapper.CheckQuota)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/usage/current", wrapper.GetCurrentUsage)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/analyzed-repositories", wrapper.GetUserAnalyzedRepositories)
@@ -3400,6 +3560,116 @@ func (response GetSpecDocument500ApplicationProblemPlusJSONResponse) VisitGetSpe
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CheckQuotaRequestObject struct {
+	Body *CheckQuotaJSONRequestBody
+}
+
+type CheckQuotaResponseObject interface {
+	VisitCheckQuotaResponse(w http.ResponseWriter) error
+}
+
+type CheckQuota200JSONResponse CheckQuotaResponse
+
+func (response CheckQuota200JSONResponse) VisitCheckQuotaResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CheckQuota400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response CheckQuota400ApplicationProblemPlusJSONResponse) VisitCheckQuotaResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CheckQuota401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response CheckQuota401ApplicationProblemPlusJSONResponse) VisitCheckQuotaResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CheckQuota404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response CheckQuota404ApplicationProblemPlusJSONResponse) VisitCheckQuotaResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CheckQuota500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response CheckQuota500ApplicationProblemPlusJSONResponse) VisitCheckQuotaResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCurrentUsageRequestObject struct {
+}
+
+type GetCurrentUsageResponseObject interface {
+	VisitGetCurrentUsageResponse(w http.ResponseWriter) error
+}
+
+type GetCurrentUsage200JSONResponse UsageStatusResponse
+
+func (response GetCurrentUsage200JSONResponse) VisitGetCurrentUsageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCurrentUsage401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetCurrentUsage401ApplicationProblemPlusJSONResponse) VisitGetCurrentUsageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCurrentUsage404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetCurrentUsage404ApplicationProblemPlusJSONResponse) VisitGetCurrentUsageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCurrentUsage500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetCurrentUsage500ApplicationProblemPlusJSONResponse) VisitGetCurrentUsageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type GetUserAnalyzedRepositoriesRequestObject struct {
 	Params GetUserAnalyzedRepositoriesParams
 }
@@ -3889,6 +4159,12 @@ type StrictServerInterface interface {
 	// Get specification document for analysis
 	// (GET /api/spec-view/{analysisId})
 	GetSpecDocument(ctx context.Context, request GetSpecDocumentRequestObject) (GetSpecDocumentResponseObject, error)
+	// Check usage quota before operation
+	// (POST /api/usage/check-quota)
+	CheckQuota(ctx context.Context, request CheckQuotaRequestObject) (CheckQuotaResponseObject, error)
+	// Get current usage status
+	// (GET /api/usage/current)
+	GetCurrentUsage(ctx context.Context, request GetCurrentUsageRequestObject) (GetCurrentUsageResponseObject, error)
 	// Get user's analyzed repositories
 	// (GET /api/user/analyzed-repositories)
 	GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error)
@@ -4388,6 +4664,61 @@ func (sh *strictHandler) GetSpecDocument(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetSpecDocumentResponseObject); ok {
 		if err := validResponse.VisitGetSpecDocumentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CheckQuota operation middleware
+func (sh *strictHandler) CheckQuota(w http.ResponseWriter, r *http.Request) {
+	var request CheckQuotaRequestObject
+
+	var body CheckQuotaJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CheckQuota(ctx, request.(CheckQuotaRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CheckQuota")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CheckQuotaResponseObject); ok {
+		if err := validResponse.VisitCheckQuotaResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCurrentUsage operation middleware
+func (sh *strictHandler) GetCurrentUsage(w http.ResponseWriter, r *http.Request) {
+	var request GetCurrentUsageRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCurrentUsage(ctx, request.(GetCurrentUsageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCurrentUsage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCurrentUsageResponseObject); ok {
+		if err := validResponse.VisitGetCurrentUsageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

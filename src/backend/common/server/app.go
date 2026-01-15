@@ -36,6 +36,8 @@ import (
 	subscriptionadapter "github.com/specvital/web/src/backend/modules/subscription/adapter"
 	subscriptionusecase "github.com/specvital/web/src/backend/modules/subscription/usecase"
 	usageadapter "github.com/specvital/web/src/backend/modules/usage/adapter"
+	usagehandler "github.com/specvital/web/src/backend/modules/usage/handler"
+	usageusecase "github.com/specvital/web/src/backend/modules/usage/usecase"
 )
 
 type Handlers struct {
@@ -96,7 +98,9 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 	assignDefaultPlanUC := subscriptionusecase.NewAssignDefaultPlanUseCase(subscriptionConfig.DefaultPlanTier, subscriptionRepo)
 
 	usageRepo := usageadapter.NewPostgresRepository(queries)
-	_ = usageRepo
+
+	checkQuotaUC := usageusecase.NewCheckQuotaUseCase(subscriptionRepo, usageRepo)
+	getCurrentUsageUC := usageusecase.NewGetCurrentUsageUseCase(subscriptionRepo, usageRepo)
 
 	handleOAuthCallbackUC := authusecase.NewHandleOAuthCallbackUseCase(
 		container.Encryptor,
@@ -245,7 +249,16 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 		return nil, nil, fmt.Errorf("create spec-view handler: %w", err)
 	}
 
-	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, analyzerHandler, specViewHandler, webhookHandler)
+	usageHandler, err := usagehandler.NewHandler(&usagehandler.HandlerConfig{
+		CheckQuota:      checkQuotaUC,
+		GetCurrentUsage: getCurrentUsageUC,
+		Logger:          log,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("create usage handler: %w", err)
+	}
+
+	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, analyzerHandler, specViewHandler, usageHandler, webhookHandler)
 
 	return &Handlers{
 		API:     apiHandlers,

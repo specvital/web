@@ -58,6 +58,11 @@ type SpecViewHandlers interface {
 	RequestSpecGeneration(ctx context.Context, request RequestSpecGenerationRequestObject) (RequestSpecGenerationResponseObject, error)
 }
 
+type UsageHandlers interface {
+	CheckQuota(ctx context.Context, request CheckQuotaRequestObject) (CheckQuotaResponseObject, error)
+	GetCurrentUsage(ctx context.Context, request GetCurrentUsageRequestObject) (GetCurrentUsageResponseObject, error)
+}
+
 type APIHandlers struct {
 	analyzer        AnalyzerHandlers
 	analysisHistory AnalysisHistoryHandlers
@@ -67,6 +72,7 @@ type APIHandlers struct {
 	githubApp       GitHubAppHandlers
 	repository      RepositoryHandlers
 	specView        SpecViewHandlers
+	usage           UsageHandlers
 	webhook         WebhookHandlers
 }
 
@@ -81,6 +87,7 @@ func NewAPIHandlers(
 	githubApp GitHubAppHandlers,
 	repository RepositoryHandlers,
 	specView SpecViewHandlers,
+	usage UsageHandlers,
 	webhook WebhookHandlers,
 ) *APIHandlers {
 	return &APIHandlers{
@@ -92,6 +99,7 @@ func NewAPIHandlers(
 		githubApp:       githubApp,
 		repository:      repository,
 		specView:        specView,
+		usage:           usage,
 		webhook:         webhook,
 	}
 }
@@ -229,4 +237,22 @@ func (h *APIHandlers) RequestSpecGeneration(ctx context.Context, request Request
 		}, nil
 	}
 	return h.specView.RequestSpecGeneration(ctx, request)
+}
+
+func (h *APIHandlers) CheckQuota(ctx context.Context, request CheckQuotaRequestObject) (CheckQuotaResponseObject, error) {
+	if h.usage == nil {
+		return CheckQuota500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Usage feature not configured"),
+		}, nil
+	}
+	return h.usage.CheckQuota(ctx, request)
+}
+
+func (h *APIHandlers) GetCurrentUsage(ctx context.Context, request GetCurrentUsageRequestObject) (GetCurrentUsageResponseObject, error) {
+	if h.usage == nil {
+		return GetCurrentUsage500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Usage feature not configured"),
+		}, nil
+	}
+	return h.usage.GetCurrentUsage(ctx, request)
 }

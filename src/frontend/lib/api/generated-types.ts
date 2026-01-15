@@ -598,6 +598,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/usage/check-quota": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check usage quota before operation
+         * @description Validates if user has sufficient quota for the requested operation.
+         *     Returns current usage, limit, and whether the operation is allowed.
+         *
+         */
+        post: operations["checkQuota"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/usage/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current usage status
+         * @description Returns current usage statistics for both SpecView and Analysis.
+         *     Includes used count, limit, and percentage for each metric type.
+         *
+         */
+        get: operations["getCurrentUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1405,6 +1449,75 @@ export interface components {
          * @enum {string}
          */
         SpecGenerationStatusEnum: "pending" | "running" | "completed" | "failed" | "not_found";
+        /**
+         * @description Type of usage event:
+         *     - specview: SpecView generation
+         *     - analysis: Repository analysis
+         *
+         * @enum {string}
+         */
+        UsageEventType: "specview" | "analysis";
+        CheckQuotaRequest: {
+            eventType: components["schemas"]["UsageEventType"];
+            /**
+             * @description Number of operations to check quota for
+             * @default 1
+             */
+            amount: number;
+        };
+        CheckQuotaResponse: {
+            /** @description Whether the requested operation is allowed */
+            isAllowed: boolean;
+            /** @description Current usage count for the event type */
+            used: number;
+            /** @description Usage limit (null for unlimited/enterprise) */
+            limit?: number | null;
+            /**
+             * Format: date-time
+             * @description When the usage period resets
+             */
+            resetAt: string;
+        };
+        UsageMetric: {
+            /** @description Current usage count */
+            used: number;
+            /** @description Usage limit (null for unlimited/enterprise) */
+            limit?: number | null;
+            /**
+             * Format: float
+             * @description Usage percentage (null for unlimited/enterprise)
+             */
+            percentage?: number | null;
+        };
+        PlanInfo: {
+            tier: components["schemas"]["PlanTier"];
+            /** @description Monthly SpecView limit (null for unlimited) */
+            specviewMonthlyLimit?: number | null;
+            /** @description Monthly analysis limit (null for unlimited) */
+            analysisMonthlyLimit?: number | null;
+            /** @description Data retention in days (null for unlimited) */
+            retentionDays?: number | null;
+        };
+        /**
+         * @description Subscription plan tier:
+         *     - free: Free tier with limited quotas
+         *     - pro: Pro tier with expanded limits
+         *     - pro_plus: Pro Plus tier with higher limits
+         *     - enterprise: Enterprise tier with unlimited usage
+         *
+         * @enum {string}
+         */
+        PlanTier: "free" | "pro" | "pro_plus" | "enterprise";
+        UsageStatusResponse: {
+            specview: components["schemas"]["UsageMetric"];
+            analysis: components["schemas"]["UsageMetric"];
+            /**
+             * Format: date-time
+             * @description When the current usage period resets
+             */
+            resetAt: string;
+            plan: components["schemas"]["PlanInfo"];
+        };
     };
     responses: {
         /** @description Invalid request parameters */
@@ -2243,6 +2356,57 @@ export interface operations {
                     "application/json": components["schemas"]["SpecGenerationStatusResponse"];
                 };
             };
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    checkQuota: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckQuotaRequest"];
+            };
+        };
+        responses: {
+            /** @description Quota check result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckQuotaResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getCurrentUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current usage status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageStatusResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };

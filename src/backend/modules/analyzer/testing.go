@@ -200,7 +200,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 	)
 
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(h, user.NewMockHandler(), authhandler.NewMockHandler(), user.NewMockHandler(), NewMockGitHubHandler(), NewMockGitHubAppHandler(), h, specviewhandler.NewMockHandler(), nil)
+	apiHandlers := api.NewAPIHandlers(h, user.NewMockHandler(), authhandler.NewMockHandler(), user.NewMockHandler(), NewMockGitHubHandler(), NewMockGitHubAppHandler(), h, specviewhandler.NewMockHandler(), NewMockUsageHandler(), nil)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 
@@ -241,4 +241,20 @@ func (m *mockGitHubHandler) GetUserGitHubOrganizations(_ context.Context, _ api.
 
 func (m *mockGitHubHandler) GetUserGitHubRepositories(_ context.Context, _ api.GetUserGitHubRepositoriesRequestObject) (api.GetUserGitHubRepositoriesResponseObject, error) {
 	return api.GetUserGitHubRepositories200JSONResponse{Data: []api.GitHubRepository{}}, nil
+}
+
+type mockUsageHandler struct{}
+
+var _ api.UsageHandlers = (*mockUsageHandler)(nil)
+
+func NewMockUsageHandler() *mockUsageHandler {
+	return &mockUsageHandler{}
+}
+
+func (m *mockUsageHandler) CheckQuota(_ context.Context, _ api.CheckQuotaRequestObject) (api.CheckQuotaResponseObject, error) {
+	return api.CheckQuota200JSONResponse{}, nil
+}
+
+func (m *mockUsageHandler) GetCurrentUsage(_ context.Context, _ api.GetCurrentUsageRequestObject) (api.GetCurrentUsageResponseObject, error) {
+	return api.GetCurrentUsage200JSONResponse{}, nil
 }

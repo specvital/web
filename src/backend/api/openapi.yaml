@@ -796,6 +796,65 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  # Usage Quota APIs
+  /api/usage/check-quota:
+    post:
+      operationId: checkQuota
+      summary: Check usage quota before operation
+      description: |
+        Validates if user has sufficient quota for the requested operation.
+        Returns current usage, limit, and whether the operation is allowed.
+      tags:
+        - Usage
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckQuotaRequest"
+      responses:
+        "200":
+          description: Quota check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckQuotaResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/usage/current:
+    get:
+      operationId: getCurrentUsage
+      summary: Get current usage status
+      description: |
+        Returns current usage statistics for both SpecView and Analysis.
+        Includes used count, limit, and percentage for each metric type.
+      tags:
+        - Usage
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Current usage status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageStatusResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   securitySchemes:
     cookieAuth:
@@ -2133,3 +2192,129 @@ components:
         - completed: Document successfully generated
         - failed: Generation failed
         - not_found: No generation request exists
+
+    # Usage Quota Schemas
+    UsageEventType:
+      type: string
+      enum:
+        - specview
+        - analysis
+      description: |
+        Type of usage event:
+        - specview: SpecView generation
+        - analysis: Repository analysis
+
+    CheckQuotaRequest:
+      type: object
+      required:
+        - eventType
+      properties:
+        eventType:
+          $ref: "#/components/schemas/UsageEventType"
+        amount:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Number of operations to check quota for
+
+    CheckQuotaResponse:
+      type: object
+      required:
+        - isAllowed
+        - used
+        - resetAt
+      properties:
+        isAllowed:
+          type: boolean
+          description: Whether the requested operation is allowed
+        used:
+          type: integer
+          minimum: 0
+          description: Current usage count for the event type
+        limit:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Usage limit (null for unlimited/enterprise)
+        resetAt:
+          type: string
+          format: date-time
+          description: When the usage period resets
+
+    UsageMetric:
+      type: object
+      required:
+        - used
+      properties:
+        used:
+          type: integer
+          minimum: 0
+          description: Current usage count
+        limit:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Usage limit (null for unlimited/enterprise)
+        percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Usage percentage (null for unlimited/enterprise)
+
+    PlanInfo:
+      type: object
+      required:
+        - tier
+      properties:
+        tier:
+          $ref: "#/components/schemas/PlanTier"
+        specviewMonthlyLimit:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Monthly SpecView limit (null for unlimited)
+        analysisMonthlyLimit:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Monthly analysis limit (null for unlimited)
+        retentionDays:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Data retention in days (null for unlimited)
+
+    PlanTier:
+      type: string
+      enum:
+        - free
+        - pro
+        - pro_plus
+        - enterprise
+      description: |
+        Subscription plan tier:
+        - free: Free tier with limited quotas
+        - pro: Pro tier with expanded limits
+        - pro_plus: Pro Plus tier with higher limits
+        - enterprise: Enterprise tier with unlimited usage
+
+    UsageStatusResponse:
+      type: object
+      required:
+        - specview
+        - analysis
+        - resetAt
+        - plan
+      properties:
+        specview:
+          $ref: "#/components/schemas/UsageMetric"
+        analysis:
+          $ref: "#/components/schemas/UsageMetric"
+        resetAt:
+          type: string
+          format: date-time
+          description: When the current usage period resets
+        plan:
+          $ref: "#/components/schemas/PlanInfo"
