@@ -53,10 +53,8 @@ export const Header = () => {
 
           <div className="hidden items-center gap-2 md:flex">
             {!isHomePage && <AnalyzeDialog variant="header" />}
-            <div className="flex items-center gap-0.5 rounded-full border border-border bg-transparent dark:border-transparent dark:bg-secondary">
-              <LanguageSelector />
-              <ThemeToggle />
-            </div>
+            <LanguageSelector />
+            <ThemeToggle />
             <div
               aria-hidden="true"
               className="mx-1.5 h-6 w-px bg-gradient-to-b from-transparent via-border to-transparent"
