@@ -149,6 +149,15 @@ func (h *Handler) RequestSpecGeneration(ctx context.Context, request api.Request
 			return api.RequestSpecGeneration400ApplicationProblemPlusJSONResponse{
 				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid analysis ID"),
 			}, nil
+		case errors.Is(err, domain.ErrQuotaExceeded):
+			return api.RequestSpecGeneration429ApplicationProblemPlusJSONResponse{
+				TooManyRequestsApplicationProblemPlusJSONResponse: api.TooManyRequestsApplicationProblemPlusJSONResponse{
+					Detail: "Monthly SpecView generation quota exceeded. Upgrade your plan or wait for the next billing period.",
+					Status: 429,
+					Title:  "Quota Exceeded",
+					Type:   ptr("quota_exceeded"),
+				},
+			}, nil
 		}
 
 		h.logger.Error(ctx, "failed to request spec generation", "error", err)
@@ -214,4 +223,8 @@ func (r specDocument200Response) VisitGetSpecDocumentResponse(w http.ResponseWri
 	w.WriteHeader(200)
 	_, err := w.Write(r.data)
 	return err
+}
+
+func ptr(s string) *string {
+	return &s
 }

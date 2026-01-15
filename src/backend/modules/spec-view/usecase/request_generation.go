@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/specvital/web/src/backend/modules/spec-view/domain"
 	"github.com/specvital/web/src/backend/modules/spec-view/domain/entity"
 	"github.com/specvital/web/src/backend/modules/spec-view/domain/port"
+	usageentity "github.com/specvital/web/src/backend/modules/usage/domain/entity"
+	usageusecase "github.com/specvital/web/src/backend/modules/usage/usecase"
 )
 
 type RequestGenerationInput struct {
@@ -22,14 +25,20 @@ type RequestGenerationOutput struct {
 }
 
 type RequestGenerationUseCase struct {
-	queue port.QueueService
-	repo  port.SpecViewRepository
+	checkQuota *usageusecase.CheckQuotaUseCase
+	queue      port.QueueService
+	repo       port.SpecViewRepository
 }
 
-func NewRequestGenerationUseCase(repo port.SpecViewRepository, queue port.QueueService) *RequestGenerationUseCase {
+func NewRequestGenerationUseCase(
+	repo port.SpecViewRepository,
+	queue port.QueueService,
+	checkQuota *usageusecase.CheckQuotaUseCase,
+) *RequestGenerationUseCase {
 	return &RequestGenerationUseCase{
-		queue: queue,
-		repo:  repo,
+		checkQuota: checkQuota,
+		queue:      queue,
+		repo:       repo,
 	}
 }
 
@@ -66,6 +75,24 @@ func (uc *RequestGenerationUseCase) Execute(ctx context.Context, input RequestGe
 			case entity.StatusRunning:
 				return nil, domain.ErrGenerationRunning
 			}
+		}
+	}
+
+	// Quota check: validates user has remaining quota before enqueueing.
+	// Note: This check is not atomic with queue enrollment. Concurrent requests may
+	// pass validation before usage is recorded, allowing marginal over-usage.
+	// This is acceptable as usage recording happens asynchronously in the worker.
+	if input.UserID != "" && uc.checkQuota != nil {
+		quotaResult, err := uc.checkQuota.Execute(ctx, usageusecase.CheckQuotaInput{
+			UserID:    input.UserID,
+			EventType: usageentity.EventTypeSpecview,
+			Amount:    1,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("check quota for user %s: %w", input.UserID, err)
+		}
+		if !quotaResult.IsAllowed {
+			return nil, domain.ErrQuotaExceeded
 		}
 	}
 

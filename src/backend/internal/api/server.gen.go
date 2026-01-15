@@ -3471,6 +3471,17 @@ func (response RequestSpecGeneration409ApplicationProblemPlusJSONResponse) Visit
 	return json.NewEncoder(w).Encode(response)
 }
 
+type RequestSpecGeneration429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response RequestSpecGeneration429ApplicationProblemPlusJSONResponse) VisitRequestSpecGenerationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type RequestSpecGeneration500ApplicationProblemPlusJSONResponse struct {
 	InternalErrorApplicationProblemPlusJSONResponse
 }
