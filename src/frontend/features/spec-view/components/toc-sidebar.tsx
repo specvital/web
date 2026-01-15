@@ -207,8 +207,8 @@ const TocContent = ({
     filteredDocument?.domains ?? document.domains.map(toFilteredDomain);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-3 py-2 border-b">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="px-3 py-2 border-b flex-shrink-0">
         <div className="text-sm font-medium">{t("toc.title")}</div>
         <div className="text-xs text-muted-foreground mt-0.5">
           {hasFilter ? (
@@ -227,7 +227,7 @@ const TocContent = ({
           )}
         </div>
       </div>
-      <ScrollArea className="flex-1 [&>div>div]:!block [&>div>div]:!w-full">
+      <ScrollArea className="flex-1 min-h-0 [&>div>div]:!block [&>div>div]:!w-full">
         <div className="p-2 space-y-1">
           {displayDomains.map((domain) => (
             <TocItem
