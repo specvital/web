@@ -11,6 +11,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/auth/domain"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	"github.com/specvital/web/src/backend/modules/auth/domain/port"
+	subscriptionport "github.com/specvital/web/src/backend/modules/subscription/domain/port"
 )
 
 type HandleOAuthCallbackInput struct {
@@ -30,6 +31,7 @@ type HandleOAuthCallbackUseCase struct {
 	refreshTokenRepo port.RefreshTokenRepository
 	repository       port.Repository
 	stateStore       port.StateStore
+	subscriber       subscriptionport.Subscriber
 	tokenManager     port.TokenManager
 }
 
@@ -39,6 +41,7 @@ func NewHandleOAuthCallbackUseCase(
 	refreshTokenRepo port.RefreshTokenRepository,
 	repository port.Repository,
 	stateStore port.StateStore,
+	subscriber subscriptionport.Subscriber,
 	tokenManager port.TokenManager,
 ) *HandleOAuthCallbackUseCase {
 	if encryptor == nil {
@@ -56,6 +59,9 @@ func NewHandleOAuthCallbackUseCase(
 	if stateStore == nil {
 		panic("stateStore is required")
 	}
+	if subscriber == nil {
+		panic("subscriber is required")
+	}
 	if tokenManager == nil {
 		panic("tokenManager is required")
 	}
@@ -65,6 +71,7 @@ func NewHandleOAuthCallbackUseCase(
 		refreshTokenRepo: refreshTokenRepo,
 		repository:       repository,
 		stateStore:       stateStore,
+		subscriber:       subscriber,
 		tokenManager:     tokenManager,
 	}
 }
@@ -157,6 +164,10 @@ func (uc *HandleOAuthCallbackUseCase) updateOAuthAccount(ctx context.Context, ac
 	return nil
 }
 
+// createNewUser creates a user, OAuth account, and assigns default subscription.
+// Note: These operations are not wrapped in a transaction. If AssignDefaultPlan fails,
+// the user exists without a subscription. This is handled via backfill mechanism
+// (GetUsersWithoutActiveSubscription query) to ensure eventual consistency.
 func (uc *HandleOAuthCallbackUseCase) createNewUser(ctx context.Context, oauthUser *entity.OAuthUserInfo, encryptedToken string) (*entity.User, error) {
 	newUser := &entity.User{
 		AvatarURL: oauthUser.AvatarURL,
@@ -179,6 +190,10 @@ func (uc *HandleOAuthCallbackUseCase) createNewUser(ctx context.Context, oauthUs
 
 	if _, err := uc.repository.UpsertOAuthAccount(ctx, oauthAccount); err != nil {
 		return nil, fmt.Errorf("create oauth account: %w", err)
+	}
+
+	if err := uc.subscriber.AssignDefaultPlan(ctx, userID); err != nil {
+		return nil, fmt.Errorf("assign default plan: %w", err)
 	}
 
 	newUser.ID = userID

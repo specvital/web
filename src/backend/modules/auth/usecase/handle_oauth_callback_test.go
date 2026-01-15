@@ -8,6 +8,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/auth/domain"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	"github.com/specvital/web/src/backend/modules/auth/domain/port"
+	subscriptionport "github.com/specvital/web/src/backend/modules/subscription/domain/port"
 )
 
 type mockTokenManager struct {
@@ -99,6 +100,19 @@ func (m *mockRefreshTokenRepo) RotateToken(ctx context.Context, oldTokenID strin
 	return "new-token-id", nil
 }
 
+type mockSubscriber struct {
+	assignDefaultPlanFunc func(ctx context.Context, userID string) error
+}
+
+var _ subscriptionport.Subscriber = (*mockSubscriber)(nil)
+
+func (m *mockSubscriber) AssignDefaultPlan(ctx context.Context, userID string) error {
+	if m.assignDefaultPlanFunc != nil {
+		return m.assignDefaultPlanFunc(ctx, userID)
+	}
+	return nil
+}
+
 func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 	tests := []struct {
 		name                  string
@@ -108,8 +122,10 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 		setupRefreshTokenRepo func() *mockRefreshTokenRepo
 		setupRepo             func() *mockRepository
 		setupStateStore       func() *mockStateStore
+		setupSubscriber       func() *mockSubscriber
 		setupToken            func() *mockTokenManager
 		wantErr               error
+		wantAnyErr            bool
 		wantAccessToken       string
 	}{
 		{
@@ -170,6 +186,9 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 						return domain.ErrInvalidState
 					},
 				}
+			},
+			setupSubscriber: func() *mockSubscriber {
+				return &mockSubscriber{}
 			},
 			setupToken: func() *mockTokenManager {
 				return &mockTokenManager{
@@ -245,6 +264,9 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 					},
 				}
 			},
+			setupSubscriber: func() *mockSubscriber {
+				return &mockSubscriber{}
+			},
 			setupToken: func() *mockTokenManager {
 				return &mockTokenManager{
 					generateAccessTokenFunc: func(userID, _ string) (string, error) {
@@ -280,10 +302,76 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 					},
 				}
 			},
+			setupSubscriber: func() *mockSubscriber {
+				return &mockSubscriber{}
+			},
 			setupToken: func() *mockTokenManager {
 				return &mockTokenManager{}
 			},
 			wantErr:         domain.ErrInvalidState,
+			wantAccessToken: "",
+		},
+		{
+			name: "should return error when assign default plan fails for new user",
+			input: HandleOAuthCallbackInput{
+				Code:  "valid-code",
+				State: "valid-state",
+			},
+			setupEncryptor: func() *mockEncryptor {
+				return &mockEncryptor{
+					encryptFunc: func(plaintext string) (string, error) {
+						return "encrypted-" + plaintext, nil
+					},
+				}
+			},
+			setupOAuth: func() *mockOAuthClient {
+				return &mockOAuthClient{
+					exchangeCodeFunc: func(_ context.Context, code string) (string, error) {
+						return "access-token", nil
+					},
+					getUserInfoFunc: func(_ context.Context, _ string) (*entity.OAuthUserInfo, error) {
+						return &entity.OAuthUserInfo{
+							ExternalID: "12345",
+							Username:   "newuser",
+							AvatarURL:  "https://github.com/avatar",
+						}, nil
+					},
+				}
+			},
+			setupRefreshTokenRepo: func() *mockRefreshTokenRepo {
+				return &mockRefreshTokenRepo{}
+			},
+			setupRepo: func() *mockRepository {
+				return &mockRepository{
+					getOAuthAccountByProviderFunc: func(_ context.Context, _, _ string) (*entity.OAuthAccount, error) {
+						return nil, domain.ErrUserNotFound
+					},
+					createUserFunc: func(_ context.Context, _ *entity.User) (string, error) {
+						return "new-user-id", nil
+					},
+					upsertOAuthAccountFunc: func(_ context.Context, _ *entity.OAuthAccount) (string, error) {
+						return "oauth-id", nil
+					},
+				}
+			},
+			setupStateStore: func() *mockStateStore {
+				return &mockStateStore{
+					validateFunc: func(_ context.Context, _ string) error {
+						return nil
+					},
+				}
+			},
+			setupSubscriber: func() *mockSubscriber {
+				return &mockSubscriber{
+					assignDefaultPlanFunc: func(_ context.Context, _ string) error {
+						return errors.New("subscription service unavailable")
+					},
+				}
+			},
+			setupToken: func() *mockTokenManager {
+				return &mockTokenManager{}
+			},
+			wantAnyErr:      true,
 			wantAccessToken: "",
 		},
 	}
@@ -295,9 +383,10 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 			refreshTokenRepo := tt.setupRefreshTokenRepo()
 			repo := tt.setupRepo()
 			stateStore := tt.setupStateStore()
+			subscriber := tt.setupSubscriber()
 			tokenMgr := tt.setupToken()
 
-			uc := NewHandleOAuthCallbackUseCase(enc, oauth, refreshTokenRepo, repo, stateStore, tokenMgr)
+			uc := NewHandleOAuthCallbackUseCase(enc, oauth, refreshTokenRepo, repo, stateStore, subscriber, tokenMgr)
 
 			output, err := uc.Execute(context.Background(), tt.input)
 
@@ -308,6 +397,13 @@ func TestHandleOAuthCallbackUseCase_Execute(t *testing.T) {
 				}
 				if !errors.Is(err, tt.wantErr) {
 					t.Errorf("expected error %v, got %v", tt.wantErr, err)
+				}
+				return
+			}
+
+			if tt.wantAnyErr {
+				if err == nil {
+					t.Error("expected error, got nil")
 				}
 				return
 			}

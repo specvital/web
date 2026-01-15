@@ -33,6 +33,8 @@ import (
 	specviewadapter "github.com/specvital/web/src/backend/modules/spec-view/adapter"
 	specviewhandler "github.com/specvital/web/src/backend/modules/spec-view/handler"
 	specviewusecase "github.com/specvital/web/src/backend/modules/spec-view/usecase"
+	subscriptionadapter "github.com/specvital/web/src/backend/modules/subscription/adapter"
+	subscriptionusecase "github.com/specvital/web/src/backend/modules/subscription/usecase"
 )
 
 type Handlers struct {
@@ -87,12 +89,18 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 	getCurrentUserUC := authusecase.NewGetCurrentUserUseCase(authRepo)
 	getUserGitHubTokenUC := authusecase.NewGetUserGitHubTokenUseCase(container.Encryptor, authRepo)
 	tokenProvider := authadapter.NewTokenProviderAdapter(getUserGitHubTokenUC)
+
+	subscriptionConfig := subscriptionadapter.ConfigFromEnv()
+	subscriptionRepo := subscriptionadapter.NewPostgresRepository(queries)
+	assignDefaultPlanUC := subscriptionusecase.NewAssignDefaultPlanUseCase(subscriptionConfig.DefaultPlanTier, subscriptionRepo)
+
 	handleOAuthCallbackUC := authusecase.NewHandleOAuthCallbackUseCase(
 		container.Encryptor,
 		container.GitHubOAuth,
 		refreshTokenRepo,
 		authRepo,
 		stateStore,
+		assignDefaultPlanUC,
 		container.JWTManager,
 	)
 	initiateOAuthUC := authusecase.NewInitiateOAuthUseCase(container.GitHubOAuth, stateStore)

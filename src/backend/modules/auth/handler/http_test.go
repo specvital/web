@@ -18,6 +18,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/auth/domain/port"
 	"github.com/specvital/web/src/backend/modules/auth/usecase"
 	specviewhandler "github.com/specvital/web/src/backend/modules/spec-view/handler"
+	subscriptionport "github.com/specvital/web/src/backend/modules/subscription/domain/port"
 	"github.com/specvital/web/src/backend/modules/user"
 )
 
@@ -222,6 +223,19 @@ func (m *mockRefreshTokenRepo) RotateToken(ctx context.Context, oldTokenID strin
 	return "new-token-id", nil
 }
 
+type mockSubscriber struct {
+	assignDefaultPlanFunc func(ctx context.Context, userID string) error
+}
+
+var _ subscriptionport.Subscriber = (*mockSubscriber)(nil)
+
+func (m *mockSubscriber) AssignDefaultPlan(ctx context.Context, userID string) error {
+	if m.assignDefaultPlanFunc != nil {
+		return m.assignDefaultPlanFunc(ctx, userID)
+	}
+	return nil
+}
+
 func createTestHandler(
 	getCurrentUserUC *usecase.GetCurrentUserUseCase,
 	handleOAuthCallbackUC *usecase.HandleOAuthCallbackUseCase,
@@ -306,10 +320,11 @@ func createDefaultUseCases() (*usecase.GetCurrentUserUseCase, *usecase.HandleOAu
 	oauthClient := &mockOAuthClient{}
 	stateStore := &mockStateStore{}
 	encryptor := &mockEncryptor{}
+	subscriber := &mockSubscriber{}
 	tokenManager := &mockTokenManager{}
 
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, tokenManager)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, subscriber, tokenManager)
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
 	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, tokenManager)
 
@@ -343,10 +358,11 @@ func TestAuthLogin_ServiceError(t *testing.T) {
 		},
 	}
 	encryptor := &mockEncryptor{}
+	subscriber := &mockSubscriber{}
 	tokenManager := &mockTokenManager{}
 
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, tokenManager)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, subscriber, tokenManager)
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
 	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, tokenManager)
 
@@ -376,10 +392,11 @@ func TestAuthCallback_Success(t *testing.T) {
 	oauthClient := &mockOAuthClient{}
 	stateStore := &mockStateStore{}
 	encryptor := &mockEncryptor{}
+	subscriber := &mockSubscriber{}
 	tokenManager := &mockTokenManager{}
 
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, tokenManager)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, subscriber, tokenManager)
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
 	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, tokenManager)
 
@@ -415,10 +432,11 @@ func TestAuthCallback_InvalidState(t *testing.T) {
 		},
 	}
 	encryptor := &mockEncryptor{}
+	subscriber := &mockSubscriber{}
 	tokenManager := &mockTokenManager{}
 
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, tokenManager)
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(encryptor, oauthClient, refreshTokenRepo, repo, stateStore, subscriber, tokenManager)
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(oauthClient, stateStore)
 	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, tokenManager)
 
@@ -505,7 +523,7 @@ func TestAuthMe_UserNotFound(t *testing.T) {
 	}
 	refreshTokenRepo := &mockRefreshTokenRepo{}
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockSubscriber{}, &mockTokenManager{})
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
 	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{})
 
@@ -534,7 +552,7 @@ func TestAuthMe_Success(t *testing.T) {
 	}
 	refreshTokenRepo := &mockRefreshTokenRepo{}
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockSubscriber{}, &mockTokenManager{})
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
 	refreshToken := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{})
 
@@ -619,7 +637,7 @@ func TestAuthRefresh_Success(t *testing.T) {
 		},
 	}
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockSubscriber{}, &mockTokenManager{})
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
 	refreshTokenUC := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{
 		hashTokenFunc: func(token string) string {
@@ -667,7 +685,7 @@ func TestAuthRefresh_ExpiredToken(t *testing.T) {
 		},
 	}
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockSubscriber{}, &mockTokenManager{})
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
 	refreshTokenUC := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{
 		hashTokenFunc: func(token string) string {
@@ -698,7 +716,7 @@ func TestAuthRefresh_TokenReuseDetected(t *testing.T) {
 		},
 	}
 	getCurrentUser := usecase.NewGetCurrentUserUseCase(repo)
-	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockTokenManager{})
+	handleOAuthCallback := usecase.NewHandleOAuthCallbackUseCase(&mockEncryptor{}, &mockOAuthClient{}, refreshTokenRepo, repo, &mockStateStore{}, &mockSubscriber{}, &mockTokenManager{})
 	initiateOAuth := usecase.NewInitiateOAuthUseCase(&mockOAuthClient{}, &mockStateStore{})
 	refreshTokenUC := usecase.NewRefreshTokenUseCase(refreshTokenRepo, repo, &mockTokenManager{
 		hashTokenFunc: func(token string) string {
