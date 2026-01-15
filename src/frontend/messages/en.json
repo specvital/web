@@ -471,5 +471,88 @@
       "resetIn": "Resets in {days}",
       "unavailable": "Usage information unavailable"
     }
+  },
+  "pricing": {
+    "header": {
+      "title": "Simple, transparent pricing",
+      "subtitle": "Choose the plan that fits your needs"
+    },
+    "promotion": {
+      "title": "Early Access: Pro features FREE!",
+      "description": "Sign up now and enjoy Pro features at no cost during our launch period"
+    },
+    "mostPopular": "Most Popular",
+    "comingSoon": "Coming Soon",
+    "customPricing": "Custom",
+    "month": "mo",
+    "days": "days",
+    "unlimited": "Unlimited",
+    "tiers": {
+      "free": {
+        "name": "Free",
+        "description": "For individuals getting started"
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For professionals and small teams"
+      },
+      "pro_plus": {
+        "name": "Pro+",
+        "description": "For growing teams with higher needs"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "For large organizations"
+      }
+    },
+    "features": {
+      "specview": {
+        "label": "SpecView"
+      },
+      "analysis": {
+        "label": "Analysis"
+      },
+      "retention": {
+        "label": "Retention"
+      }
+    },
+    "cta": {
+      "getStartedFree": "Get Started Free",
+      "currentPlan": "Current Plan",
+      "upgrade": "Upgrade",
+      "upgradeComingSoon": "Upgrade options coming soon",
+      "contactUs": "Contact Us"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": {
+        "specview": {
+          "question": "What is a SpecView?",
+          "answer": "SpecView is an AI-generated specification document that organizes your test cases into domains, features, and behaviors. It helps you understand your test coverage at a glance."
+        },
+        "analysis": {
+          "question": "What is Analysis?",
+          "answer": "Analysis parses your repository's test files and extracts test cases, frameworks, and statistics. It's the foundation for understanding your test suite."
+        },
+        "promotionFree": {
+          "question": "Is the promotion really free?",
+          "answer": "Yes! During our early access period, you get Pro-level features at no cost. No credit card required. When we introduce paid plans, you'll be notified in advance."
+        },
+        "paymentLive": {
+          "question": "When will payments go live?",
+          "answer": "We're currently in early access. Paid plans will be introduced later this year. Early users will receive special benefits and advance notice."
+        },
+        "retention": {
+          "question": "What is data retention?",
+          "answer": "Data retention refers to how long we store your analysis history and generated documents. Higher plans offer longer retention periods."
+        }
+      }
+    }
+  },
+  "navigation": {
+    "ariaLabel": "Main navigation",
+    "dashboard": "Dashboard",
+    "explore": "Explore",
+    "pricing": "Pricing"
   }
 }

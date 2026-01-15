@@ -8,13 +8,14 @@ import { cn } from "@/lib/utils";
 
 type NavItem = {
   href: string;
-  labelKey: "dashboard" | "explore";
+  labelKey: "dashboard" | "explore" | "pricing";
   requiresAuth?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", labelKey: "dashboard", requiresAuth: true },
   { href: "/explore", labelKey: "explore" },
+  { href: "/pricing", labelKey: "pricing" },
 ];
 
 type NavigationTabsProps = {
