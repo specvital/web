@@ -26,6 +26,7 @@
     "ctaTrigger": "Analyze a repository"
   },
   "auth": {
+    "account": "Account",
     "login": "Sign in",
     "logout": "Sign out",
     "openUserMenu": "Open user menu"
@@ -444,5 +445,31 @@
     "benefit3Description": "Download specs in Markdown or share with your team",
     "continueWithGitHub": "Continue with GitHub",
     "freeNote": "Test analysis stays free for everyone"
+  },
+  "account": {
+    "title": "Account",
+    "plan": {
+      "title": "Current Plan",
+      "tier": {
+        "free": "Free",
+        "pro": "Pro",
+        "pro_plus": "Pro+",
+        "enterprise": "Enterprise"
+      },
+      "specviewLimit": "SpecView",
+      "analysisLimit": "Analysis",
+      "retention": "Data Retention",
+      "month": "month",
+      "days": "{days} days",
+      "unlimited": "Unlimited",
+      "unavailable": "Plan information unavailable"
+    },
+    "usage": {
+      "title": "Usage This Period",
+      "specview": "SpecView Generations",
+      "analysis": "Analysis Runs",
+      "resetIn": "Resets in {days}",
+      "unavailable": "Usage information unavailable"
+    }
   }
 }

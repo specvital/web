@@ -598,6 +598,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user's subscription details
+         * @description Returns the current user's subscription details including plan info and billing period.
+         *     Provides plan tier, limits, and period dates for display in account page.
+         *
+         */
+        get: operations["getUserSubscription"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/usage/check-quota": {
         parameters: {
             query?: never;
@@ -1508,6 +1530,19 @@ export interface components {
          * @enum {string}
          */
         PlanTier: "free" | "pro" | "pro_plus" | "enterprise";
+        UserSubscriptionResponse: {
+            plan: components["schemas"]["PlanInfo"];
+            /**
+             * Format: date-time
+             * @description Start of the current billing period
+             */
+            currentPeriodStart: string;
+            /**
+             * Format: date-time
+             * @description End of the current billing period (when usage resets)
+             */
+            currentPeriodEnd: string;
+        };
         UsageStatusResponse: {
             specview: components["schemas"]["UsageMetric"];
             analysis: components["schemas"]["UsageMetric"];
@@ -2358,6 +2393,29 @@ export interface operations {
                     "application/json": components["schemas"]["SpecGenerationStatusResponse"];
                 };
             };
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subscription details retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSubscriptionResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };

@@ -201,7 +201,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 	)
 
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(h, user.NewMockHandler(), authhandler.NewMockHandler(), user.NewMockHandler(), NewMockGitHubHandler(), NewMockGitHubAppHandler(), h, specviewhandler.NewMockHandler(), NewMockUsageHandler(), nil)
+	apiHandlers := api.NewAPIHandlers(h, user.NewMockHandler(), authhandler.NewMockHandler(), user.NewMockHandler(), NewMockGitHubHandler(), NewMockGitHubAppHandler(), h, specviewhandler.NewMockHandler(), NewMockSubscriptionHandler(), NewMockUsageHandler(), nil)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 
@@ -258,4 +258,16 @@ func (m *mockUsageHandler) CheckQuota(_ context.Context, _ api.CheckQuotaRequest
 
 func (m *mockUsageHandler) GetCurrentUsage(_ context.Context, _ api.GetCurrentUsageRequestObject) (api.GetCurrentUsageResponseObject, error) {
 	return api.GetCurrentUsage200JSONResponse{}, nil
+}
+
+type mockSubscriptionHandler struct{}
+
+var _ api.SubscriptionHandlers = (*mockSubscriptionHandler)(nil)
+
+func NewMockSubscriptionHandler() *mockSubscriptionHandler {
+	return &mockSubscriptionHandler{}
+}
+
+func (m *mockSubscriptionHandler) GetUserSubscription(_ context.Context, _ api.GetUserSubscriptionRequestObject) (api.GetUserSubscriptionResponseObject, error) {
+	return api.GetUserSubscription200JSONResponse{}, nil
 }

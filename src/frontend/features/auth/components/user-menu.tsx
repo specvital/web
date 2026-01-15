@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "@/i18n/navigation";
 
 import { useAuth } from "../hooks";
 
@@ -47,6 +48,12 @@ export const UserMenu = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/account">
+            <Settings className="mr-2 h-4 w-4" />
+            {t("account")}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem disabled={logoutPending} onClick={logout}>
           <LogOut className="mr-2 h-4 w-4" />
           {t("logout")}

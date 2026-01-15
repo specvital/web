@@ -26,6 +26,7 @@
     "ctaTrigger": "리포지토리 분석하기"
   },
   "auth": {
+    "account": "계정",
     "login": "로그인",
     "logout": "로그아웃",
     "openUserMenu": "사용자 메뉴 열기"
@@ -444,5 +445,31 @@
     "benefit3Description": "마크다운으로 다운로드하거나 팀과 공유",
     "continueWithGitHub": "GitHub으로 계속하기",
     "freeNote": "테스트 분석은 모두에게 무료입니다"
+  },
+  "account": {
+    "title": "계정",
+    "plan": {
+      "title": "현재 플랜",
+      "tier": {
+        "free": "무료",
+        "pro": "Pro",
+        "pro_plus": "Pro+",
+        "enterprise": "Enterprise"
+      },
+      "specviewLimit": "SpecView",
+      "analysisLimit": "분석",
+      "retention": "데이터 보관",
+      "month": "월",
+      "days": "{days}일",
+      "unlimited": "무제한",
+      "unavailable": "플랜 정보를 불러올 수 없습니다"
+    },
+    "usage": {
+      "title": "이번 기간 사용량",
+      "specview": "SpecView 생성",
+      "analysis": "분석 실행",
+      "resetIn": "{days} 후 초기화",
+      "unavailable": "사용량 정보를 불러올 수 없습니다"
+    }
   }
 }

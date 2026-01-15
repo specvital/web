@@ -36,6 +36,7 @@ import (
 	specviewhandler "github.com/specvital/web/src/backend/modules/spec-view/handler"
 	specviewusecase "github.com/specvital/web/src/backend/modules/spec-view/usecase"
 	subscriptionadapter "github.com/specvital/web/src/backend/modules/subscription/adapter"
+	subscriptionhandler "github.com/specvital/web/src/backend/modules/subscription/handler"
 	subscriptionusecase "github.com/specvital/web/src/backend/modules/subscription/usecase"
 	usageadapter "github.com/specvital/web/src/backend/modules/usage/adapter"
 	usagehandler "github.com/specvital/web/src/backend/modules/usage/handler"
@@ -264,7 +265,16 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 		return nil, nil, fmt.Errorf("create usage handler: %w", err)
 	}
 
-	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, analyzerHandler, specViewHandler, usageHandler, webhookHandler)
+	getUserSubscriptionUC := subscriptionusecase.NewGetUserSubscriptionUseCase(subscriptionRepo)
+	subscriptionHandler, err := subscriptionhandler.NewHandler(&subscriptionhandler.HandlerConfig{
+		GetUserSubscription: getUserSubscriptionUC,
+		Logger:              log,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("create subscription handler: %w", err)
+	}
+
+	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, analyzerHandler, specViewHandler, subscriptionHandler, usageHandler, webhookHandler)
 
 	return &Handlers{
 		API:     apiHandlers,

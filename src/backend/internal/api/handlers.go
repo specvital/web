@@ -63,6 +63,10 @@ type UsageHandlers interface {
 	GetCurrentUsage(ctx context.Context, request GetCurrentUsageRequestObject) (GetCurrentUsageResponseObject, error)
 }
 
+type SubscriptionHandlers interface {
+	GetUserSubscription(ctx context.Context, request GetUserSubscriptionRequestObject) (GetUserSubscriptionResponseObject, error)
+}
+
 type APIHandlers struct {
 	analyzer        AnalyzerHandlers
 	analysisHistory AnalysisHistoryHandlers
@@ -72,6 +76,7 @@ type APIHandlers struct {
 	githubApp       GitHubAppHandlers
 	repository      RepositoryHandlers
 	specView        SpecViewHandlers
+	subscription    SubscriptionHandlers
 	usage           UsageHandlers
 	webhook         WebhookHandlers
 }
@@ -87,6 +92,7 @@ func NewAPIHandlers(
 	githubApp GitHubAppHandlers,
 	repository RepositoryHandlers,
 	specView SpecViewHandlers,
+	subscription SubscriptionHandlers,
 	usage UsageHandlers,
 	webhook WebhookHandlers,
 ) *APIHandlers {
@@ -99,6 +105,7 @@ func NewAPIHandlers(
 		githubApp:       githubApp,
 		repository:      repository,
 		specView:        specView,
+		subscription:    subscription,
 		usage:           usage,
 		webhook:         webhook,
 	}
@@ -255,4 +262,13 @@ func (h *APIHandlers) GetCurrentUsage(ctx context.Context, request GetCurrentUsa
 		}, nil
 	}
 	return h.usage.GetCurrentUsage(ctx, request)
+}
+
+func (h *APIHandlers) GetUserSubscription(ctx context.Context, request GetUserSubscriptionRequestObject) (GetUserSubscriptionResponseObject, error) {
+	if h.subscription == nil {
+		return GetUserSubscription500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Subscription feature not configured"),
+		}, nil
+	}
+	return h.subscription.GetUserSubscription(ctx, request)
 }

@@ -935,6 +935,16 @@ type UserInfo struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// UserSubscriptionResponse defines model for UserSubscriptionResponse.
+type UserSubscriptionResponse struct {
+	// CurrentPeriodEnd End of the current billing period (when usage resets)
+	CurrentPeriodEnd time.Time `json:"currentPeriodEnd"`
+
+	// CurrentPeriodStart Start of the current billing period
+	CurrentPeriodStart time.Time `json:"currentPeriodStart"`
+	Plan               PlanInfo  `json:"plan"`
+}
+
 // ViewFilterParam Filter repositories by analyzer (who analyzed):
 // - all: All analyzed repositories
 // - my: Only repositories analyzed by the current user
@@ -1441,6 +1451,9 @@ type ServerInterface interface {
 	// Get user's GitHub repositories
 	// (GET /api/user/github/repositories)
 	GetUserGitHubRepositories(w http.ResponseWriter, r *http.Request, params GetUserGitHubRepositoriesParams)
+	// Get user's subscription details
+	// (GET /api/user/subscription)
+	GetUserSubscription(w http.ResponseWriter, r *http.Request)
 	// Handle GitHub App webhook events
 	// (POST /api/webhooks/github-app)
 	HandleGitHubAppWebhook(w http.ResponseWriter, r *http.Request, params HandleGitHubAppWebhookParams)
@@ -1609,6 +1622,12 @@ func (_ Unimplemented) GetOrganizationRepositories(w http.ResponseWriter, r *htt
 // Get user's GitHub repositories
 // (GET /api/user/github/repositories)
 func (_ Unimplemented) GetUserGitHubRepositories(w http.ResponseWriter, r *http.Request, params GetUserGitHubRepositoriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get user's subscription details
+// (GET /api/user/subscription)
+func (_ Unimplemented) GetUserSubscription(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2438,6 +2457,26 @@ func (siw *ServerInterfaceWrapper) GetUserGitHubRepositories(w http.ResponseWrit
 	handler.ServeHTTP(w, r)
 }
 
+// GetUserSubscription operation middleware
+func (siw *ServerInterfaceWrapper) GetUserSubscription(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserSubscription(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // HandleGitHubAppWebhook operation middleware
 func (siw *ServerInterfaceWrapper) HandleGitHubAppWebhook(w http.ResponseWriter, r *http.Request) {
 
@@ -2721,6 +2760,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/github/repositories", wrapper.GetUserGitHubRepositories)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/user/subscription", wrapper.GetUserSubscription)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/webhooks/github-app", wrapper.HandleGitHubAppWebhook)
@@ -4079,6 +4121,55 @@ func (response GetUserGitHubRepositories500ApplicationProblemPlusJSONResponse) V
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetUserSubscriptionRequestObject struct {
+}
+
+type GetUserSubscriptionResponseObject interface {
+	VisitGetUserSubscriptionResponse(w http.ResponseWriter) error
+}
+
+type GetUserSubscription200JSONResponse UserSubscriptionResponse
+
+func (response GetUserSubscription200JSONResponse) VisitGetUserSubscriptionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserSubscription401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserSubscription401ApplicationProblemPlusJSONResponse) VisitGetUserSubscriptionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserSubscription404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserSubscription404ApplicationProblemPlusJSONResponse) VisitGetUserSubscriptionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserSubscription500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserSubscription500ApplicationProblemPlusJSONResponse) VisitGetUserSubscriptionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type HandleGitHubAppWebhookRequestObject struct {
 	Params HandleGitHubAppWebhookParams
 	Body   *HandleGitHubAppWebhookJSONRequestBody
@@ -4211,6 +4302,9 @@ type StrictServerInterface interface {
 	// Get user's GitHub repositories
 	// (GET /api/user/github/repositories)
 	GetUserGitHubRepositories(ctx context.Context, request GetUserGitHubRepositoriesRequestObject) (GetUserGitHubRepositoriesResponseObject, error)
+	// Get user's subscription details
+	// (GET /api/user/subscription)
+	GetUserSubscription(ctx context.Context, request GetUserSubscriptionRequestObject) (GetUserSubscriptionResponseObject, error)
 	// Handle GitHub App webhook events
 	// (POST /api/webhooks/github-app)
 	HandleGitHubAppWebhook(ctx context.Context, request HandleGitHubAppWebhookRequestObject) (HandleGitHubAppWebhookResponseObject, error)
@@ -4949,6 +5043,30 @@ func (sh *strictHandler) GetUserGitHubRepositories(w http.ResponseWriter, r *htt
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetUserGitHubRepositoriesResponseObject); ok {
 		if err := validResponse.VisitGetUserGitHubRepositoriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserSubscription operation middleware
+func (sh *strictHandler) GetUserSubscription(w http.ResponseWriter, r *http.Request) {
+	var request GetUserSubscriptionRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserSubscription(ctx, request.(GetUserSubscriptionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserSubscription")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserSubscriptionResponseObject); ok {
+		if err := validResponse.VisitGetUserSubscriptionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -800,6 +800,32 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  # User Subscription APIs
+  /api/user/subscription:
+    get:
+      operationId: getUserSubscription
+      summary: Get user's subscription details
+      description: |
+        Returns the current user's subscription details including plan info and billing period.
+        Provides plan tier, limits, and period dates for display in account page.
+      tags:
+        - User
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Subscription details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSubscriptionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   # Usage Quota APIs
   /api/usage/check-quota:
     post:
@@ -2303,6 +2329,24 @@ components:
         - pro: Pro tier with expanded limits
         - pro_plus: Pro Plus tier with higher limits
         - enterprise: Enterprise tier with unlimited usage
+
+    UserSubscriptionResponse:
+      type: object
+      required:
+        - plan
+        - currentPeriodStart
+        - currentPeriodEnd
+      properties:
+        plan:
+          $ref: "#/components/schemas/PlanInfo"
+        currentPeriodStart:
+          type: string
+          format: date-time
+          description: Start of the current billing period
+        currentPeriodEnd:
+          type: string
+          format: date-time
+          description: End of the current billing period (when usage resets)
 
     UsageStatusResponse:
       type: object
