@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/specvital/web/src/backend/common/docs"
 	"github.com/specvital/web/src/backend/common/health"
 	"github.com/specvital/web/src/backend/common/logger"
 	"github.com/specvital/web/src/backend/common/middleware"
+	"github.com/specvital/web/src/backend/common/ratelimit"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/internal/client"
 	"github.com/specvital/web/src/backend/internal/db"
@@ -172,6 +174,9 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 	getRepositoryStatsUC := analyzerusecase.NewGetRepositoryStatsUseCase(analyzerRepo)
 	reanalyzeRepositoryUC := analyzerusecase.NewReanalyzeRepositoryUseCase(analyzerGitClient, analyzerQueue, analyzerRepo, tokenProvider)
 
+	anonymousRateLimiter := ratelimit.NewIPRateLimiter(10, time.Minute)
+	closers = append(closers, anonymousRateLimiter)
+
 	analyzerHandler := analyzerhandler.NewHandler(
 		log,
 		analyzeRepositoryUC,
@@ -181,6 +186,7 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 		getRepositoryStatsUC,
 		reanalyzeRepositoryUC,
 		historyRepo,
+		anonymousRateLimiter,
 	)
 
 	githubRepo := githubadapter.NewPostgresRepository(container.DB, queries)

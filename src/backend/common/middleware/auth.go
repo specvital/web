@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/specvital/web/src/backend/common/httputil"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/auth/domain/entity"
 	"github.com/specvital/web/src/backend/modules/auth/domain/port"
@@ -15,6 +16,7 @@ type contextKey string
 
 const (
 	claimsKey       contextKey = "claims"
+	clientIPKey     contextKey = "client_ip"
 	refreshTokenKey contextKey = "refresh_token"
 )
 
@@ -28,6 +30,11 @@ func GetRefreshToken(ctx context.Context) string {
 	return token
 }
 
+func GetClientIP(ctx context.Context) string {
+	ip, _ := ctx.Value(clientIPKey).(string)
+	return ip
+}
+
 func GetUserID(ctx context.Context) string {
 	claims := GetClaims(ctx)
 	if claims == nil {
@@ -38,6 +45,10 @@ func GetUserID(ctx context.Context) string {
 
 func WithClaims(ctx context.Context, claims *entity.Claims) context.Context {
 	return context.WithValue(ctx, claimsKey, claims)
+}
+
+func withClientIP(ctx context.Context, ip string) context.Context {
+	return context.WithValue(ctx, clientIPKey, ip)
 }
 
 func WithRefreshToken(ctx context.Context, token string) context.Context {
@@ -85,6 +96,8 @@ func (m *AuthMiddleware) OptionalAuth(next http.Handler) http.Handler {
 		}
 
 		ctx := r.Context()
+
+		ctx = withClientIP(ctx, httputil.ExtractClientIP(r))
 
 		claims, err := m.extractClaims(r)
 		if err == nil && claims != nil {

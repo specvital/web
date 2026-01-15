@@ -197,6 +197,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 		getRepositoryStatsUC,
 		reanalyzeRepositoryUC,
 		nil,
+		nil,
 	)
 
 	r := chi.NewRouter()

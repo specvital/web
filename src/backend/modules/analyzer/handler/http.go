@@ -10,6 +10,7 @@ import (
 
 	"github.com/specvital/web/src/backend/common/logger"
 	"github.com/specvital/web/src/backend/common/middleware"
+	"github.com/specvital/web/src/backend/common/ratelimit"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/internal/client"
 	"github.com/specvital/web/src/backend/modules/analyzer/adapter/mapper"
@@ -22,14 +23,15 @@ import (
 var validNamePattern = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 type Handler struct {
-	analyzeRepository   *usecase.AnalyzeRepositoryUseCase
-	getAnalysis         *usecase.GetAnalysisUseCase
-	getRepositoryStats  *usecase.GetRepositoryStatsUseCase
-	getUpdateStatus     *usecase.GetUpdateStatusUseCase
-	historyChecker      port.HistoryChecker
-	listRepositoryCards *usecase.ListRepositoryCardsUseCase
-	logger              *logger.Logger
-	reanalyzeRepository *usecase.ReanalyzeRepositoryUseCase
+	analyzeRepository    *usecase.AnalyzeRepositoryUseCase
+	anonymousRateLimiter *ratelimit.IPRateLimiter
+	getAnalysis          *usecase.GetAnalysisUseCase
+	getRepositoryStats   *usecase.GetRepositoryStatsUseCase
+	getUpdateStatus      *usecase.GetUpdateStatusUseCase
+	historyChecker       port.HistoryChecker
+	listRepositoryCards  *usecase.ListRepositoryCardsUseCase
+	logger               *logger.Logger
+	reanalyzeRepository  *usecase.ReanalyzeRepositoryUseCase
 }
 
 var _ api.AnalyzerHandlers = (*Handler)(nil)
@@ -44,16 +46,18 @@ func NewHandler(
 	getRepositoryStats *usecase.GetRepositoryStatsUseCase,
 	reanalyzeRepository *usecase.ReanalyzeRepositoryUseCase,
 	historyChecker port.HistoryChecker,
+	anonymousRateLimiter *ratelimit.IPRateLimiter,
 ) *Handler {
 	return &Handler{
-		analyzeRepository:   analyzeRepository,
-		getAnalysis:         getAnalysis,
-		getRepositoryStats:  getRepositoryStats,
-		getUpdateStatus:     getUpdateStatus,
-		historyChecker:      historyChecker,
-		listRepositoryCards: listRepositoryCards,
-		logger:              logger,
-		reanalyzeRepository: reanalyzeRepository,
+		analyzeRepository:    analyzeRepository,
+		anonymousRateLimiter: anonymousRateLimiter,
+		getAnalysis:          getAnalysis,
+		getRepositoryStats:   getRepositoryStats,
+		getUpdateStatus:      getUpdateStatus,
+		historyChecker:       historyChecker,
+		listRepositoryCards:  listRepositoryCards,
+		logger:               logger,
+		reanalyzeRepository:  reanalyzeRepository,
 	}
 }
 
@@ -68,6 +72,24 @@ func (h *Handler) AnalyzeRepository(ctx context.Context, request api.AnalyzeRepo
 	}
 
 	userID := middleware.GetUserID(ctx)
+
+	if userID == "" && h.anonymousRateLimiter != nil {
+		clientIP := middleware.GetClientIP(ctx)
+		if clientIP == "" {
+			clientIP = "unknown"
+		}
+		if !h.anonymousRateLimiter.Allow(clientIP) {
+			log.Warn(ctx, "rate limit exceeded for anonymous user", "client_ip", clientIP)
+			return api.AnalyzeRepository429ApplicationProblemPlusJSONResponse{
+				TooManyRequestsApplicationProblemPlusJSONResponse: api.TooManyRequestsApplicationProblemPlusJSONResponse{
+					Detail: "Rate limit exceeded. Please sign in for higher limits or try again later.",
+					Status: 429,
+					Title:  "Too Many Requests",
+				},
+			}, nil
+		}
+	}
+
 	result, err := h.analyzeRepository.Execute(ctx, usecase.AnalyzeRepositoryInput{
 		Owner:  owner,
 		Repo:   repo,

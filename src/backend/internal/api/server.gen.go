@@ -2781,6 +2781,17 @@ func (response AnalyzeRepository400ApplicationProblemPlusJSONResponse) VisitAnal
 	return json.NewEncoder(w).Encode(response)
 }
 
+type AnalyzeRepository429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response AnalyzeRepository429ApplicationProblemPlusJSONResponse) VisitAnalyzeRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type AnalyzeRepository500ApplicationProblemPlusJSONResponse struct {
 	InternalErrorApplicationProblemPlusJSONResponse
 }

@@ -38,6 +38,8 @@ paths:
                   - $ref: "#/components/schemas/AnalyzingResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         "500":
           $ref: "#/components/responses/InternalError"
 
