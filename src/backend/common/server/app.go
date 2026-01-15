@@ -35,6 +35,7 @@ import (
 	specviewusecase "github.com/specvital/web/src/backend/modules/spec-view/usecase"
 	subscriptionadapter "github.com/specvital/web/src/backend/modules/subscription/adapter"
 	subscriptionusecase "github.com/specvital/web/src/backend/modules/subscription/usecase"
+	usageadapter "github.com/specvital/web/src/backend/modules/usage/adapter"
 )
 
 type Handlers struct {
@@ -93,6 +94,9 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 	subscriptionConfig := subscriptionadapter.ConfigFromEnv()
 	subscriptionRepo := subscriptionadapter.NewPostgresRepository(queries)
 	assignDefaultPlanUC := subscriptionusecase.NewAssignDefaultPlanUseCase(subscriptionConfig.DefaultPlanTier, subscriptionRepo)
+
+	usageRepo := usageadapter.NewPostgresRepository(queries)
+	_ = usageRepo
 
 	handleOAuthCallbackUC := authusecase.NewHandleOAuthCallbackUseCase(
 		container.Encryptor,
