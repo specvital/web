@@ -24,9 +24,10 @@ const (
 // SpecGenerationArgs represents the arguments for spec generation job.
 // This must match the worker's Args structure.
 type SpecGenerationArgs struct {
-	AnalysisID string `json:"analysis_id" river:"unique"`
-	Language   string `json:"language"`
-	ModelID    string `json:"model_id"`
+	AnalysisID string  `json:"analysis_id" river:"unique"`
+	Language   string  `json:"language"`
+	ModelID    string  `json:"model_id"`
+	UserID     *string `json:"user_id,omitempty"`
 }
 
 func (SpecGenerationArgs) Kind() string { return TypeSpecGeneration }
@@ -39,7 +40,7 @@ func NewRiverQueueService(client *river.Client[pgx.Tx]) *RiverQueueService {
 	return &RiverQueueService{client: client}
 }
 
-func (s *RiverQueueService) EnqueueSpecGeneration(ctx context.Context, analysisID string, language string) error {
+func (s *RiverQueueService) EnqueueSpecGeneration(ctx context.Context, analysisID string, language string, userID *string) error {
 	ctx, cancel := context.WithTimeout(ctx, enqueueTimeout)
 	defer cancel()
 
@@ -47,6 +48,7 @@ func (s *RiverQueueService) EnqueueSpecGeneration(ctx context.Context, analysisI
 		AnalysisID: analysisID,
 		Language:   language,
 		ModelID:    "gemini-2.5-pro",
+		UserID:     userID,
 	}
 
 	_, err := s.client.Insert(ctx, args, &river.InsertOpts{

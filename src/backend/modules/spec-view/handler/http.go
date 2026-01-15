@@ -7,6 +7,7 @@ import (
 	"github.com/cockroachdb/errors"
 
 	"github.com/specvital/web/src/backend/common/logger"
+	"github.com/specvital/web/src/backend/common/middleware"
 	"github.com/specvital/web/src/backend/internal/api"
 	"github.com/specvital/web/src/backend/modules/spec-view/adapter/mapper"
 	"github.com/specvital/web/src/backend/modules/spec-view/domain"
@@ -114,10 +115,13 @@ func (h *Handler) RequestSpecGeneration(ctx context.Context, request api.Request
 		isForce = *request.Body.IsForceRegenerate
 	}
 
+	userID := middleware.GetUserID(ctx)
+
 	result, err := h.requestGeneration.Execute(ctx, usecase.RequestGenerationInput{
 		AnalysisID:        request.Body.AnalysisID.String(),
 		IsForceRegenerate: isForce,
 		Language:          language,
+		UserID:            userID,
 	})
 	if err != nil {
 		switch {

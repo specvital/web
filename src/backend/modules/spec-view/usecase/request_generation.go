@@ -12,6 +12,7 @@ type RequestGenerationInput struct {
 	AnalysisID        string
 	IsForceRegenerate bool
 	Language          string
+	UserID            string
 }
 
 type RequestGenerationOutput struct {
@@ -73,7 +74,12 @@ func (uc *RequestGenerationUseCase) Execute(ctx context.Context, input RequestGe
 		language = "en"
 	}
 
-	if err := uc.queue.EnqueueSpecGeneration(ctx, input.AnalysisID, language); err != nil {
+	var userIDPtr *string
+	if input.UserID != "" {
+		userIDPtr = &input.UserID
+	}
+
+	if err := uc.queue.EnqueueSpecGeneration(ctx, input.AnalysisID, language, userIDPtr); err != nil {
 		return nil, err
 	}
 
