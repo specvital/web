@@ -301,13 +301,14 @@
     },
     "quotaConfirm": {
       "title": "Generate AI Specification",
-      "description": "This will use your SpecView generation quota. Please review your current usage before proceeding.",
-      "specviewUsage": "SpecView Usage",
+      "description": "This will use your AI Spec Doc generation quota. Please review your current usage before proceeding.",
+      "specviewUsage": "Usage This Month",
       "used": "used",
       "unlimited": "Unlimited",
-      "thisMonth": "this month",
-      "estimatedCost": "This generation will use ~{count} quota",
-      "afterGeneration": "After: {after} / {limit}",
+      "thisMonth": "tests (this month)",
+      "unit": "tests",
+      "estimatedCost": "This generation will use ~{count} tests",
+      "afterGeneration": "After: {after} / {limit} tests",
       "warningMessage": "You're running low on your monthly quota. Consider upgrading your plan for more generations.",
       "dangerMessage": "You're almost at your monthly limit. This generation will use most of your remaining quota.",
       "exceededMessage": "You've reached your monthly quota limit. Please upgrade your plan or wait until next month.",
@@ -319,7 +320,7 @@
     "toast": {
       "quotaExceeded": {
         "title": "Quota Exceeded",
-        "description": "You've used {used} of {limit} SpecView generations this month.",
+        "description": "You've used {used} of {limit} tests this month.",
         "viewAccount": "View Account"
       },
       "generateFailed": {
@@ -490,7 +491,7 @@
         "pro_plus": "Pro+",
         "enterprise": "Enterprise"
       },
-      "specviewLimit": "SpecView",
+      "specviewLimit": "AI Spec Docs",
       "analysisLimit": "Analysis",
       "retention": "Data Retention",
       "month": "month",
@@ -500,7 +501,7 @@
     },
     "usage": {
       "title": "Usage This Period",
-      "specview": "SpecView Generations",
+      "specview": "AI Spec Docs",
       "analysis": "Analysis Runs",
       "resetIn": "Resets in {days}",
       "unavailable": "Usage information unavailable"
@@ -541,10 +542,12 @@
     },
     "features": {
       "specview": {
-        "label": "SpecView"
+        "label": "AI Spec Docs",
+        "unit": "tests"
       },
       "analysis": {
-        "label": "Analysis"
+        "label": "Analysis",
+        "unit": "runs"
       },
       "retention": {
         "label": "Retention"
@@ -561,8 +564,8 @@
       "title": "Frequently Asked Questions",
       "items": {
         "specview": {
-          "question": "What is a SpecView?",
-          "answer": "SpecView is an AI-generated specification document that organizes your test cases into domains, features, and behaviors. It helps you understand your test coverage at a glance."
+          "question": "What is an AI Spec Document?",
+          "answer": "An AI Spec Document automatically organizes your test cases into domains, features, and behaviors. It helps you understand your test coverage at a glance."
         },
         "analysis": {
           "question": "What is Analysis?",

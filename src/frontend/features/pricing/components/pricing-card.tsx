@@ -75,7 +75,9 @@ export const PricingCard = ({ currentTier, plan }: PricingCardProps) => {
                 </span>
                 <span className="font-medium">
                   {formatFeatureValue(feature.value, t("unlimited"))}
-                  {feature.label !== "retention" && `/${t("month")}`}
+                  {feature.label !== "retention" &&
+                    feature.value !== null &&
+                    ` ${tFeatures(`${feature.label}.unit`)}/${t("month")}`}
                   {feature.label === "retention" && feature.value !== null && ` ${t("days")}`}
                 </span>
               </span>

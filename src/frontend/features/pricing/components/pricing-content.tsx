@@ -7,7 +7,7 @@ import { PromotionBanner } from "./promotion-banner";
 
 export const PricingContent = () => {
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-12">
+    <div className="container mx-auto max-w-7xl px-4 py-12">
       <PromotionBanner />
       <PricingHeader />
       <PricingGrid />

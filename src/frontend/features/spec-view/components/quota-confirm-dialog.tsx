@@ -110,7 +110,7 @@ export const QuotaConfirmDialog = () => {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <InfinityIcon className="h-4 w-4" />
                   <span>
-                    {formatQuotaNumber(specview.used)} {t("used")} · {t("unlimited")}
+                    {formatQuotaNumber(specview.used)} {t("unit")} {t("used")} · {t("unlimited")}
                   </span>
                 </div>
               ) : (
