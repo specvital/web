@@ -113,7 +113,7 @@ export const UrlInputForm = ({ onSuccess }: UrlInputFormProps) => {
                     <li>github.com/owner/repo</li>
                     <li>owner/repo</li>
                   </ul>
-                  <p className="text-xs text-muted-foreground">{t("supportedFormats.note")}</p>
+                  <p className="text-xs text-background/70">{t("supportedFormats.note")}</p>
                 </div>
               }
               contentClassName="max-w-xs"
