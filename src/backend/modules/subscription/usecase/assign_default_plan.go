@@ -40,8 +40,8 @@ func (uc *AssignDefaultPlanUseCase) AssignDefaultPlan(ctx context.Context, userI
 	}
 
 	now := time.Now().UTC()
-	periodStart := beginningOfMonth(now)
-	periodEnd := endOfMonth(now)
+	periodStart := now
+	periodEnd := now.AddDate(0, 1, 0).Add(-time.Nanosecond)
 
 	_, err = uc.repo.CreateUserSubscription(ctx, userID, plan.ID, periodStart, periodEnd)
 	if err != nil {
@@ -49,12 +49,4 @@ func (uc *AssignDefaultPlanUseCase) AssignDefaultPlan(ctx context.Context, userI
 	}
 
 	return nil
-}
-
-func beginningOfMonth(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
-}
-
-func endOfMonth(t time.Time) time.Time {
-	return beginningOfMonth(t).AddDate(0, 1, 0).Add(-time.Nanosecond)
 }
