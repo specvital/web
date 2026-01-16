@@ -71,9 +71,7 @@ export const PricingCta = ({ currentTier, plan }: PricingCtaProps) => {
     );
   }
 
-  return (
-    <Button className="w-full" disabled variant="secondary">
-      {t("currentPlan")}
-    </Button>
-  );
+  // Free plan but not current (e.g., Pro user viewing Free card)
+  // No downgrade functionality, so hide button
+  return null;
 };
