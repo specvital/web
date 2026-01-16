@@ -13,12 +13,6 @@ export const PLAN_CONFIGS: Record<PlanTier, PlanConfig> = {
   pro_plus: { cta: "startFree", tier: "pro_plus" },
 };
 
-export const FAQ_ITEMS = [
-  "specview",
-  "analysis",
-  "promotionFree",
-  "paymentLive",
-  "retention",
-] as const;
+export const FAQ_ITEMS = ["specview", "analysis", "paymentLive", "retention"] as const;
 
 export type FaqKey = (typeof FAQ_ITEMS)[number];

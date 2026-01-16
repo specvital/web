@@ -565,23 +565,19 @@
       "items": {
         "specview": {
           "question": "What is an AI Spec Document?",
-          "answer": "An AI Spec Document automatically organizes your test cases into domains, features, and behaviors. It helps you understand your test coverage at a glance."
+          "answer": "An AI Spec Document automatically organizes your test cases into domains, features, and behaviors. It helps you understand your test status at a glance."
         },
         "analysis": {
           "question": "What is Analysis?",
           "answer": "Analysis parses your repository's test files and extracts test cases, frameworks, and statistics. It's the foundation for understanding your test suite."
         },
-        "promotionFree": {
-          "question": "Is the promotion really free?",
-          "answer": "Yes! During our early access period, you get Pro-level features at no cost. No credit card required. When we introduce paid plans, you'll be notified in advance."
-        },
         "paymentLive": {
           "question": "When will payments go live?",
-          "answer": "We're currently in early access. Paid plans will be introduced later this year. Early users will receive special benefits and advance notice."
+          "answer": "We're currently in early access. Paid plans will be introduced in the first half of this year. Early users will receive special benefits and advance notice."
         },
         "retention": {
           "question": "What is data retention?",
-          "answer": "Data retention refers to how long we store your analysis history and generated documents. Higher plans offer longer retention periods."
+          "answer": "Retention period determines how long you can access your dashboard history and generated AI spec documents. Repository analysis results are kept regardless of your plan."
         }
       }
     }
