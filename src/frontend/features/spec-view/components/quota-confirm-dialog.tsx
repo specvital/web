@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Gauge, Infinity as InfinityIcon, Sparkles } from "lucide-react";
+import { AlertTriangle, Gauge, Globe, Infinity as InfinityIcon, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 import { useQuotaConfirmDialog } from "../hooks/use-quota-confirm-dialog";
+import type { SpecLanguage } from "../types";
 import { formatQuotaNumber, getQuotaLevel, isQuotaExceeded, type QuotaLevel } from "../utils/quota";
 
 const LEVEL_CONFIG: Record<
@@ -56,7 +65,17 @@ const getIcon = (level: QuotaLevel, isUnlimited: boolean) => {
 
 export const QuotaConfirmDialog = () => {
   const t = useTranslations("specView.quotaConfirm");
-  const { close, confirm, estimatedCost, isOpen, onOpenChange, usage } = useQuotaConfirmDialog();
+  const {
+    close,
+    confirm,
+    estimatedCost,
+    isOpen,
+    onOpenChange,
+    selectedLanguage,
+    setSelectedLanguage,
+    specLanguages,
+    usage,
+  } = useQuotaConfirmDialog();
 
   const specview = usage?.specview;
   const percentage = specview?.percentage ?? null;
@@ -87,6 +106,34 @@ export const QuotaConfirmDialog = () => {
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
+
+        <div className="mt-4 space-y-4">
+          {/* Language Selection */}
+          <div className="space-y-2">
+            <Label
+              className="flex items-center gap-2 text-sm font-medium"
+              htmlFor="language-select"
+            >
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              {t("outputLanguage")}
+            </Label>
+            <Select
+              onValueChange={(value) => setSelectedLanguage(value as SpecLanguage)}
+              value={selectedLanguage}
+            >
+              <SelectTrigger className="w-full" id="language-select">
+                <SelectValue placeholder={t("selectLanguage")} />
+              </SelectTrigger>
+              <SelectContent>
+                {specLanguages.map((language) => (
+                  <SelectItem key={language} value={language}>
+                    {language}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         {specview && (
           <div className="mt-4 space-y-4">

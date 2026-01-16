@@ -6,6 +6,7 @@ export {
   EmptyDocument,
   ExecutiveSummary,
   FeatureGroup,
+  GenerationProgressModal,
   GenerationStatus,
   QuotaConfirmDialog,
   QuotaIndicator,
@@ -15,6 +16,7 @@ export {
 export {
   specViewKeys,
   useDocumentFilter,
+  useGenerationProgress,
   useQuotaConfirmDialog,
   useScrollSync,
   useSpecView,

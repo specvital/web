@@ -1,17 +1,20 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 import { useUsage } from "@/features/account";
 import { useAuth, useSpecLoginDialog } from "@/features/auth";
 import {
   DocumentView,
   EmptyDocument,
+  GenerationProgressModal,
   GenerationStatus,
   QuotaConfirmDialog,
   useDocumentFilter,
+  useGenerationProgress,
   useQuotaConfirmDialog,
   useSpecView,
 } from "@/features/spec-view";
@@ -37,6 +40,7 @@ const pageStaggerContainer = createStaggerContainer(0.1, 0);
 
 export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const t = useTranslations("analyze");
+  const locale = useLocale();
   const { frameworks, query, setFrameworks, setQuery, setStatuses, statuses } = useFilterState();
   const { setViewMode, viewMode } = useViewMode();
   const shouldReduceMotion = useReducedMotion();
@@ -46,6 +50,14 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const { open: openSpecLoginDialog } = useSpecLoginDialog();
   const { data: usageData } = useUsage(isAuthenticated);
   const { open: openQuotaConfirmDialog } = useQuotaConfirmDialog();
+  const {
+    bringToForeground: bringProgressToForeground,
+    close: closeProgressModal,
+    isInBackground: isProgressInBackground,
+    open: openProgressModal,
+    updateStatus: updateProgressStatus,
+  } = useGenerationProgress();
+  const tToast = useTranslations("specView.toast");
 
   const {
     data: specDocument,
@@ -54,6 +66,87 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
     isLoading: isSpecLoading,
     requestGenerate,
   } = useSpecView(result.id);
+
+  // Sync generation status with progress modal
+  useEffect(() => {
+    if (generationStatus) {
+      updateProgressStatus(generationStatus);
+
+      // Show toast when completed/failed in background
+      if (isProgressInBackground) {
+        if (generationStatus === "completed") {
+          closeProgressModal();
+          toast.success(tToast("generationComplete.title"), {
+            action: {
+              label: tToast("generationComplete.viewDocument"),
+              onClick: () => setViewMode("document"),
+            },
+            description: tToast("generationComplete.description"),
+          });
+        } else if (generationStatus === "failed") {
+          closeProgressModal();
+          toast.error(tToast("generateFailed.title"));
+        }
+      } else {
+        // Close modal when completed (not in background)
+        if (generationStatus === "completed" || generationStatus === "failed") {
+          closeProgressModal();
+        }
+      }
+    }
+  }, [
+    generationStatus,
+    updateProgressStatus,
+    closeProgressModal,
+    isProgressInBackground,
+    tToast,
+    setViewMode,
+  ]);
+
+  // Handle completion when document becomes available (generationStatus becomes null)
+  const prevSpecDocumentRef = useRef(specDocument);
+  useEffect(() => {
+    // Document just became available (was null, now exists)
+    if (specDocument && !prevSpecDocumentRef.current) {
+      updateProgressStatus("completed");
+      if (isProgressInBackground) {
+        closeProgressModal();
+        toast.success(tToast("generationComplete.title"), {
+          action: {
+            label: tToast("generationComplete.viewDocument"),
+            onClick: () => setViewMode("document"),
+          },
+          description: tToast("generationComplete.description"),
+        });
+      } else {
+        closeProgressModal();
+      }
+    }
+    prevSpecDocumentRef.current = specDocument;
+  }, [
+    specDocument,
+    updateProgressStatus,
+    closeProgressModal,
+    isProgressInBackground,
+    tToast,
+    setViewMode,
+  ]);
+
+  // Show toast when switching to background
+  const prevIsInBackgroundRef = useRef(false);
+  useEffect(() => {
+    if (isProgressInBackground && !prevIsInBackgroundRef.current) {
+      // Just switched to background
+      toast.info(tToast("generationInProgress.title"), {
+        action: {
+          label: tToast("generationInProgress.viewProgress"),
+          onClick: () => bringProgressToForeground(),
+        },
+        description: tToast("generationInProgress.description"),
+      });
+    }
+    prevIsInBackgroundRef.current = isProgressInBackground;
+  }, [isProgressInBackground, tToast, bringProgressToForeground]);
 
   const isDocumentAvailable = Boolean(specDocument);
 
@@ -97,7 +190,21 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
       return;
     }
 
-    openQuotaConfirmDialog(usageData ?? null, () => requestGenerate(), result.summary.total);
+    openQuotaConfirmDialog({
+      analysisId: result.id,
+      estimatedCost: result.summary.total,
+      locale,
+      onConfirm: (language) => {
+        requestGenerate(language);
+        // Open progress modal after generation starts
+        openProgressModal({
+          analysisId: result.id,
+          onViewDocument: () => setViewMode("document"),
+          status: "pending",
+        });
+      },
+      usage: usageData ?? null,
+    });
   };
 
   const renderContent = () => {
@@ -141,6 +248,7 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   return (
     <>
       <QuotaConfirmDialog />
+      <GenerationProgressModal />
       <motion.main
         animate="visible"
         className="container mx-auto px-4 py-8"

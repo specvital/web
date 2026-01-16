@@ -302,6 +302,8 @@
     "quotaConfirm": {
       "title": "AI 스펙 문서 생성",
       "description": "AI 스펙 문서 생성 할당량이 사용됩니다. 진행하기 전에 현재 사용량을 확인해주세요.",
+      "outputLanguage": "출력 언어",
+      "selectLanguage": "언어 선택",
       "specviewUsage": "이번 달 사용량",
       "used": "사용",
       "unlimited": "무제한",
@@ -325,6 +327,44 @@
       },
       "generateFailed": {
         "title": "스펙 생성 실패"
+      },
+      "generationInProgress": {
+        "title": "스펙 문서 생성 중",
+        "description": "준비되면 알려드리겠습니다.",
+        "viewProgress": "진행 상황 보기"
+      },
+      "generationComplete": {
+        "title": "스펙 문서 준비 완료",
+        "description": "AI 스펙 문서를 확인할 수 있습니다.",
+        "viewDocument": "문서 보기"
+      }
+    },
+    "generationProgress": {
+      "title": "스펙 문서 생성 중",
+      "description": "AI가 테스트 케이스를 분석하고 문서를 작성하고 있습니다.",
+      "phase": "{current} / {total} 단계",
+      "estimatedTime": "예상 시간: 2-5분",
+      "continueBrowsing": "계속 둘러보기",
+      "viewDocument": "문서 보기",
+      "retryButton": "다시 시도",
+      "tip": "이 창을 닫고 다른 작업을 계속할 수 있습니다. 완료되면 알려드리겠습니다.",
+      "completed": {
+        "title": "생성 완료",
+        "description": "스펙 문서가 성공적으로 생성되었습니다."
+      },
+      "failed": {
+        "title": "생성 실패",
+        "description": "스펙 문서 생성 중 오류가 발생했습니다."
+      },
+      "steps": {
+        "queued": "대기 중",
+        "queuedDescription": "순서를 기다리고 있습니다...",
+        "analyzing": "분석 중",
+        "analyzingDescription": "테스트 케이스와 저장소 구조 스캔 중...",
+        "generating": "생성 중",
+        "generatingDescription": "AI가 스펙 문서 작성 중...",
+        "finalizing": "마무리 중",
+        "finalizingDescription": "문서 포맷 정리 및 마무리 중..."
       }
     }
   },
