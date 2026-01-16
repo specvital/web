@@ -201,7 +201,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 	)
 
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(h, user.NewMockHandler(), authhandler.NewMockHandler(), user.NewMockHandler(), NewMockGitHubHandler(), NewMockGitHubAppHandler(), h, specviewhandler.NewMockHandler(), NewMockSubscriptionHandler(), NewMockUsageHandler(), nil)
+	apiHandlers := api.NewAPIHandlers(h, user.NewMockHandler(), authhandler.NewMockHandler(), user.NewMockHandler(), NewMockGitHubHandler(), NewMockGitHubAppHandler(), NewMockPricingHandler(), h, specviewhandler.NewMockHandler(), NewMockSubscriptionHandler(), NewMockUsageHandler(), nil)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 
@@ -270,4 +270,16 @@ func NewMockSubscriptionHandler() *mockSubscriptionHandler {
 
 func (m *mockSubscriptionHandler) GetUserSubscription(_ context.Context, _ api.GetUserSubscriptionRequestObject) (api.GetUserSubscriptionResponseObject, error) {
 	return api.GetUserSubscription200JSONResponse{}, nil
+}
+
+type mockPricingHandler struct{}
+
+var _ api.PricingHandlers = (*mockPricingHandler)(nil)
+
+func NewMockPricingHandler() *mockPricingHandler {
+	return &mockPricingHandler{}
+}
+
+func (m *mockPricingHandler) GetPricing(_ context.Context, _ api.GetPricingRequestObject) (api.GetPricingResponseObject, error) {
+	return api.GetPricing200JSONResponse{Data: []api.PricingPlan{}}, nil
 }

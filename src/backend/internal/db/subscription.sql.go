@@ -129,15 +129,24 @@ ORDER BY
     END
 `
 
-func (q *Queries) GetAllPlans(ctx context.Context) ([]SubscriptionPlan, error) {
+type GetAllPlansRow struct {
+	ID                   pgtype.UUID        `json:"id"`
+	Tier                 PlanTier           `json:"tier"`
+	SpecviewMonthlyLimit pgtype.Int4        `json:"specview_monthly_limit"`
+	AnalysisMonthlyLimit pgtype.Int4        `json:"analysis_monthly_limit"`
+	RetentionDays        pgtype.Int4        `json:"retention_days"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) GetAllPlans(ctx context.Context) ([]GetAllPlansRow, error) {
 	rows, err := q.db.Query(ctx, getAllPlans)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []SubscriptionPlan
+	var items []GetAllPlansRow
 	for rows.Next() {
-		var i SubscriptionPlan
+		var i GetAllPlansRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Tier,
@@ -168,9 +177,18 @@ FROM subscription_plans
 WHERE tier = $1
 `
 
-func (q *Queries) GetPlanByTier(ctx context.Context, tier PlanTier) (SubscriptionPlan, error) {
+type GetPlanByTierRow struct {
+	ID                   pgtype.UUID        `json:"id"`
+	Tier                 PlanTier           `json:"tier"`
+	SpecviewMonthlyLimit pgtype.Int4        `json:"specview_monthly_limit"`
+	AnalysisMonthlyLimit pgtype.Int4        `json:"analysis_monthly_limit"`
+	RetentionDays        pgtype.Int4        `json:"retention_days"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) GetPlanByTier(ctx context.Context, tier PlanTier) (GetPlanByTierRow, error) {
 	row := q.db.QueryRow(ctx, getPlanByTier, tier)
-	var i SubscriptionPlan
+	var i GetPlanByTierRow
 	err := row.Scan(
 		&i.ID,
 		&i.Tier,
@@ -180,6 +198,57 @@ func (q *Queries) GetPlanByTier(ctx context.Context, tier PlanTier) (Subscriptio
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getPricingPlans = `-- name: GetPricingPlans :many
+SELECT
+    tier,
+    monthly_price,
+    specview_monthly_limit,
+    analysis_monthly_limit,
+    retention_days
+FROM subscription_plans
+ORDER BY
+    CASE tier
+        WHEN 'free' THEN 1
+        WHEN 'pro' THEN 2
+        WHEN 'pro_plus' THEN 3
+        WHEN 'enterprise' THEN 4
+    END
+`
+
+type GetPricingPlansRow struct {
+	Tier                 PlanTier    `json:"tier"`
+	MonthlyPrice         pgtype.Int4 `json:"monthly_price"`
+	SpecviewMonthlyLimit pgtype.Int4 `json:"specview_monthly_limit"`
+	AnalysisMonthlyLimit pgtype.Int4 `json:"analysis_monthly_limit"`
+	RetentionDays        pgtype.Int4 `json:"retention_days"`
+}
+
+func (q *Queries) GetPricingPlans(ctx context.Context) ([]GetPricingPlansRow, error) {
+	rows, err := q.db.Query(ctx, getPricingPlans)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPricingPlansRow
+	for rows.Next() {
+		var i GetPricingPlansRow
+		if err := rows.Scan(
+			&i.Tier,
+			&i.MonthlyPrice,
+			&i.SpecviewMonthlyLimit,
+			&i.AnalysisMonthlyLimit,
+			&i.RetentionDays,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUsersWithoutActiveSubscription = `-- name: GetUsersWithoutActiveSubscription :many

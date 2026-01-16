@@ -826,6 +826,24 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  # Pricing API
+  /api/pricing:
+    get:
+      operationId: getPricing
+      summary: Get subscription plan pricing
+      description: Returns all subscription plans with pricing and limits.
+      tags:
+        - Pricing
+      responses:
+        "200":
+          description: Pricing plans retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   # Usage Quota APIs
   /api/usage/check-quota:
     post:
@@ -2347,6 +2365,40 @@ components:
           type: string
           format: date-time
           description: End of the current billing period (when usage resets)
+
+    PricingResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PricingPlan"
+
+    PricingPlan:
+      type: object
+      required:
+        - tier
+      properties:
+        tier:
+          $ref: "#/components/schemas/PlanTier"
+        monthlyPrice:
+          type: integer
+          nullable: true
+          description: Monthly price in dollars (null for enterprise/custom)
+        specviewMonthlyLimit:
+          type: integer
+          nullable: true
+          description: Monthly SpecView limit (null for unlimited)
+        analysisMonthlyLimit:
+          type: integer
+          nullable: true
+          description: Monthly analysis limit (null for unlimited)
+        retentionDays:
+          type: integer
+          nullable: true
+          description: Data retention in days (null for unlimited)
 
     UsageStatusResponse:
       type: object

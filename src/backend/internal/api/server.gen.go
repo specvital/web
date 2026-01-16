@@ -486,6 +486,33 @@ type PlanInfo struct {
 // - enterprise: Enterprise tier with unlimited usage
 type PlanTier string
 
+// PricingPlan defines model for PricingPlan.
+type PricingPlan struct {
+	// AnalysisMonthlyLimit Monthly analysis limit (null for unlimited)
+	AnalysisMonthlyLimit *int `json:"analysisMonthlyLimit"`
+
+	// MonthlyPrice Monthly price in dollars (null for enterprise/custom)
+	MonthlyPrice *int `json:"monthlyPrice"`
+
+	// RetentionDays Data retention in days (null for unlimited)
+	RetentionDays *int `json:"retentionDays"`
+
+	// SpecviewMonthlyLimit Monthly SpecView limit (null for unlimited)
+	SpecviewMonthlyLimit *int `json:"specviewMonthlyLimit"`
+
+	// Tier Subscription plan tier:
+	// - free: Free tier with limited quotas
+	// - pro: Pro tier with expanded limits
+	// - pro_plus: Pro Plus tier with higher limits
+	// - enterprise: Enterprise tier with unlimited usage
+	Tier PlanTier `json:"tier"`
+}
+
+// PricingResponse defines model for PricingResponse.
+type PricingResponse struct {
+	Data []PricingPlan `json:"data"`
+}
+
 // ProblemDetail defines model for ProblemDetail.
 type ProblemDetail struct {
 	// Detail Human-readable explanation specific to this occurrence
@@ -1394,6 +1421,9 @@ type ServerInterface interface {
 	// Refresh authentication tokens
 	// (POST /api/auth/refresh)
 	AuthRefresh(w http.ResponseWriter, r *http.Request)
+	// Get subscription plan pricing
+	// (GET /api/pricing)
+	GetPricing(w http.ResponseWriter, r *http.Request)
 	// Get recently analyzed repositories
 	// (GET /api/repositories/recent)
 	GetRecentRepositories(w http.ResponseWriter, r *http.Request, params GetRecentRepositoriesParams)
@@ -1508,6 +1538,12 @@ func (_ Unimplemented) AuthMe(w http.ResponseWriter, r *http.Request) {
 // Refresh authentication tokens
 // (POST /api/auth/refresh)
 func (_ Unimplemented) AuthRefresh(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get subscription plan pricing
+// (GET /api/pricing)
+func (_ Unimplemented) GetPricing(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1836,6 +1872,20 @@ func (siw *ServerInterfaceWrapper) AuthRefresh(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AuthRefresh(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPricing operation middleware
+func (siw *ServerInterfaceWrapper) GetPricing(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPricing(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2705,6 +2755,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/api/auth/refresh", wrapper.AuthRefresh)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/pricing", wrapper.GetPricing)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/repositories/recent", wrapper.GetRecentRepositories)
 	})
 	r.Group(func(r chi.Router) {
@@ -3121,6 +3174,33 @@ type AuthRefresh500ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response AuthRefresh500ApplicationProblemPlusJSONResponse) VisitAuthRefreshResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetPricingRequestObject struct {
+}
+
+type GetPricingResponseObject interface {
+	VisitGetPricingResponse(w http.ResponseWriter) error
+}
+
+type GetPricing200JSONResponse PricingResponse
+
+func (response GetPricing200JSONResponse) VisitGetPricingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetPricing500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetPricing500ApplicationProblemPlusJSONResponse) VisitGetPricingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(500)
 
@@ -4245,6 +4325,9 @@ type StrictServerInterface interface {
 	// Refresh authentication tokens
 	// (POST /api/auth/refresh)
 	AuthRefresh(ctx context.Context, request AuthRefreshRequestObject) (AuthRefreshResponseObject, error)
+	// Get subscription plan pricing
+	// (GET /api/pricing)
+	GetPricing(ctx context.Context, request GetPricingRequestObject) (GetPricingResponseObject, error)
 	// Get recently analyzed repositories
 	// (GET /api/repositories/recent)
 	GetRecentRepositories(ctx context.Context, request GetRecentRepositoriesRequestObject) (GetRecentRepositoriesResponseObject, error)
@@ -4539,6 +4622,30 @@ func (sh *strictHandler) AuthRefresh(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AuthRefreshResponseObject); ok {
 		if err := validResponse.VisitAuthRefreshResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPricing operation middleware
+func (sh *strictHandler) GetPricing(w http.ResponseWriter, r *http.Request) {
+	var request GetPricingRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPricing(ctx, request.(GetPricingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPricing")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPricingResponseObject); ok {
+		if err := validResponse.VisitGetPricingResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

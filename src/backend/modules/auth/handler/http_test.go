@@ -256,7 +256,7 @@ func createTestHandler(
 
 func setupTestRouter(handler *Handler) *chi.Mux {
 	r := chi.NewRouter()
-	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, user.NewMockHandler(), handler, user.NewMockHandler(), &mockGitHubHandler{}, &mockGitHubAppHandler{}, &mockRepositoryHandler{}, specviewhandler.NewMockHandler(), nil)
+	apiHandlers := api.NewAPIHandlers(&mockAnalyzerHandler{}, user.NewMockHandler(), handler, user.NewMockHandler(), &mockGitHubHandler{}, &mockGitHubAppHandler{}, &mockPricingHandler{}, &mockRepositoryHandler{}, specviewhandler.NewMockHandler(), &mockSubscriptionHandler{}, &mockUsageHandler{}, nil)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
 	return r
@@ -312,6 +312,28 @@ func (m *mockGitHubAppHandler) GetGitHubAppInstallURL(_ context.Context, _ api.G
 
 func (m *mockGitHubAppHandler) GetUserGitHubAppInstallations(_ context.Context, _ api.GetUserGitHubAppInstallationsRequestObject) (api.GetUserGitHubAppInstallationsResponseObject, error) {
 	return api.GetUserGitHubAppInstallations200JSONResponse{Data: []api.GitHubAppInstallation{}}, nil
+}
+
+type mockPricingHandler struct{}
+
+func (m *mockPricingHandler) GetPricing(_ context.Context, _ api.GetPricingRequestObject) (api.GetPricingResponseObject, error) {
+	return api.GetPricing200JSONResponse{Data: []api.PricingPlan{}}, nil
+}
+
+type mockSubscriptionHandler struct{}
+
+func (m *mockSubscriptionHandler) GetUserSubscription(_ context.Context, _ api.GetUserSubscriptionRequestObject) (api.GetUserSubscriptionResponseObject, error) {
+	return api.GetUserSubscription200JSONResponse{}, nil
+}
+
+type mockUsageHandler struct{}
+
+func (m *mockUsageHandler) CheckQuota(_ context.Context, _ api.CheckQuotaRequestObject) (api.CheckQuotaResponseObject, error) {
+	return api.CheckQuota200JSONResponse{}, nil
+}
+
+func (m *mockUsageHandler) GetCurrentUsage(_ context.Context, _ api.GetCurrentUsageRequestObject) (api.GetCurrentUsageResponseObject, error) {
+	return api.GetCurrentUsage200JSONResponse{}, nil
 }
 
 func createDefaultUseCases() (*usecase.GetCurrentUserUseCase, *usecase.HandleOAuthCallbackUseCase, *usecase.InitiateOAuthUseCase, *usecase.RefreshTokenUseCase, *mockRepository, *mockOAuthClient, *mockStateStore, *mockRefreshTokenRepo) {

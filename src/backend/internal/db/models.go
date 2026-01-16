@@ -556,6 +556,7 @@ type SubscriptionPlan struct {
 	AnalysisMonthlyLimit pgtype.Int4        `json:"analysis_monthly_limit"`
 	RetentionDays        pgtype.Int4        `json:"retention_days"`
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	MonthlyPrice         pgtype.Int4        `json:"monthly_price"`
 }
 
 type SystemConfig struct {

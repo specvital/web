@@ -10,6 +10,14 @@ type Plan struct {
 	RetentionDays        *int32
 }
 
+type PricingPlan struct {
+	Tier                 PlanTier
+	MonthlyPrice         *int32
+	SpecviewMonthlyLimit *int32
+	AnalysisMonthlyLimit *int32
+	RetentionDays        *int32
+}
+
 func (p *Plan) IsUnlimited() bool {
 	return p.Tier.IsUnlimited()
 }

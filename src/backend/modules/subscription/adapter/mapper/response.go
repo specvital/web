@@ -36,3 +36,40 @@ func toPlanInfo(plan *entity.Plan) api.PlanInfo {
 		RetentionDays:        retentionDays,
 	}
 }
+
+func ToPricingResponse(plans []entity.PricingPlan) api.PricingResponse {
+	data := make([]api.PricingPlan, len(plans))
+	for i, p := range plans {
+		data[i] = toPricingPlan(&p)
+	}
+	return api.PricingResponse{Data: data}
+}
+
+func toPricingPlan(p *entity.PricingPlan) api.PricingPlan {
+	var price, specview, analysis, retention *int
+
+	if p.MonthlyPrice != nil {
+		v := int(*p.MonthlyPrice)
+		price = &v
+	}
+	if p.SpecviewMonthlyLimit != nil {
+		v := int(*p.SpecviewMonthlyLimit)
+		specview = &v
+	}
+	if p.AnalysisMonthlyLimit != nil {
+		v := int(*p.AnalysisMonthlyLimit)
+		analysis = &v
+	}
+	if p.RetentionDays != nil {
+		v := int(*p.RetentionDays)
+		retention = &v
+	}
+
+	return api.PricingPlan{
+		Tier:                 api.PlanTier(p.Tier.String()),
+		MonthlyPrice:         price,
+		SpecviewMonthlyLimit: specview,
+		AnalysisMonthlyLimit: analysis,
+		RetentionDays:        retention,
+	}
+}

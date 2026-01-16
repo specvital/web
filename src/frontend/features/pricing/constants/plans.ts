@@ -1,48 +1,17 @@
-import type { PricingPlan } from "../types";
+import type { PlanTier } from "../types";
 
-export const PRICING_PLANS: PricingPlan[] = [
-  {
-    cta: "getStarted",
-    features: [
-      { label: "specview", value: 5000 },
-      { label: "analysis", value: 50 },
-      { label: "retention", value: 30 },
-    ],
-    monthlyPrice: 0,
-    tier: "free",
-  },
-  {
-    cta: "startFree",
-    features: [
-      { label: "specview", value: 100000 },
-      { label: "analysis", value: 1000 },
-      { label: "retention", value: 180 },
-    ],
-    highlighted: true,
-    monthlyPrice: 15,
-    tier: "pro",
-  },
-  {
-    cta: "startFree",
-    features: [
-      { label: "specview", value: 500000 },
-      { label: "analysis", value: 5000 },
-      { label: "retention", value: 365 },
-    ],
-    monthlyPrice: 59,
-    tier: "pro_plus",
-  },
-  {
-    cta: "contactUs",
-    features: [
-      { label: "specview", value: null },
-      { label: "analysis", value: null },
-      { label: "retention", value: null },
-    ],
-    monthlyPrice: null,
-    tier: "enterprise",
-  },
-];
+export type PlanConfig = {
+  cta: "getStarted" | "startFree" | "contactUs";
+  highlighted?: boolean;
+  tier: PlanTier;
+};
+
+export const PLAN_CONFIGS: Record<PlanTier, PlanConfig> = {
+  enterprise: { cta: "contactUs", tier: "enterprise" },
+  free: { cta: "getStarted", tier: "free" },
+  pro: { cta: "startFree", highlighted: true, tier: "pro" },
+  pro_plus: { cta: "startFree", tier: "pro_plus" },
+};
 
 export const FAQ_ITEMS = [
   "specview",

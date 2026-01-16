@@ -439,7 +439,8 @@ CREATE TABLE public.subscription_plans (
     specview_monthly_limit integer,
     analysis_monthly_limit integer,
     retention_days integer,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    monthly_price integer
 );
 
 

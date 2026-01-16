@@ -26,7 +26,7 @@ func NewPostgresRepository(queries *db.Queries) *PostgresRepository {
 }
 
 func (r *PostgresRepository) GetPlanByTier(ctx context.Context, tier entity.PlanTier) (*entity.Plan, error) {
-	dbPlan, err := r.queries.GetPlanByTier(ctx, db.PlanTier(tier))
+	row, err := r.queries.GetPlanByTier(ctx, db.PlanTier(tier))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrPlanNotFound
@@ -34,18 +34,44 @@ func (r *PostgresRepository) GetPlanByTier(ctx context.Context, tier entity.Plan
 		return nil, fmt.Errorf("query plan by tier: %w", err)
 	}
 
-	return mapDBPlanToEntity(dbPlan), nil
+	plan := &entity.Plan{
+		ID:   uuidToString(row.ID),
+		Tier: entity.PlanTier(row.Tier),
+	}
+	if row.SpecviewMonthlyLimit.Valid {
+		plan.SpecviewMonthlyLimit = &row.SpecviewMonthlyLimit.Int32
+	}
+	if row.AnalysisMonthlyLimit.Valid {
+		plan.AnalysisMonthlyLimit = &row.AnalysisMonthlyLimit.Int32
+	}
+	if row.RetentionDays.Valid {
+		plan.RetentionDays = &row.RetentionDays.Int32
+	}
+	return plan, nil
 }
 
 func (r *PostgresRepository) GetAllPlans(ctx context.Context) ([]entity.Plan, error) {
-	dbPlans, err := r.queries.GetAllPlans(ctx)
+	rows, err := r.queries.GetAllPlans(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query all plans: %w", err)
 	}
 
-	plans := make([]entity.Plan, len(dbPlans))
-	for i, p := range dbPlans {
-		plans[i] = *mapDBPlanToEntity(p)
+	plans := make([]entity.Plan, len(rows))
+	for i, row := range rows {
+		plan := entity.Plan{
+			ID:   uuidToString(row.ID),
+			Tier: entity.PlanTier(row.Tier),
+		}
+		if row.SpecviewMonthlyLimit.Valid {
+			plan.SpecviewMonthlyLimit = &row.SpecviewMonthlyLimit.Int32
+		}
+		if row.AnalysisMonthlyLimit.Valid {
+			plan.AnalysisMonthlyLimit = &row.AnalysisMonthlyLimit.Int32
+		}
+		if row.RetentionDays.Valid {
+			plan.RetentionDays = &row.RetentionDays.Int32
+		}
+		plans[i] = plan
 	}
 
 	return plans, nil
@@ -153,23 +179,33 @@ func (r *PostgresRepository) GetUsersWithoutActiveSubscription(ctx context.Conte
 	return ids, nil
 }
 
-func mapDBPlanToEntity(p db.SubscriptionPlan) *entity.Plan {
-	plan := &entity.Plan{
-		ID:   uuidToString(p.ID),
-		Tier: entity.PlanTier(p.Tier),
+func (r *PostgresRepository) GetPricingPlans(ctx context.Context) ([]entity.PricingPlan, error) {
+	rows, err := r.queries.GetPricingPlans(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query pricing plans: %w", err)
 	}
 
-	if p.SpecviewMonthlyLimit.Valid {
-		plan.SpecviewMonthlyLimit = &p.SpecviewMonthlyLimit.Int32
-	}
-	if p.AnalysisMonthlyLimit.Valid {
-		plan.AnalysisMonthlyLimit = &p.AnalysisMonthlyLimit.Int32
-	}
-	if p.RetentionDays.Valid {
-		plan.RetentionDays = &p.RetentionDays.Int32
+	plans := make([]entity.PricingPlan, len(rows))
+	for i, row := range rows {
+		plan := entity.PricingPlan{
+			Tier: entity.PlanTier(row.Tier),
+		}
+		if row.MonthlyPrice.Valid {
+			plan.MonthlyPrice = &row.MonthlyPrice.Int32
+		}
+		if row.SpecviewMonthlyLimit.Valid {
+			plan.SpecviewMonthlyLimit = &row.SpecviewMonthlyLimit.Int32
+		}
+		if row.AnalysisMonthlyLimit.Valid {
+			plan.AnalysisMonthlyLimit = &row.AnalysisMonthlyLimit.Int32
+		}
+		if row.RetentionDays.Valid {
+			plan.RetentionDays = &row.RetentionDays.Int32
+		}
+		plans[i] = plan
 	}
 
-	return plan
+	return plans, nil
 }
 
 func uuidFromString(s string) ([16]byte, error) {

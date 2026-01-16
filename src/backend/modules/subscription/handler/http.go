@@ -14,18 +14,26 @@ import (
 )
 
 type Handler struct {
+	getPricingPlans     *usecase.GetPricingPlansUseCase
 	getUserSubscription *usecase.GetUserSubscriptionUseCase
 	logger              *logger.Logger
 }
 
-var _ api.SubscriptionHandlers = (*Handler)(nil)
+var (
+	_ api.PricingHandlers      = (*Handler)(nil)
+	_ api.SubscriptionHandlers = (*Handler)(nil)
+)
 
 type HandlerConfig struct {
+	GetPricingPlans     *usecase.GetPricingPlansUseCase
 	GetUserSubscription *usecase.GetUserSubscriptionUseCase
 	Logger              *logger.Logger
 }
 
 func NewHandler(cfg *HandlerConfig) (*Handler, error) {
+	if cfg.GetPricingPlans == nil {
+		return nil, errors.New("GetPricingPlans usecase is required")
+	}
 	if cfg.GetUserSubscription == nil {
 		return nil, errors.New("GetUserSubscription usecase is required")
 	}
@@ -34,6 +42,7 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	}
 
 	return &Handler{
+		getPricingPlans:     cfg.GetPricingPlans,
 		getUserSubscription: cfg.GetUserSubscription,
 		logger:              cfg.Logger,
 	}, nil
@@ -61,4 +70,16 @@ func (h *Handler) GetUserSubscription(ctx context.Context, _ api.GetUserSubscrip
 	}
 
 	return api.GetUserSubscription200JSONResponse(mapper.ToUserSubscriptionResponse(sub)), nil
+}
+
+func (h *Handler) GetPricing(ctx context.Context, _ api.GetPricingRequestObject) (api.GetPricingResponseObject, error) {
+	plans, err := h.getPricingPlans.Execute(ctx)
+	if err != nil {
+		h.logger.Error(ctx, "failed to get pricing plans", "error", err)
+		return api.GetPricing500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to get pricing"),
+		}, nil
+	}
+
+	return api.GetPricing200JSONResponse(mapper.ToPricingResponse(plans)), nil
 }

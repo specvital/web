@@ -35,6 +35,10 @@ func (m *mockSubscriptionRepo) GetUsersWithoutActiveSubscription(_ context.Conte
 	return nil, nil
 }
 
+func (m *mockSubscriptionRepo) GetPricingPlans(_ context.Context) ([]subscriptionentity.PricingPlan, error) {
+	return nil, nil
+}
+
 type mockUsageRepo struct {
 	monthlyUsage int64
 	usageStats   *usageentity.UsageStats

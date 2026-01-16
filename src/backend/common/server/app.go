@@ -265,8 +265,10 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 		return nil, nil, fmt.Errorf("create usage handler: %w", err)
 	}
 
+	getPricingPlansUC := subscriptionusecase.NewGetPricingPlansUseCase(subscriptionRepo)
 	getUserSubscriptionUC := subscriptionusecase.NewGetUserSubscriptionUseCase(subscriptionRepo)
 	subscriptionHandler, err := subscriptionhandler.NewHandler(&subscriptionhandler.HandlerConfig{
+		GetPricingPlans:     getPricingPlansUC,
 		GetUserSubscription: getUserSubscriptionUC,
 		Logger:              log,
 	})
@@ -274,7 +276,7 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 		return nil, nil, fmt.Errorf("create subscription handler: %w", err)
 	}
 
-	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, analyzerHandler, specViewHandler, subscriptionHandler, usageHandler, webhookHandler)
+	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, subscriptionHandler, analyzerHandler, specViewHandler, subscriptionHandler, usageHandler, webhookHandler)
 
 	return &Handlers{
 		API:     apiHandlers,

@@ -620,6 +620,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get subscription plan pricing
+         * @description Returns all subscription plans with pricing and limits.
+         */
+        get: operations["getPricing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/usage/check-quota": {
         parameters: {
             query?: never;
@@ -1543,6 +1563,20 @@ export interface components {
              */
             currentPeriodEnd: string;
         };
+        PricingResponse: {
+            data: components["schemas"]["PricingPlan"][];
+        };
+        PricingPlan: {
+            tier: components["schemas"]["PlanTier"];
+            /** @description Monthly price in dollars (null for enterprise/custom) */
+            monthlyPrice?: number | null;
+            /** @description Monthly SpecView limit (null for unlimited) */
+            specviewMonthlyLimit?: number | null;
+            /** @description Monthly analysis limit (null for unlimited) */
+            analysisMonthlyLimit?: number | null;
+            /** @description Data retention in days (null for unlimited) */
+            retentionDays?: number | null;
+        };
         UsageStatusResponse: {
             specview: components["schemas"]["UsageMetric"];
             analysis: components["schemas"]["UsageMetric"];
@@ -2417,6 +2451,27 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getPricing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pricing plans retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingResponse"];
+                };
+            };
             500: components["responses"]["InternalError"];
         };
     };

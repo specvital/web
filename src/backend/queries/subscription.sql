@@ -26,6 +26,22 @@ ORDER BY
         WHEN 'enterprise' THEN 4
     END;
 
+-- name: GetPricingPlans :many
+SELECT
+    tier,
+    monthly_price,
+    specview_monthly_limit,
+    analysis_monthly_limit,
+    retention_days
+FROM subscription_plans
+ORDER BY
+    CASE tier
+        WHEN 'free' THEN 1
+        WHEN 'pro' THEN 2
+        WHEN 'pro_plus' THEN 3
+        WHEN 'enterprise' THEN 4
+    END;
+
 -- name: CreateUserSubscription :one
 INSERT INTO user_subscriptions (user_id, plan_id, current_period_start, current_period_end)
 VALUES ($1, $2, $3, $4)

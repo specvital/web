@@ -67,6 +67,10 @@ type SubscriptionHandlers interface {
 	GetUserSubscription(ctx context.Context, request GetUserSubscriptionRequestObject) (GetUserSubscriptionResponseObject, error)
 }
 
+type PricingHandlers interface {
+	GetPricing(ctx context.Context, request GetPricingRequestObject) (GetPricingResponseObject, error)
+}
+
 type APIHandlers struct {
 	analyzer        AnalyzerHandlers
 	analysisHistory AnalysisHistoryHandlers
@@ -74,6 +78,7 @@ type APIHandlers struct {
 	bookmark        BookmarkHandlers
 	github          GitHubHandlers
 	githubApp       GitHubAppHandlers
+	pricing         PricingHandlers
 	repository      RepositoryHandlers
 	specView        SpecViewHandlers
 	subscription    SubscriptionHandlers
@@ -90,6 +95,7 @@ func NewAPIHandlers(
 	bookmark BookmarkHandlers,
 	github GitHubHandlers,
 	githubApp GitHubAppHandlers,
+	pricing PricingHandlers,
 	repository RepositoryHandlers,
 	specView SpecViewHandlers,
 	subscription SubscriptionHandlers,
@@ -103,6 +109,7 @@ func NewAPIHandlers(
 		bookmark:        bookmark,
 		github:          github,
 		githubApp:       githubApp,
+		pricing:         pricing,
 		repository:      repository,
 		specView:        specView,
 		subscription:    subscription,
@@ -271,4 +278,13 @@ func (h *APIHandlers) GetUserSubscription(ctx context.Context, request GetUserSu
 		}, nil
 	}
 	return h.subscription.GetUserSubscription(ctx, request)
+}
+
+func (h *APIHandlers) GetPricing(ctx context.Context, request GetPricingRequestObject) (GetPricingResponseObject, error) {
+	if h.pricing == nil {
+		return GetPricing500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Pricing feature not configured"),
+		}, nil
+	}
+	return h.pricing.GetPricing(ctx, request)
 }

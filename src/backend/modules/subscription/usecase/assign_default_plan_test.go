@@ -61,6 +61,10 @@ func (m *mockSubscriptionRepository) GetUsersWithoutActiveSubscription(ctx conte
 	return nil, nil
 }
 
+func (m *mockSubscriptionRepository) GetPricingPlans(_ context.Context) ([]entity.PricingPlan, error) {
+	return nil, nil
+}
+
 func TestAssignDefaultPlanUseCase_AssignDefaultPlan(t *testing.T) {
 	tests := []struct {
 		name      string
