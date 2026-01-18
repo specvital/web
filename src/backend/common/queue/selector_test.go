@@ -19,63 +19,63 @@ func TestSelectQueue(t *testing.T) {
 			baseQueue:   "analysis",
 			tier:        subscription.PlanTierPro,
 			isScheduled: false,
-			want:        "analysis:priority",
+			want:        "analysis_priority",
 		},
 		{
 			name:        "pro_plus user gets priority queue",
 			baseQueue:   "analysis",
 			tier:        subscription.PlanTierProPlus,
 			isScheduled: false,
-			want:        "analysis:priority",
+			want:        "analysis_priority",
 		},
 		{
 			name:        "enterprise user gets priority queue",
 			baseQueue:   "analysis",
 			tier:        subscription.PlanTierEnterprise,
 			isScheduled: false,
-			want:        "analysis:priority",
+			want:        "analysis_priority",
 		},
 		{
 			name:        "free user gets default queue",
 			baseQueue:   "analysis",
 			tier:        subscription.PlanTierFree,
 			isScheduled: false,
-			want:        "analysis:default",
+			want:        "analysis_default",
 		},
 		{
 			name:        "empty tier gets default queue",
 			baseQueue:   "analysis",
 			tier:        subscription.PlanTier(""),
 			isScheduled: false,
-			want:        "analysis:default",
+			want:        "analysis_default",
 		},
 		{
 			name:        "scheduled job gets scheduled queue regardless of tier",
 			baseQueue:   "analysis",
 			tier:        subscription.PlanTierPro,
 			isScheduled: true,
-			want:        "analysis:scheduled",
+			want:        "analysis_scheduled",
 		},
 		{
 			name:        "scheduled free tier gets scheduled queue",
 			baseQueue:   "analysis",
 			tier:        subscription.PlanTierFree,
 			isScheduled: true,
-			want:        "analysis:scheduled",
+			want:        "analysis_scheduled",
 		},
 		{
 			name:        "specview pro user gets priority queue",
 			baseQueue:   "specview",
 			tier:        subscription.PlanTierProPlus,
 			isScheduled: false,
-			want:        "specview:priority",
+			want:        "specview_priority",
 		},
 		{
 			name:        "specview free user gets default queue",
 			baseQueue:   "specview",
 			tier:        subscription.PlanTierFree,
 			isScheduled: false,
-			want:        "specview:default",
+			want:        "specview_default",
 		},
 	}
 
@@ -172,12 +172,12 @@ func TestQueueConstants(t *testing.T) {
 		constant string
 		want     string
 	}{
-		{QueueAnalysisPriority, "analysis:priority"},
-		{QueueAnalysisDefault, "analysis:default"},
-		{QueueAnalysisScheduled, "analysis:scheduled"},
-		{QueueSpecViewPriority, "specview:priority"},
-		{QueueSpecViewDefault, "specview:default"},
-		{QueueSpecViewScheduled, "specview:scheduled"},
+		{QueueAnalysisPriority, "analysis_priority"},
+		{QueueAnalysisDefault, "analysis_default"},
+		{QueueAnalysisScheduled, "analysis_scheduled"},
+		{QueueSpecViewPriority, "specview_priority"},
+		{QueueSpecViewDefault, "specview_default"},
+		{QueueSpecViewScheduled, "specview_scheduled"},
 	}
 
 	for _, tt := range tests {

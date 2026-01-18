@@ -5,10 +5,11 @@ import (
 )
 
 // Queue Suffix constants
+// Note: River queue names only allow letters, numbers, underscores, and hyphens (no colons)
 const (
-	SuffixPriority  = ":priority"
-	SuffixDefault   = ":default"
-	SuffixScheduled = ":scheduled"
+	SuffixPriority  = "_priority"
+	SuffixDefault   = "_default"
+	SuffixScheduled = "_scheduled"
 )
 
 // Base queue name constants
