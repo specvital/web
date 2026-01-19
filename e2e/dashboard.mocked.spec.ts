@@ -13,7 +13,9 @@ import {
   mockRepositoriesBookmarked,
   mockRepositoriesSortedByName,
   mockRepositoriesSortedByTests,
+  mockRepositoriesEmpty,
   mockStatsNormal,
+  mockStatsEmpty,
 } from "./fixtures/api-responses";
 
 test.describe("Dashboard Page (Mocked API)", () => {
@@ -390,6 +392,53 @@ test.describe("Dashboard Page (Mocked API)", () => {
         // Verify reanalyze was triggered
         await page.waitForTimeout(500);
         expect(reanalyzeTriggered).toBe(true);
+      }
+    });
+  });
+
+  test.describe("Empty State", () => {
+    test("should display empty state when no repositories analyzed", async ({ page }) => {
+      await setupMockHandlers(page, {
+        repositories: mockRepositoriesEmpty,
+        stats: mockStatsEmpty,
+      });
+
+      await page.goto("/en/dashboard");
+
+      // Wait for page to load
+      await expect(page.getByRole("heading", { name: /dashboard/i })).toBeVisible({
+        timeout: 10000,
+      });
+
+      // Empty state should show Explore button to analyze first repo
+      await expect(
+        page
+          .getByRole("link", { name: /explore|analyze|get started/i })
+          .or(page.getByRole("button", { name: /explore|analyze|get started/i }))
+      ).toBeVisible({ timeout: 10000 });
+    });
+
+    test("should navigate to explore page from empty state", async ({ page }) => {
+      await setupMockHandlers(page, {
+        repositories: mockRepositoriesEmpty,
+        stats: mockStatsEmpty,
+      });
+
+      await page.goto("/en/dashboard");
+
+      // Wait for page to load
+      await expect(page.getByRole("heading", { name: /dashboard/i })).toBeVisible({
+        timeout: 10000,
+      });
+
+      // Click the Explore/Analyze button
+      const exploreLink = page.getByRole("link", { name: /explore/i }).first();
+      const hasExploreLink = await exploreLink.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (hasExploreLink) {
+        await exploreLink.click();
+        // Should navigate to explore page
+        await expect(page).toHaveURL(/\/explore/);
       }
     });
   });

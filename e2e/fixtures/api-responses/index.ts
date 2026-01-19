@@ -8,3 +8,4 @@ export * from "./github-repos";
 export * from "./github-orgs";
 export * from "./subscription";
 export * from "./stats";
+export * from "./analysis";

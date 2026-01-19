@@ -12,6 +12,9 @@ import {
   mockSubscriptionEnterprise,
   mockUsageNormal,
   mockUsageFree,
+  mockUsageWarning,
+  mockUsageCritical,
+  mockUsageExceeded,
   mockUsageEnterprise,
 } from "./fixtures/api-responses";
 
@@ -92,7 +95,7 @@ test.describe("Account Page - Subscription Display (Mocked API)", () => {
 
     // Billing period or reset date should be visible
     // The exact format depends on the implementation
-    await expect(page.getByText(/period|resets|billing/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/period|resets|billing/i).first()).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -108,28 +111,119 @@ test.describe("Account Page - Usage Quota States (Mocked API)", () => {
     // Wait for page to load
     await expect(page.getByRole("heading", { name: /account/i })).toBeVisible({ timeout: 10000 });
 
-    // Verify usage section is displayed (content structure is implementation-specific)
-    await page.waitForLoadState("networkidle");
+    // Verify usage percentages are displayed (both SpecView and Analysis show 30%)
+    const percentageElements = page.getByText("30%");
+    await expect(percentageElements.first()).toBeVisible({ timeout: 10000 });
+    expect(await percentageElements.count()).toBe(2);
+
+    // Progress bar should have primary color (not warning/destructive)
+    const progressBars = page.locator('[class*="bg-primary"]');
+    expect(await progressBars.count()).toBeGreaterThan(0);
   });
 
-  test.skip("should display warning usage state (70%)", async ({ page }) => {
-    // Skipped: Warning styling verification is implementation-specific
+  test("should display warning usage state (70%)", async ({ page }) => {
+    await setupMockHandlers(page, {
+      subscription: mockSubscriptionPro,
+      usage: mockUsageWarning,
+    });
+
+    await page.goto("/en/account");
+
+    // Wait for page to load
+    await expect(page.getByRole("heading", { name: /account/i })).toBeVisible({ timeout: 10000 });
+
+    // Verify 70% usage percentage is displayed (both SpecView and Analysis)
+    const percentageElements = page.getByText("70%");
+    await expect(percentageElements.first()).toBeVisible({ timeout: 10000 });
+    expect(await percentageElements.count()).toBe(2);
+
+    // Progress bar should have amber/warning color (bg-amber-500)
+    const warningProgressBars = page.locator('[class*="bg-amber"]');
+    expect(await warningProgressBars.count()).toBeGreaterThan(0);
   });
 
-  test.skip("should display critical usage state (90%+)", async ({ page }) => {
-    // Skipped: Critical styling verification is implementation-specific
+  test("should display critical usage state (90%+)", async ({ page }) => {
+    await setupMockHandlers(page, {
+      subscription: mockSubscriptionPro,
+      usage: mockUsageCritical,
+    });
+
+    await page.goto("/en/account");
+
+    // Wait for page to load
+    await expect(page.getByRole("heading", { name: /account/i })).toBeVisible({ timeout: 10000 });
+
+    // Verify 92% usage percentage is displayed (both SpecView and Analysis)
+    const percentageElements = page.getByText("92%");
+    await expect(percentageElements.first()).toBeVisible({ timeout: 10000 });
+    expect(await percentageElements.count()).toBe(2);
+
+    // Progress bar should have destructive color
+    const criticalProgressBars = page.locator('[class*="bg-destructive"]');
+    expect(await criticalProgressBars.count()).toBeGreaterThan(0);
+
+    // Percentage text should also have destructive styling
+    await expect(page.locator('[class*="text-destructive"]:has-text("92%")').first()).toBeVisible();
   });
 
-  test.skip("should display exceeded usage state (100%+)", async ({ page }) => {
-    // Skipped: Exceeded styling verification is implementation-specific
+  test("should display exceeded usage state (100%+)", async ({ page }) => {
+    await setupMockHandlers(page, {
+      subscription: mockSubscriptionPro,
+      usage: mockUsageExceeded,
+    });
+
+    await page.goto("/en/account");
+
+    // Wait for page to load
+    await expect(page.getByRole("heading", { name: /account/i })).toBeVisible({ timeout: 10000 });
+
+    // Verify exceeded percentage is displayed (105% and 104%)
+    await expect(page.getByText("105%")).toBeVisible({ timeout: 10000 });
+
+    // Should show destructive styling
+    const criticalProgressBars = page.locator('[class*="bg-destructive"]');
+    expect(await criticalProgressBars.count()).toBeGreaterThan(0);
   });
 
-  test.skip("should display both SpecView and Analysis usage metrics", async ({ page }) => {
-    // Skipped: Metric display verification is implementation-specific
+  test("should display both SpecView and Analysis usage metrics", async ({ page }) => {
+    await setupMockHandlers(page, {
+      subscription: mockSubscriptionPro,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/account");
+
+    // Wait for page to load
+    await expect(page.getByRole("heading", { name: /account/i })).toBeVisible({ timeout: 10000 });
+
+    // SpecView usage should be displayed (labeled as "AI Spec Docs")
+    // There are multiple elements with this text (plan features + usage section)
+    const specViewLabels = page.getByText(/ai spec docs/i);
+    await expect(specViewLabels.first()).toBeVisible({ timeout: 10000 });
+
+    // Analysis usage should be displayed (labeled as "Analysis Runs")
+    const analysisLabels = page.getByText(/analysis runs/i);
+    await expect(analysisLabels.first()).toBeVisible({ timeout: 10000 });
+
+    // Both should show usage values (30/100 for SpecView, 150/500 for Analysis)
+    await expect(page.getByText("30 / 100")).toBeVisible();
+    await expect(page.getByText("150 / 500")).toBeVisible();
   });
 
-  test.skip("should display usage reset date", async ({ page }) => {
-    // Skipped: Reset date display is implementation-specific
+  test("should display usage reset date", async ({ page }) => {
+    await setupMockHandlers(page, {
+      subscription: mockSubscriptionPro,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/account");
+
+    // Wait for page to load
+    await expect(page.getByRole("heading", { name: /account/i })).toBeVisible({ timeout: 10000 });
+
+    // Reset date info should be visible (shows "Resets in X days (Month DD)" format)
+    // This is shown in the card description area
+    await expect(page.getByText(/resets in \d+ days/i)).toBeVisible({ timeout: 10000 });
   });
 });
 

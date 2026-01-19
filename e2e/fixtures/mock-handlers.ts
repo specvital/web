@@ -16,6 +16,9 @@ import type {
   UsageStatusResponse,
   BookmarkResponse,
   ReanalyzeResponse,
+  AnalysisCompletedResponse,
+  SpecDocumentResponse,
+  RequestSpecGenerationResponse,
 } from "./api-responses";
 
 export interface MockHandlersOptions {
@@ -29,10 +32,15 @@ export interface MockHandlersOptions {
   usage?: UsageStatusResponse;
   bookmarkResponse?: BookmarkResponse;
   reanalyzeResponse?: ReanalyzeResponse;
+  // Analysis page mocks
+  analysis?: AnalysisCompletedResponse;
+  specDocument?: SpecDocumentResponse;
+  specGeneration?: RequestSpecGenerationResponse;
   // Dynamic handlers for testing specific scenarios
   onRepositoriesRequest?: (url: URL) => UserAnalyzedRepositoriesResponse | null;
   onBookmark?: (owner: string, repo: string, method: string) => BookmarkResponse;
   onReanalyze?: (owner: string, repo: string) => ReanalyzeResponse;
+  onSpecGeneration?: (analysisId: string, language: string) => RequestSpecGenerationResponse;
 }
 
 type RouteHandler = (route: Route) => Promise<void>;
@@ -232,6 +240,81 @@ export async function setupMockHandlers(
           response = options.onReanalyze(owner, repo);
         } else {
           response = options.reanalyzeResponse ?? { status: "queued" };
+        }
+
+        return route.fulfill({
+          status: 202,
+          contentType: "application/json",
+          body: JSON.stringify(response),
+        });
+      },
+    });
+  }
+
+  // /api/analyze/{owner}/{repo}
+  if (options.analysis) {
+    handlers.push({
+      pattern: /\/api\/analyze\/([^/]+)\/([^/]+)$/,
+      handler: async (route) => {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(options.analysis),
+        });
+      },
+    });
+  }
+
+  // /api/spec-view/{analysisId} - Get spec document
+  if (options.specDocument) {
+    handlers.push({
+      pattern: /\/api\/spec-view\/[0-9a-f-]+$/,
+      handler: async (route) => {
+        const response = options.specDocument;
+        if (response?.status === "generating" && response.generationStatus?.status === "not_found") {
+          return route.fulfill({
+            status: 404,
+            contentType: "application/json",
+            body: JSON.stringify({ detail: "Not found" }),
+          });
+        }
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(response),
+        });
+      },
+    });
+  }
+
+  // /api/spec-view/status/{analysisId} - Get generation status
+  if (options.specGeneration) {
+    handlers.push({
+      pattern: /\/api\/spec-view\/status\/[0-9a-f-]+$/,
+      handler: async (route) => {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(options.specGeneration),
+        });
+      },
+    });
+  }
+
+  // /api/spec-view/generate - Request generation
+  if (options.specGeneration || options.onSpecGeneration) {
+    handlers.push({
+      pattern: "**/api/spec-view/generate",
+      handler: async (route) => {
+        const body = route.request().postDataJSON();
+        const analysisId = body?.analysisId ?? "";
+        const language = body?.language ?? "English";
+
+        let response: RequestSpecGenerationResponse;
+        if (options.onSpecGeneration) {
+          response = options.onSpecGeneration(analysisId, language);
+        } else {
+          response = options.specGeneration ?? { status: "pending", analysisId };
         }
 
         return route.fulfill({
