@@ -12,6 +12,9 @@ test.describe("Theme Toggle", () => {
     // Click theme toggle
     await page.getByRole("button", { name: "Toggle theme" }).click();
 
+    // Wait for theme transition (300ms animation + setTheme delay)
+    await page.waitForTimeout(400);
+
     // Verify theme changed
     const newTheme = await page.evaluate(() =>
       document.documentElement.classList.contains("dark") ? "dark" : "light"
@@ -20,6 +23,9 @@ test.describe("Theme Toggle", () => {
 
     // Click again to toggle back
     await page.getByRole("button", { name: "Toggle theme" }).click();
+
+    // Wait for theme transition
+    await page.waitForTimeout(400);
 
     // Verify theme reverted
     const finalTheme = await page.evaluate(() =>

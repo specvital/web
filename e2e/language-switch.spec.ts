@@ -7,6 +7,9 @@ test.describe("Language Switching", () => {
     // Click language selector
     await page.getByRole("button", { name: "Select language" }).click();
 
+    // Wait for dropdown menu to appear
+    await expect(page.getByRole("menu")).toBeVisible();
+
     // Verify English is disabled (current language)
     await expect(page.getByRole("menuitem", { name: "English" })).toBeDisabled();
 
@@ -32,6 +35,9 @@ test.describe("Language Switching", () => {
 
     // Click language selector
     await page.getByRole("button", { name: "언어 선택" }).click();
+
+    // Wait for dropdown menu to appear
+    await expect(page.getByRole("menu")).toBeVisible();
 
     // Verify Korean is disabled (current language)
     await expect(page.getByRole("menuitem", { name: "한국어" })).toBeDisabled();
