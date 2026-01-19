@@ -228,12 +228,44 @@ test.describe("Account Page - Usage Quota States (Mocked API)", () => {
 });
 
 test.describe("Account Page - Plan Limits Display (Mocked API)", () => {
-  test.skip("should display plan limits for Free tier", async ({ page }) => {
-    // Skipped: Plan limits display verification is implementation-specific
+  test("should display plan limits for Free tier", async ({ page }) => {
+    await setupMockHandlers(page, {
+      subscription: mockSubscriptionFree,
+      usage: mockUsageFree,
+    });
+
+    await page.goto("/en/account");
+
+    // Wait for page to load
+    await expect(page.getByRole("heading", { name: /account/i })).toBeVisible({ timeout: 10000 });
+
+    // Verify Free plan limits are displayed
+    // AI Spec Docs: 10/month
+    await expect(page.getByText("10/month")).toBeVisible({ timeout: 5000 });
+    // Analysis: 50/month
+    await expect(page.getByText("50/month")).toBeVisible({ timeout: 5000 });
+    // Data Retention: 30 days
+    await expect(page.getByText("30 days")).toBeVisible({ timeout: 5000 });
   });
 
-  test.skip("should display plan limits for Pro tier", async ({ page }) => {
-    // Skipped: Plan limits display verification is implementation-specific
+  test("should display plan limits for Pro tier", async ({ page }) => {
+    await setupMockHandlers(page, {
+      subscription: mockSubscriptionPro,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/account");
+
+    // Wait for page to load
+    await expect(page.getByRole("heading", { name: /account/i })).toBeVisible({ timeout: 10000 });
+
+    // Verify Pro plan limits are displayed
+    // AI Spec Docs: 100/month
+    await expect(page.getByText("100/month")).toBeVisible({ timeout: 5000 });
+    // Analysis: 500/month
+    await expect(page.getByText("500/month")).toBeVisible({ timeout: 5000 });
+    // Data Retention: 90 days
+    await expect(page.getByText("90 days")).toBeVisible({ timeout: 5000 });
   });
 
   test("should display unlimited for Enterprise tier", async ({ page }) => {
@@ -289,10 +321,7 @@ test.describe("Account Page - Upgrade Prompts (Mocked API)", () => {
 
     // Upgrade button should NOT be visible for enterprise
     const upgradeButton = page.getByRole("button", { name: /upgrade/i });
-    const hasUpgrade = await upgradeButton.isVisible({ timeout: 3000 }).catch(() => false);
-
-    // Enterprise users shouldn't see upgrade prompts
-    // (This assertion depends on implementation)
+    await expect(upgradeButton).not.toBeVisible({ timeout: 3000 });
   });
 });
 
