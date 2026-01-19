@@ -74,13 +74,16 @@ jobs:
         uses: extractions/setup-just@v2
 
       - name: Install air (Go hot reload)
-        run: go install github.com/air-verse/air@latest
+        run: |
+          go install github.com/air-verse/air@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
 
       - name: Install PostgreSQL client
         run: just install-psql
 
       - name: Setup database
         run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d specvital_test -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
           PGPASSWORD=postgres psql -h localhost -U postgres -d specvital_test -f src/backend/internal/db/schema.sql
 
       - name: Install dependencies
