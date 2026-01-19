@@ -214,7 +214,7 @@ func TestExecutePaginated_WithCursor(t *testing.T) {
 	}
 }
 
-func TestExecutePaginated_InvalidCursor(t *testing.T) {
+func TestExecutePaginated_SortByMismatch_RestartsFromBeginning(t *testing.T) {
 	t.Parallel()
 
 	cursor := entity.EncodeCursor(entity.RepositoryCursor{
@@ -225,17 +225,20 @@ func TestExecutePaginated_InvalidCursor(t *testing.T) {
 	repo := &mockRepository{}
 	uc := usecase.NewListRepositoryCardsUseCase(&mockGitClient{}, repo, &mockTokenProvider{})
 
+	// sortBy mismatch gracefully restarts pagination (no error, nil cursor)
 	_, err := uc.ExecutePaginated(context.Background(), usecase.ListRepositoryCardsPaginatedInput{
 		Cursor: cursor,
 		SortBy: entity.SortByName, // mismatch
 		UserID: "user-1",
 	})
 
-	if err == nil {
-		t.Error("expected error for sortBy mismatch")
+	if err != nil {
+		t.Errorf("expected no error for sortBy mismatch (graceful restart), got %v", err)
 	}
-	if err != entity.ErrInvalidCursor {
-		t.Errorf("expected ErrInvalidCursor, got %v", err)
+
+	// Verify cursor was treated as nil (fresh pagination)
+	if repo.paginationParams.Cursor != nil {
+		t.Error("expected nil cursor passed to repository (fresh start)")
 	}
 }
 

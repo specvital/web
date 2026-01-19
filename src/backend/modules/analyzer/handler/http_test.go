@@ -188,7 +188,7 @@ func TestGetRecentRepositories_InvalidCursor(t *testing.T) {
 	}
 }
 
-func TestGetRecentRepositories_SortByMismatch(t *testing.T) {
+func TestGetRecentRepositories_SortByMismatch_RestartsFromBeginning(t *testing.T) {
 	mock := &mockRepository{}
 
 	log := newTestLogger()
@@ -213,8 +213,9 @@ func TestGetRecentRepositories_SortByMismatch(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	_, ok := resp.(api.GetRecentRepositories400ApplicationProblemPlusJSONResponse)
+	// sortBy mismatch gracefully restarts pagination from beginning (returns 200)
+	_, ok := resp.(api.GetRecentRepositories200JSONResponse)
 	if !ok {
-		t.Fatalf("expected 400 response for sortBy mismatch, got %T", resp)
+		t.Fatalf("expected 200 response for sortBy mismatch (graceful restart), got %T", resp)
 	}
 }
