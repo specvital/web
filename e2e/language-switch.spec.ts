@@ -4,8 +4,13 @@ test.describe("Language Switching", () => {
   test("should switch from English to Korean", async ({ page }) => {
     await page.goto("/en");
 
+    // Wait for hydration to complete (client components mount)
+    const languageButton = page.getByRole("button", { name: "Select language" });
+    await expect(languageButton).toBeEnabled();
+    await page.waitForTimeout(300); // Additional wait for event handlers to attach
+
     // Click language selector
-    await page.getByRole("button", { name: "Select language" }).click();
+    await languageButton.click();
 
     // Wait for dropdown menu to appear
     await expect(page.getByRole("menu")).toBeVisible();
@@ -33,8 +38,13 @@ test.describe("Language Switching", () => {
   test("should switch from Korean to English", async ({ page }) => {
     await page.goto("/ko");
 
+    // Wait for hydration to complete (client components mount)
+    const languageButton = page.getByRole("button", { name: "언어 선택" });
+    await expect(languageButton).toBeEnabled();
+    await page.waitForTimeout(300); // Additional wait for event handlers to attach
+
     // Click language selector
-    await page.getByRole("button", { name: "언어 선택" }).click();
+    await languageButton.click();
 
     // Wait for dropdown menu to appear
     await expect(page.getByRole("menu")).toBeVisible();

@@ -26,13 +26,18 @@ test.describe("Homepage", () => {
     await page.goto("/");
 
     // Enter GitHub URL
-    await page.getByRole("textbox", { name: /github/i }).fill("facebook/react");
+    const input = page.getByRole("textbox", { name: /github/i });
+    await input.fill("facebook/react");
 
-    // Click start button
-    await page.getByRole("button", { name: /analyze|분석 시작/i }).click();
+    // Wait for validation to complete (debounced 500ms)
+    await page.waitForTimeout(600);
 
-    // Verify navigation to analysis page
-    await expect(page).toHaveURL(/\/analyze\/facebook\/react/);
+    // Click start button and wait for navigation
+    const button = page.getByRole("button", { name: /analyze|분석 시작/i });
+    await button.click();
+
+    // Wait for navigation to complete (Next.js router transition)
+    await page.waitForURL(/\/analyze\/facebook\/react/, { timeout: 15000 });
   });
 
   test("should show error for invalid URL format", async ({ page }) => {
@@ -44,8 +49,10 @@ test.describe("Homepage", () => {
     // Click Analyze button
     await page.getByRole("button", { name: /analyze|분석 시작/i }).click();
 
-    // Verify error message is shown
-    await expect(page.getByText(/invalid github/i)).toBeVisible();
+    // Verify error message is shown (in alert, not sr-only)
+    await expect(
+      page.locator("[data-slot='alert-description']").filter({ hasText: /invalid github/i })
+    ).toBeVisible();
 
     // Verify URL hasn't changed (still on homepage)
     await expect(page).not.toHaveURL(/\/analyze/);
