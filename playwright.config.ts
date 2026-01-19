@@ -36,8 +36,17 @@ export default defineConfig({
       },
     },
     {
+      name: "chromium-mocked",
+      dependencies: ["setup"],
+      testMatch: /.*\.mocked\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: AUTH_FILE,
+      },
+    },
+    {
       name: "chromium-no-auth",
-      testIgnore: /.*\.auth\.spec\.ts/,
+      testIgnore: /.*\.(auth|mocked)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
   ],
