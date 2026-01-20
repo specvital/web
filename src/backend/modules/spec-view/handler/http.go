@@ -14,6 +14,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/spec-view/domain/entity"
 	"github.com/specvital/web/src/backend/modules/spec-view/domain/port"
 	"github.com/specvital/web/src/backend/modules/spec-view/usecase"
+	subscriptionDomain "github.com/specvital/web/src/backend/modules/subscription/domain"
 	subscription "github.com/specvital/web/src/backend/modules/subscription/domain/entity"
 )
 
@@ -177,6 +178,10 @@ func (h *Handler) RequestSpecGeneration(ctx context.Context, request api.Request
 					Title:  "Quota Exceeded",
 					Type:   ptr("quota_exceeded"),
 				},
+			}, nil
+		case errors.Is(err, subscriptionDomain.ErrNoActiveSubscription):
+			return api.RequestSpecGeneration403ApplicationProblemPlusJSONResponse{
+				ForbiddenApplicationProblemPlusJSONResponse: api.NewForbidden("Active subscription required for spec generation. Please subscribe to a plan."),
 			}, nil
 		}
 

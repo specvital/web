@@ -8,7 +8,12 @@ import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/routes";
 
-import { fetchSpecDocument, QuotaExceededError, requestSpecGeneration } from "../api";
+import {
+  fetchSpecDocument,
+  NoSubscriptionError,
+  QuotaExceededError,
+  requestSpecGeneration,
+} from "../api";
 import type {
   SpecDocument,
   SpecDocumentResponse,
@@ -112,6 +117,19 @@ export const useSpecView = (
         language,
       }),
     onError: (error) => {
+      if (error instanceof NoSubscriptionError) {
+        toast.error(t("noSubscription.title"), {
+          action: {
+            label: t("noSubscription.viewPlans"),
+            onClick: () => {
+              router.push(ROUTES.ACCOUNT);
+            },
+          },
+          description: t("noSubscription.description"),
+        });
+        return;
+      }
+
       if (error instanceof QuotaExceededError) {
         toast.error(t("quotaExceeded.title"), {
           action: {

@@ -344,6 +344,11 @@
       "regenerate": "문서 재생성"
     },
     "toast": {
+      "noSubscription": {
+        "title": "구독 필요",
+        "description": "스펙 문서를 생성하려면 활성 구독이 필요합니다.",
+        "viewPlans": "요금제 보기"
+      },
       "quotaExceeded": {
         "title": "할당량 초과",
         "description": "이번 달 {used} / {limit} 테스트 사용",

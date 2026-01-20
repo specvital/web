@@ -3,9 +3,13 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
+	pkgerrors "github.com/cockroachdb/errors"
+
 	"github.com/specvital/web/src/backend/common/logger"
+	subscriptionDomain "github.com/specvital/web/src/backend/modules/subscription/domain"
 	subscription "github.com/specvital/web/src/backend/modules/subscription/domain/entity"
 )
 
@@ -84,6 +88,23 @@ func TestHandler_lookupUserTier(t *testing.T) {
 		got := h.lookupUserTier(context.Background(), "user-123")
 		if got != subscription.PlanTierFree {
 			t.Errorf("lookupUserTier() = %q, want %q", got, subscription.PlanTierFree)
+		}
+	})
+}
+
+func TestErrNoActiveSubscription_WrappedErrorMatching(t *testing.T) {
+	t.Run("matches wrapped ErrNoActiveSubscription with fmt.Errorf", func(t *testing.T) {
+		wrappedErr := fmt.Errorf("check quota for user xyz: %w", subscriptionDomain.ErrNoActiveSubscription)
+		if !pkgerrors.Is(wrappedErr, subscriptionDomain.ErrNoActiveSubscription) {
+			t.Error("errors.Is should match wrapped ErrNoActiveSubscription")
+		}
+	})
+
+	t.Run("matches deeply wrapped ErrNoActiveSubscription", func(t *testing.T) {
+		inner := fmt.Errorf("inner: %w", subscriptionDomain.ErrNoActiveSubscription)
+		outer := fmt.Errorf("outer: %w", inner)
+		if !pkgerrors.Is(outer, subscriptionDomain.ErrNoActiveSubscription) {
+			t.Error("errors.Is should match deeply wrapped ErrNoActiveSubscription")
 		}
 	})
 }

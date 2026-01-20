@@ -344,6 +344,11 @@
       "regenerate": "Regenerate Document"
     },
     "toast": {
+      "noSubscription": {
+        "title": "Subscription Required",
+        "description": "An active subscription is required to generate spec documents.",
+        "viewPlans": "View Plans"
+      },
       "quotaExceeded": {
         "title": "Quota Exceeded",
         "description": "You've used {used} of {limit} tests this month.",

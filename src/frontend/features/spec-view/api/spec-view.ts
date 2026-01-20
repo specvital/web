@@ -20,6 +20,13 @@ export class QuotaExceededError extends Error {
   }
 }
 
+export class NoSubscriptionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NoSubscriptionError";
+  }
+}
+
 export async function fetchSpecDocument(
   analysisId: string,
   language?: SpecLanguage
@@ -61,6 +68,11 @@ export async function requestSpecGeneration(
     body: JSON.stringify(request),
     method: "POST",
   });
+
+  if (response.status === 403) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new NoSubscriptionError(errorBody.detail || "Active subscription required");
+  }
 
   if (response.status === 429) {
     const errorBody = await response.json().catch(() => ({}));
