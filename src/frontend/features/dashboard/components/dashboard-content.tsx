@@ -14,14 +14,14 @@ import {
   useReanalyze,
   useRemoveBookmark,
 } from "../hooks";
-import { useOwnershipFilter } from "../hooks/use-ownership-filter";
-import { useStarredFilter } from "../hooks/use-starred-filter";
+import { useBookmarkFilter } from "../hooks/use-bookmark-filter";
 import type { SortOption } from "../types";
 import { EmptyStateVariant } from "./empty-state-variant";
 import { FilterBar } from "./filter-bar";
 import { InfiniteScrollLoader } from "./infinite-scroll-loader";
 import { RepositoryList } from "./repository-list";
 import { SummarySection } from "./summary-section";
+import { useOwnershipFilter } from "../hooks/use-ownership-filter";
 
 export const DashboardContent = () => {
   const t = useTranslations("dashboard");
@@ -30,7 +30,7 @@ export const DashboardContent = () => {
   const { removeBookmark } = useRemoveBookmark();
   const { reanalyze } = useReanalyze();
   const { ownershipFilter } = useOwnershipFilter();
-  const { starredOnly } = useStarredFilter();
+  const { bookmarkOnly } = useBookmarkFilter();
 
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,7 +53,7 @@ export const DashboardContent = () => {
   const filteredRepositories = (() => {
     let result = repositories;
 
-    if (starredOnly) {
+    if (bookmarkOnly) {
       result = result.filter((repo) => repo.isBookmarked);
     }
 
@@ -92,7 +92,7 @@ export const DashboardContent = () => {
 
   const hasNoRepositories = !isLoading && repositories.length === 0 && !isError;
   const hasNoFilterResults =
-    starredOnly && filteredRepositories.length === 0 && repositories.length > 0;
+    bookmarkOnly && filteredRepositories.length === 0 && repositories.length > 0;
   const hasNoSearchResults =
     searchQuery.trim() !== "" && filteredRepositories.length === 0 && repositories.length > 0;
 
@@ -101,13 +101,13 @@ export const DashboardContent = () => {
       <SummarySection />
 
       <FilterBar
-        hasNextPage={hasNextPage && !starredOnly}
+        hasNextPage={hasNextPage && !bookmarkOnly}
         isLoading={isLoading}
         onSearchChange={setSearchQuery}
         onSortChange={setSortBy}
         searchQuery={searchQuery}
         sortBy={sortBy}
-        totalLoaded={starredOnly ? filteredRepositories.length : repositories.length}
+        totalLoaded={bookmarkOnly ? filteredRepositories.length : repositories.length}
       />
 
       {isLoading ? (
@@ -131,7 +131,7 @@ export const DashboardContent = () => {
             repositories={filteredRepositories}
           />
 
-          {!starredOnly && !searchQuery.trim() && (
+          {!bookmarkOnly && !searchQuery.trim() && (
             <InfiniteScrollLoader
               hasError={isError}
               hasNextPage={hasNextPage}

@@ -17,7 +17,7 @@ export { RepositoryGrid } from "./repository-grid";
 export { RepositoryList } from "./repository-list";
 export { RepositorySkeleton } from "./repository-skeleton";
 export { SortDropdown } from "./sort-dropdown";
-export { StarredToggle } from "./starred-toggle";
+export { BookmarkToggle } from "./bookmark-toggle";
 export { SummarySection } from "./summary-section";
 export { TestDeltaBadge } from "./test-delta-badge";
 export { UpdateStatusBadge } from "./update-status-badge";

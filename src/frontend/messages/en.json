@@ -425,7 +425,7 @@
       "label": "View",
       "all": "All",
       "mine": "Mine",
-      "starred": "Starred"
+      "bookmarked": "Bookmarked"
     },
     "filter": {
       "apply": "Apply",
@@ -438,8 +438,8 @@
         "organization": "Organization",
         "others": "Others"
       },
-      "starred": "Starred",
-      "starredLabel": "Show starred only"
+      "bookmarked": "Bookmarked",
+      "bookmarkedLabel": "Show bookmarked only"
     },
     "exploreCta": "Browse other repositories",
     "status": {

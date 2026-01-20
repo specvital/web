@@ -6,11 +6,11 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 
 import type { SortOption } from "../types";
+import { BookmarkToggle } from "./bookmark-toggle";
 import { MobileFilterDrawer } from "./mobile-filter-drawer";
 import { OwnershipDropdown } from "./ownership-dropdown";
 import { PaginationStatus } from "./pagination-status";
 import { SortDropdown } from "./sort-dropdown";
-import { StarredToggle } from "./starred-toggle";
 
 type FilterBarProps = {
   hasNextPage: boolean;
@@ -58,7 +58,7 @@ export const FilterBar = ({
 
         <div className="hidden gap-2 sm:flex">
           <OwnershipDropdown />
-          <StarredToggle />
+          <BookmarkToggle />
           <SortDropdown onSortChange={onSortChange} sortBy={sortBy} />
         </div>
       </div>

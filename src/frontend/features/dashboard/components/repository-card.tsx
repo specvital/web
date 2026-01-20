@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, Star } from "lucide-react";
+import { Bookmark, RefreshCw } from "lucide-react";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,7 @@ export const RepositoryCard = ({
           size="icon"
           variant="ghost"
         >
-          <Star aria-hidden="true" className={cn("size-4", isBookmarked && "fill-current")} />
+          <Bookmark aria-hidden="true" className={cn("size-4", isBookmarked && "fill-current")} />
         </Button>
       </ResponsiveTooltip>
     );

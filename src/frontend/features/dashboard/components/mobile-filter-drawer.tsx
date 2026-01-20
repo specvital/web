@@ -1,6 +1,6 @@
 "use client";
 
-import { Filter, Star } from "lucide-react";
+import { Bookmark, Filter } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -18,24 +18,24 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Toggle } from "@/components/ui/toggle";
 
+import { useBookmarkFilter } from "../hooks/use-bookmark-filter";
 import {
   OWNERSHIP_FILTER_ICONS,
   OWNERSHIP_FILTER_OPTIONS,
   type OwnershipFilter,
   useOwnershipFilter,
 } from "../hooks/use-ownership-filter";
-import { useStarredFilter } from "../hooks/use-starred-filter";
 
 export const MobileFilterDrawer = () => {
   const t = useTranslations("dashboard.filter");
   const tOwnership = useTranslations("dashboard.filter.ownership");
 
   const { ownershipFilter, setOwnershipFilter } = useOwnershipFilter();
-  const { setStarredOnly, starredOnly } = useStarredFilter();
+  const { bookmarkOnly, setBookmarkOnly } = useBookmarkFilter();
 
   const [isOpen, setIsOpen] = useState(false);
   const [localOwnership, setLocalOwnership] = useState<OwnershipFilter>(ownershipFilter);
-  const [localStarred, setLocalStarred] = useState(starredOnly);
+  const [localBookmark, setLocalBookmark] = useState(bookmarkOnly);
 
   const ownershipLabels: Record<OwnershipFilter, string> = {
     all: tOwnership("all"),
@@ -44,24 +44,24 @@ export const MobileFilterDrawer = () => {
     others: tOwnership("others"),
   };
 
-  const activeFilterCount = calculateActiveFilterCount(ownershipFilter, starredOnly);
+  const activeFilterCount = calculateActiveFilterCount(ownershipFilter, bookmarkOnly);
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
       setLocalOwnership(ownershipFilter);
-      setLocalStarred(starredOnly);
+      setLocalBookmark(bookmarkOnly);
     }
     setIsOpen(open);
   };
 
   const handleApply = () => {
     setOwnershipFilter(localOwnership === "all" ? null : localOwnership);
-    setStarredOnly(localStarred ? true : null);
+    setBookmarkOnly(localBookmark ? true : null);
     setIsOpen(false);
   };
 
-  const handleStarredToggle = (pressed: boolean) => {
-    setLocalStarred(pressed);
+  const handleBookmarkToggle = (pressed: boolean) => {
+    setLocalBookmark(pressed);
   };
 
   return (
@@ -108,19 +108,19 @@ export const MobileFilterDrawer = () => {
           </div>
 
           <div className="flex flex-col gap-3">
-            <Label className="text-sm font-medium">{t("starredLabel")}</Label>
+            <Label className="text-sm font-medium">{t("bookmarkedLabel")}</Label>
             <Toggle
-              aria-label={t("starredLabel")}
+              aria-label={t("bookmarkedLabel")}
               className="h-11 w-full justify-start gap-2 px-3"
-              onPressedChange={handleStarredToggle}
-              pressed={localStarred}
+              onPressedChange={handleBookmarkToggle}
+              pressed={localBookmark}
               variant="outline"
             >
-              <Star
+              <Bookmark
                 aria-hidden="true"
-                className={localStarred ? "fill-yellow-400 text-yellow-400" : ""}
+                className={localBookmark ? "fill-yellow-400 text-yellow-400" : ""}
               />
-              <span>{t("starred")}</span>
+              <span>{t("bookmarked")}</span>
             </Toggle>
           </div>
         </div>
@@ -135,9 +135,9 @@ export const MobileFilterDrawer = () => {
   );
 };
 
-const calculateActiveFilterCount = (ownership: OwnershipFilter, starred: boolean): number => {
+const calculateActiveFilterCount = (ownership: OwnershipFilter, bookmarked: boolean): number => {
   let count = 0;
   if (ownership !== "all") count++;
-  if (starred) count++;
+  if (bookmarked) count++;
   return count;
 };
