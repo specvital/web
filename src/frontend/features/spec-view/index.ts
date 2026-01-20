@@ -21,6 +21,7 @@ export {
   useScrollSync,
   useSpecView,
 } from "./hooks";
+export type { GenerationState } from "./hooks";
 
 export { calculateDocumentStats, calculateDomainStats, isQuotaExceeded } from "./utils";
 

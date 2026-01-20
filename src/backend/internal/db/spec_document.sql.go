@@ -24,14 +24,19 @@ func (q *Queries) CheckAnalysisExists(ctx context.Context, id pgtype.UUID) (bool
 	return exists, err
 }
 
-const checkSpecDocumentExists = `-- name: CheckSpecDocumentExists :one
+const checkSpecDocumentExistsByLanguage = `-- name: CheckSpecDocumentExistsByLanguage :one
 SELECT EXISTS(
-    SELECT 1 FROM spec_documents WHERE analysis_id = $1
+    SELECT 1 FROM spec_documents WHERE analysis_id = $1 AND language = $2
 ) AS exists
 `
 
-func (q *Queries) CheckSpecDocumentExists(ctx context.Context, analysisID pgtype.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, checkSpecDocumentExists, analysisID)
+type CheckSpecDocumentExistsByLanguageParams struct {
+	AnalysisID pgtype.UUID `json:"analysis_id"`
+	Language   string      `json:"language"`
+}
+
+func (q *Queries) CheckSpecDocumentExistsByLanguage(ctx context.Context, arg CheckSpecDocumentExistsByLanguageParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkSpecDocumentExistsByLanguage, arg.AnalysisID, arg.Language)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
@@ -340,9 +345,49 @@ type GetSpecGenerationStatusRow struct {
 	Errors      [][]byte           `json:"errors"`
 }
 
+// Returns latest generation status for an analysis (any language)
 func (q *Queries) GetSpecGenerationStatus(ctx context.Context, args []byte) (GetSpecGenerationStatusRow, error) {
 	row := q.db.QueryRow(ctx, getSpecGenerationStatus, args)
 	var i GetSpecGenerationStatusRow
+	err := row.Scan(
+		&i.State,
+		&i.CreatedAt,
+		&i.FinalizedAt,
+		&i.Errors,
+	)
+	return i, err
+}
+
+const getSpecGenerationStatusByLanguage = `-- name: GetSpecGenerationStatusByLanguage :one
+SELECT
+    rj.state,
+    rj.created_at,
+    rj.finalized_at,
+    rj.errors
+FROM river_job rj
+WHERE rj.kind = 'specview:generate'
+  AND rj.args->>'analysis_id' = $1
+  AND rj.args->>'language' = $2
+ORDER BY rj.created_at DESC
+LIMIT 1
+`
+
+type GetSpecGenerationStatusByLanguageParams struct {
+	AnalysisID []byte `json:"analysis_id"`
+	Language   []byte `json:"language"`
+}
+
+type GetSpecGenerationStatusByLanguageRow struct {
+	State       RiverJobState      `json:"state"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	FinalizedAt pgtype.Timestamptz `json:"finalized_at"`
+	Errors      [][]byte           `json:"errors"`
+}
+
+// Returns generation status for a specific analysis + language combination
+func (q *Queries) GetSpecGenerationStatusByLanguage(ctx context.Context, arg GetSpecGenerationStatusByLanguageParams) (GetSpecGenerationStatusByLanguageRow, error) {
+	row := q.db.QueryRow(ctx, getSpecGenerationStatusByLanguage, arg.AnalysisID, arg.Language)
+	var i GetSpecGenerationStatusByLanguageRow
 	err := row.Scan(
 		&i.State,
 		&i.CreatedAt,

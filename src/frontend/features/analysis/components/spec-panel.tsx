@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useUsage } from "@/features/account";
@@ -17,7 +17,7 @@ import {
   useQuotaConfirmDialog,
   useSpecView,
 } from "@/features/spec-view";
-import type { SpecLanguage } from "@/features/spec-view";
+import type { GenerationState, SpecLanguage } from "@/features/spec-view";
 
 import { FilterEmptyState } from "./filter-empty-state";
 import { SpecToolbar } from "./spec-toolbar";
@@ -51,17 +51,18 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
     updateStatus: updateProgressStatus,
   } = useGenerationProgress();
 
-  // Spec view
+  // Local state: tracking whether user initiated a generation
+  const [isWaitingForGeneration, setIsWaitingForGeneration] = useState(false);
+  const [pendingLanguage, setPendingLanguage] = useState<SpecLanguage | null>(null);
+
+  // Spec view - pass pendingLanguage to poll correct status during generation
   const {
     data: specDocument,
-    generationStatus,
-    isGenerating,
+    generationState,
     requestGenerate,
-  } = useSpecView(analysisId);
-
-  // Language switch state
-  const [isGeneratingOtherLanguage, setIsGeneratingOtherLanguage] = useState(false);
-  const [pendingLanguage, setPendingLanguage] = useState<SpecLanguage | null>(null);
+  } = useSpecView(analysisId, {
+    language: pendingLanguage ?? undefined,
+  });
 
   // Document filter
   const { matchCount } = useDocumentFilter(specDocument);
@@ -69,51 +70,76 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
   // Calculate total behaviors
   const totalBehaviors =
     specDocument?.domains.reduce(
-      (acc, d) => acc + d.features.reduce((facc, f) => facc + f.behaviors.length, 0),
+      (acc, domain) =>
+        acc + domain.features.reduce((fAcc, feature) => fAcc + feature.behaviors.length, 0),
       0
     ) ?? totalTests;
 
   const hasFilter = query.trim().length > 0 || frameworks.length > 0 || statuses.length > 0;
 
-  // Sync generation status with progress modal
-  useEffect(() => {
-    if (generationStatus) {
-      updateProgressStatus(generationStatus);
-
-      if (isProgressInBackground) {
-        if (generationStatus === "completed") {
-          closeProgressModal();
-          toast.success(t("generationComplete.title"), {
-            description: t("generationComplete.description"),
-          });
-        } else if (generationStatus === "failed") {
-          closeProgressModal();
-          toast.error(t("generateFailed.title"));
-        }
-      } else {
-        if (generationStatus === "completed" || generationStatus === "failed") {
-          closeProgressModal();
-        }
-      }
+  // Determine effective state: combine server state with local waiting state
+  const effectiveState: GenerationState = (() => {
+    if (!isWaitingForGeneration) {
+      return generationState;
     }
-  }, [generationStatus, updateProgressStatus, closeProgressModal, isProgressInBackground, t]);
+    // While waiting, treat idle as pending to handle the transition period after mutation success
+    if (generationState === "idle") {
+      return "pending";
+    }
+    return generationState;
+  })();
 
-  // Handle completion when document becomes available
-  const prevSpecDocumentRef = useRef(specDocument);
+  // Single effect to handle generation state changes
+  const prevEffectiveStateRef = useRef<GenerationState | null>(null);
   useEffect(() => {
-    if (specDocument && !prevSpecDocumentRef.current) {
+    if (!isWaitingForGeneration) {
+      prevEffectiveStateRef.current = null;
+      return;
+    }
+
+    // Update modal status for in-progress states
+    if (
+      effectiveState === "requesting" ||
+      effectiveState === "pending" ||
+      effectiveState === "running"
+    ) {
+      updateProgressStatus(effectiveState === "requesting" ? "pending" : effectiveState);
+    }
+
+    // Handle completion
+    if (effectiveState === "completed" && prevEffectiveStateRef.current !== "completed") {
       updateProgressStatus("completed");
+      setIsWaitingForGeneration(false);
+      setPendingLanguage(null);
+
       if (isProgressInBackground) {
-        closeProgressModal();
         toast.success(t("generationComplete.title"), {
           description: t("generationComplete.description"),
         });
-      } else {
-        closeProgressModal();
       }
+      closeProgressModal();
     }
-    prevSpecDocumentRef.current = specDocument;
-  }, [specDocument, updateProgressStatus, closeProgressModal, isProgressInBackground, t]);
+
+    // Handle failure
+    if (effectiveState === "failed") {
+      setIsWaitingForGeneration(false);
+      setPendingLanguage(null);
+
+      if (isProgressInBackground) {
+        toast.error(t("generateFailed.title"));
+      }
+      closeProgressModal();
+    }
+
+    prevEffectiveStateRef.current = effectiveState;
+  }, [
+    effectiveState,
+    isWaitingForGeneration,
+    isProgressInBackground,
+    updateProgressStatus,
+    closeProgressModal,
+    t,
+  ]);
 
   // Show toast when switching to background
   const prevIsInBackgroundRef = useRef(false);
@@ -130,6 +156,17 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
     prevIsInBackgroundRef.current = isProgressInBackground;
   }, [isProgressInBackground, t, bringProgressToForeground]);
 
+  const startGeneration = (language: SpecLanguage, forceRegenerate = false) => {
+    setPendingLanguage(language);
+    setIsWaitingForGeneration(true);
+    requestGenerate(language, forceRegenerate);
+    openProgressModal({
+      analysisId,
+      onViewDocument: () => {},
+      status: "pending",
+    });
+  };
+
   const handleGenerate = () => {
     if (!isAuthenticated) {
       openSpecLoginDialog();
@@ -140,14 +177,7 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
       analysisId,
       estimatedCost: totalTests,
       locale,
-      onConfirm: (selectedLanguage) => {
-        requestGenerate(selectedLanguage, false);
-        openProgressModal({
-          analysisId,
-          onViewDocument: () => {},
-          status: "pending",
-        });
-      },
+      onConfirm: (selectedLanguage) => startGeneration(selectedLanguage, false),
       usage: usageData ?? null,
     });
   };
@@ -163,14 +193,8 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
       estimatedCost: totalTests,
       isRegenerate: true,
       locale,
-      onConfirm: (selectedLanguage, isForceRegenerate) => {
-        requestGenerate(selectedLanguage, isForceRegenerate);
-        openProgressModal({
-          analysisId,
-          onViewDocument: () => {},
-          status: "pending",
-        });
-      },
+      onConfirm: (selectedLanguage, isForceRegenerate) =>
+        startGeneration(selectedLanguage, isForceRegenerate ?? false),
       usage: usageData ?? null,
     });
   };
@@ -186,31 +210,14 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
       analysisId,
       estimatedCost: totalTests,
       locale,
-      onConfirm: () => {
-        setIsGeneratingOtherLanguage(true);
-        requestGenerate(language, false);
-        openProgressModal({
-          analysisId,
-          onViewDocument: () => {},
-          status: "pending",
-        });
-      },
+      onConfirm: () => startGeneration(language, false),
       usage: usageData ?? null,
     });
   };
 
-  // Reset language switch state when generation completes or language matches
-  useEffect(() => {
-    const shouldReset =
-      (pendingLanguage && specDocument?.language === pendingLanguage) ||
-      generationStatus === "completed" ||
-      generationStatus === "failed";
-
-    if (shouldReset) {
-      setIsGeneratingOtherLanguage(false);
-      setPendingLanguage(null);
-    }
-  }, [specDocument?.language, pendingLanguage, generationStatus]);
+  // Derive UI states from effectiveState
+  const isGenerating = effectiveState === "pending" || effectiveState === "running";
+  const isGeneratingOtherLanguage = isWaitingForGeneration && specDocument !== null;
 
   const renderContent = () => {
     if (specDocument) {
@@ -228,8 +235,8 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
       );
     }
 
-    if (isGenerating && generationStatus) {
-      return <GenerationStatus onRetry={() => requestGenerate()} status={generationStatus} />;
+    if (effectiveState === "pending" || effectiveState === "running") {
+      return <GenerationStatus onRetry={() => requestGenerate()} status={effectiveState} />;
     }
 
     const specviewQuota = usageData?.specview

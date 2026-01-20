@@ -10,6 +10,7 @@ import (
 
 type GetGenerationStatusInput struct {
 	AnalysisID string
+	Language   string // Optional: if specified, returns status for that specific language
 }
 
 type GetGenerationStatusOutput struct {
@@ -29,7 +30,18 @@ func (uc *GetGenerationStatusUseCase) Execute(ctx context.Context, input GetGene
 		return nil, domain.ErrInvalidAnalysisID
 	}
 
-	status, err := uc.repo.GetGenerationStatus(ctx, input.AnalysisID)
+	if input.Language != "" && !entity.IsValidLanguage(input.Language) {
+		return nil, domain.ErrInvalidLanguage
+	}
+
+	var status *entity.SpecGenerationStatus
+	var err error
+
+	if input.Language != "" {
+		status, err = uc.repo.GetGenerationStatusByLanguage(ctx, input.AnalysisID, input.Language)
+	} else {
+		status, err = uc.repo.GetGenerationStatus(ctx, input.AnalysisID)
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -72,6 +72,7 @@ JOIN test_files tf ON tf.id = ts.file_id
 WHERE b.id = ANY($1::uuid[]);
 
 -- name: GetSpecGenerationStatus :one
+-- Returns latest generation status for an analysis (any language)
 SELECT
     rj.state,
     rj.created_at,
@@ -83,9 +84,23 @@ WHERE rj.kind = 'specview:generate'
 ORDER BY rj.created_at DESC
 LIMIT 1;
 
--- name: CheckSpecDocumentExists :one
+-- name: GetSpecGenerationStatusByLanguage :one
+-- Returns generation status for a specific analysis + language combination
+SELECT
+    rj.state,
+    rj.created_at,
+    rj.finalized_at,
+    rj.errors
+FROM river_job rj
+WHERE rj.kind = 'specview:generate'
+  AND rj.args->>'analysis_id' = @analysis_id
+  AND rj.args->>'language' = @language
+ORDER BY rj.created_at DESC
+LIMIT 1;
+
+-- name: CheckSpecDocumentExistsByLanguage :one
 SELECT EXISTS(
-    SELECT 1 FROM spec_documents WHERE analysis_id = $1
+    SELECT 1 FROM spec_documents WHERE analysis_id = $1 AND language = $2
 ) AS exists;
 
 -- name: CheckAnalysisExists :one

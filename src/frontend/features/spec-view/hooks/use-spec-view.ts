@@ -38,12 +38,28 @@ type UseSpecViewOptions = {
   language?: SpecLanguage;
 };
 
+/**
+ * Unified generation state for UI consumption.
+ * - idle: No generation in progress, no document
+ * - requesting: Mutation in progress (sending request to server)
+ * - pending: Server queued the generation
+ * - running: Server is actively generating
+ * - completed: Document is ready
+ * - failed: Generation failed
+ */
+export type GenerationState =
+  | "idle"
+  | "requesting"
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed";
+
 type UseSpecViewReturn = {
   currentLanguage: SpecLanguage | undefined;
   data: SpecDocument | null;
   error: Error | null;
-  generationStatus: SpecGenerationStatusEnum | null;
-  isGenerating: boolean;
+  generationState: GenerationState;
   isLoading: boolean;
   isPollingTimeout: boolean;
   requestGenerate: (language?: SpecLanguage, isForceRegenerate?: boolean) => void;
@@ -196,26 +212,36 @@ export const useSpecView = (
   const response: SpecDocumentResponse | undefined = query.data;
   const data = response && isDocumentCompleted(response) ? response.data : null;
 
-  const generationStatus: SpecGenerationStatusEnum | null =
+  const serverStatus: SpecGenerationStatusEnum | null =
     response && isDocumentGenerating(response) ? response.generationStatus.status : null;
 
-  const isGenerating = generationStatus === "pending" || generationStatus === "running";
-  const isLoading = query.isPending || generateMutation.isPending;
+  const isRequesting = generateMutation.isPending;
+  const isLoading = query.isPending || isRequesting;
+  const isActiveGeneration = serverStatus === "pending" || serverStatus === "running";
 
   const isPollingTimeout =
     pollingStartTimeRef.current !== null &&
     Date.now() - pollingStartTimeRef.current > MAX_POLLING_DURATION_MS &&
-    isGenerating;
+    isActiveGeneration;
 
   // Extract language from completed document data
   const currentLanguage = data?.language;
+
+  // Compute unified generation state
+  const generationState: GenerationState = (() => {
+    if (isRequesting) return "requesting";
+    if (data) return "completed";
+    if (serverStatus === "pending") return "pending";
+    if (serverStatus === "running") return "running";
+    if (serverStatus === "failed") return "failed";
+    return "idle";
+  })();
 
   return {
     currentLanguage,
     data,
     error: query.error || generateMutation.error,
-    generationStatus,
-    isGenerating,
+    generationState,
     isLoading,
     isPollingTimeout,
     requestGenerate,

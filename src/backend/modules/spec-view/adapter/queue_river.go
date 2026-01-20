@@ -23,10 +23,12 @@ const (
 )
 
 // SpecGenerationArgs represents the arguments for spec generation job.
-// This must match the worker's Args structure.
+// This must match the worker's Args structure (JSON fields only; river tags are producer-only).
+// Unique key: (AnalysisID, Language) - allows different languages for same analysis,
+// but prevents duplicate jobs for the same analysis+language combination.
 type SpecGenerationArgs struct {
 	AnalysisID string  `json:"analysis_id" river:"unique"`
-	Language   string  `json:"language"`
+	Language   string  `json:"language" river:"unique"`
 	ModelID    string  `json:"model_id"`
 	UserID     *string `json:"user_id,omitempty"`
 }

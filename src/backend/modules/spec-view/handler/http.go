@@ -208,13 +208,23 @@ func (h *Handler) RequestSpecGeneration(ctx context.Context, request api.Request
 func (h *Handler) GetSpecGenerationStatus(ctx context.Context, request api.GetSpecGenerationStatusRequestObject) (api.GetSpecGenerationStatusResponseObject, error) {
 	analysisID := request.AnalysisID.String()
 
-	result, err := h.getGenerationStatus.Execute(ctx, usecase.GetGenerationStatusInput{
+	input := usecase.GetGenerationStatusInput{
 		AnalysisID: analysisID,
-	})
+	}
+	if request.Params.Language != nil {
+		input.Language = *request.Params.Language
+	}
+
+	result, err := h.getGenerationStatus.Execute(ctx, input)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidAnalysisID) {
 			return api.GetSpecGenerationStatus404ApplicationProblemPlusJSONResponse{
 				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("invalid analysis ID"),
+			}, nil
+		}
+		if errors.Is(err, domain.ErrInvalidLanguage) {
+			return api.GetSpecGenerationStatus400ApplicationProblemPlusJSONResponse{
+				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid language"),
 			}, nil
 		}
 

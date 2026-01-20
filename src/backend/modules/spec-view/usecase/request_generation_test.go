@@ -30,7 +30,7 @@ func (m *mockSpecViewRepository) CheckAnalysisExists(_ context.Context, _ string
 	return m.analysisExists, m.analysisErr
 }
 
-func (m *mockSpecViewRepository) CheckSpecDocumentExists(_ context.Context, _ string) (bool, error) {
+func (m *mockSpecViewRepository) CheckSpecDocumentExistsByLanguage(_ context.Context, _ string, _ string) (bool, error) {
 	return m.documentExists, m.documentErr
 }
 
@@ -45,6 +45,10 @@ func (m *mockSpecViewRepository) GetSpecDocumentByLanguage(_ context.Context, _ 
 }
 
 func (m *mockSpecViewRepository) GetGenerationStatus(_ context.Context, _ string) (*entity.SpecGenerationStatus, error) {
+	return m.status, m.statusErr
+}
+
+func (m *mockSpecViewRepository) GetGenerationStatusByLanguage(_ context.Context, _ string, _ string) (*entity.SpecGenerationStatus, error) {
 	return m.status, m.statusErr
 }
 
@@ -358,6 +362,38 @@ func TestRequestGenerationUseCase_Execute_ForceRegenerate(t *testing.T) {
 			wantDeleteCalled: true,
 			wantErr:          true,
 			wantErrContains:  "delete existing spec document",
+		},
+		{
+			name: "should reject force regenerate when generation is pending",
+			input: RequestGenerationInput{
+				AnalysisID:        "test-analysis-id",
+				IsForceRegenerate: true,
+				Language:          "English",
+			},
+			mockRepo: &mockSpecViewRepository{
+				analysisExists: true,
+				status:         &entity.SpecGenerationStatus{Status: entity.StatusPending},
+			},
+			mockQueue:        &mockQueueService{},
+			wantDeleteCalled: false,
+			wantErr:          true,
+			wantErrContains:  domain.ErrGenerationPending.Error(),
+		},
+		{
+			name: "should reject force regenerate when generation is running",
+			input: RequestGenerationInput{
+				AnalysisID:        "test-analysis-id",
+				IsForceRegenerate: true,
+				Language:          "Korean",
+			},
+			mockRepo: &mockSpecViewRepository{
+				analysisExists: true,
+				status:         &entity.SpecGenerationStatus{Status: entity.StatusRunning},
+			},
+			mockQueue:        &mockQueueService{},
+			wantDeleteCalled: false,
+			wantErr:          true,
+			wantErrContains:  domain.ErrGenerationRunning.Error(),
 		},
 	}
 

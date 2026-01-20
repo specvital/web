@@ -27,10 +27,10 @@ export class NoSubscriptionError extends Error {
   }
 }
 
-export async function fetchSpecDocument(
+export const fetchSpecDocument = async (
   analysisId: string,
   language?: SpecLanguage
-): Promise<SpecDocumentResponse> {
+): Promise<SpecDocumentResponse> => {
   const url = language
     ? `/api/spec-view/${analysisId}?language=${encodeURIComponent(language)}`
     : `/api/spec-view/${analysisId}`;
@@ -42,8 +42,11 @@ export async function fetchSpecDocument(
   }
 
   if (response.status === 404) {
-    // 문서가 없으면 큐 상태 확인
-    const statusResponse = await apiFetch(`/api/spec-view/status/${analysisId}`);
+    const statusUrl = language
+      ? `/api/spec-view/status/${analysisId}?language=${encodeURIComponent(language)}`
+      : `/api/spec-view/status/${analysisId}`;
+    const statusResponse = await apiFetch(statusUrl);
+
     if (statusResponse.ok) {
       const statusData: SpecGenerationStatusResponse = await statusResponse.json();
       return {
@@ -51,7 +54,7 @@ export async function fetchSpecDocument(
         status: "generating",
       };
     }
-    // 큐에도 없으면 not_found
+
     return {
       generationStatus: { status: "not_found" },
       status: "generating",
@@ -59,11 +62,11 @@ export async function fetchSpecDocument(
   }
 
   return response.json();
-}
+};
 
-export async function requestSpecGeneration(
+export const requestSpecGeneration = async (
   request: RequestSpecGenerationRequest
-): Promise<RequestSpecGenerationResponse> {
+): Promise<RequestSpecGenerationResponse> => {
   const response = await apiFetch("/api/spec-view/generate", {
     body: JSON.stringify(request),
     method: "POST",
@@ -89,12 +92,16 @@ export async function requestSpecGeneration(
   }
 
   return response.json();
-}
+};
 
-export async function fetchGenerationStatus(
-  analysisId: string
-): Promise<SpecGenerationStatusResponse> {
-  const response = await apiFetch(`/api/spec-view/status/${analysisId}`);
+export const fetchGenerationStatus = async (
+  analysisId: string,
+  language?: SpecLanguage
+): Promise<SpecGenerationStatusResponse> => {
+  const url = language
+    ? `/api/spec-view/status/${analysisId}?language=${encodeURIComponent(language)}`
+    : `/api/spec-view/status/${analysisId}`;
+  const response = await apiFetch(url);
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
@@ -102,4 +109,4 @@ export async function fetchGenerationStatus(
   }
 
   return response.json();
-}
+};

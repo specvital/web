@@ -62,30 +62,31 @@ func (uc *RequestGenerationUseCase) Execute(ctx context.Context, input RequestGe
 		language = "English"
 	}
 
+	// Always check for in-progress generation (by language) - regardless of force regenerate
+	status, err := uc.repo.GetGenerationStatusByLanguage(ctx, input.AnalysisID, language)
+	if err != nil {
+		return nil, err
+	}
+	if status != nil {
+		switch status.Status {
+		case entity.StatusPending:
+			return nil, domain.ErrGenerationPending
+		case entity.StatusRunning:
+			return nil, domain.ErrGenerationRunning
+		}
+	}
+
 	if input.IsForceRegenerate {
 		if err := uc.repo.DeleteSpecDocumentByLanguage(ctx, input.AnalysisID, language); err != nil {
 			return nil, fmt.Errorf("delete existing spec document: %w", err)
 		}
 	} else {
-		docExists, err := uc.repo.CheckSpecDocumentExists(ctx, input.AnalysisID)
+		docExists, err := uc.repo.CheckSpecDocumentExistsByLanguage(ctx, input.AnalysisID, language)
 		if err != nil {
 			return nil, err
 		}
 		if docExists {
 			return nil, domain.ErrAlreadyExists
-		}
-
-		status, err := uc.repo.GetGenerationStatus(ctx, input.AnalysisID)
-		if err != nil {
-			return nil, err
-		}
-		if status != nil {
-			switch status.Status {
-			case entity.StatusPending:
-				return nil, domain.ErrGenerationPending
-			case entity.StatusRunning:
-				return nil, domain.ErrGenerationRunning
-			}
 		}
 	}
 

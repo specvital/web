@@ -588,6 +588,7 @@ export interface paths {
          * Get spec generation status
          * @description Returns the current status of spec document generation.
          *     Useful for polling during generation.
+         *     If language is specified, returns status for that specific language.
          *
          */
         get: operations["getSpecGenerationStatus"];
@@ -2415,7 +2416,13 @@ export interface operations {
     };
     getSpecGenerationStatus: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description Language to check status for (e.g., English, Korean)
+                 * @example English
+                 */
+                language?: string;
+            };
             header?: never;
             path: {
                 /**
@@ -2437,6 +2444,7 @@ export interface operations {
                     "application/json": components["schemas"]["SpecGenerationStatusResponse"];
                 };
             };
+            400: components["responses"]["BadRequest"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };

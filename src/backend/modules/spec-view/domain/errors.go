@@ -9,5 +9,6 @@ var (
 	ErrGenerationPending = errors.New("generation already pending")
 	ErrGenerationRunning = errors.New("generation already running")
 	ErrInvalidAnalysisID = errors.New("invalid analysis ID")
+	ErrInvalidLanguage   = errors.New("invalid language")
 	ErrQuotaExceeded     = errors.New("quota exceeded")
 )

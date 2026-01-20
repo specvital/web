@@ -1097,6 +1097,12 @@ type GetRecentRepositoriesParams struct {
 	Ownership *OwnershipFilterParam `form:"ownership,omitempty" json:"ownership,omitempty"`
 }
 
+// GetSpecGenerationStatusParams defines parameters for GetSpecGenerationStatus.
+type GetSpecGenerationStatusParams struct {
+	// Language Language to check status for (e.g., English, Korean)
+	Language *string `form:"language,omitempty" json:"language,omitempty"`
+}
+
 // GetSpecDocumentParams defines parameters for GetSpecDocument.
 type GetSpecDocumentParams struct {
 	// Language Filter by language. If not specified, returns the most recent document.
@@ -1456,7 +1462,7 @@ type ServerInterface interface {
 	RequestSpecGeneration(w http.ResponseWriter, r *http.Request)
 	// Get spec generation status
 	// (GET /api/spec-view/status/{analysisId})
-	GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID)
+	GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecGenerationStatusParams)
 	// Get specification document for analysis
 	// (GET /api/spec-view/{analysisId})
 	GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecDocumentParams)
@@ -1600,7 +1606,7 @@ func (_ Unimplemented) RequestSpecGeneration(w http.ResponseWriter, r *http.Requ
 
 // Get spec generation status
 // (GET /api/spec-view/status/{analysisId})
-func (_ Unimplemented) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+func (_ Unimplemented) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecGenerationStatusParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2197,8 +2203,19 @@ func (siw *ServerInterfaceWrapper) GetSpecGenerationStatus(w http.ResponseWriter
 
 	r = r.WithContext(ctx)
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetSpecGenerationStatusParams
+
+	// ------------- Optional query parameter "language" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "language", r.URL.Query(), &params.Language)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetSpecGenerationStatus(w, r, analysisID)
+		siw.Handler.GetSpecGenerationStatus(w, r, analysisID, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3659,6 +3676,7 @@ func (response RequestSpecGeneration500ApplicationProblemPlusJSONResponse) Visit
 
 type GetSpecGenerationStatusRequestObject struct {
 	AnalysisID openapi_types.UUID `json:"analysisId"`
+	Params     GetSpecGenerationStatusParams
 }
 
 type GetSpecGenerationStatusResponseObject interface {
@@ -3670,6 +3688,17 @@ type GetSpecGenerationStatus200JSONResponse SpecGenerationStatusResponse
 func (response GetSpecGenerationStatus200JSONResponse) VisitGetSpecGenerationStatusResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecGenerationStatus400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecGenerationStatus400ApplicationProblemPlusJSONResponse) VisitGetSpecGenerationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -4875,10 +4904,11 @@ func (sh *strictHandler) RequestSpecGeneration(w http.ResponseWriter, r *http.Re
 }
 
 // GetSpecGenerationStatus operation middleware
-func (sh *strictHandler) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+func (sh *strictHandler) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecGenerationStatusParams) {
 	var request GetSpecGenerationStatusRequestObject
 
 	request.AnalysisID = analysisID
+	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.GetSpecGenerationStatus(ctx, request.(GetSpecGenerationStatusRequestObject))

@@ -32,13 +32,16 @@ func (r *PostgresRepository) CheckAnalysisExists(ctx context.Context, analysisID
 	return r.queries.CheckAnalysisExists(ctx, uid)
 }
 
-func (r *PostgresRepository) CheckSpecDocumentExists(ctx context.Context, analysisID string) (bool, error) {
+func (r *PostgresRepository) CheckSpecDocumentExistsByLanguage(ctx context.Context, analysisID string, language string) (bool, error) {
 	uid, err := parseUUID(analysisID)
 	if err != nil {
 		return false, err
 	}
 
-	return r.queries.CheckSpecDocumentExists(ctx, uid)
+	return r.queries.CheckSpecDocumentExistsByLanguage(ctx, db.CheckSpecDocumentExistsByLanguageParams{
+		AnalysisID: uid,
+		Language:   language,
+	})
 }
 
 func (r *PostgresRepository) DeleteSpecDocumentByLanguage(ctx context.Context, analysisID string, language string) error {
@@ -210,6 +213,37 @@ func (r *PostgresRepository) GetGenerationStatus(ctx context.Context, analysisID
 	}
 
 	row, err := r.queries.GetSpecGenerationStatus(ctx, []byte(analysisID))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	status := &entity.SpecGenerationStatus{
+		AnalysisID: analysisID,
+		Status:     mapRiverJobState(string(row.State)),
+	}
+
+	if row.CreatedAt.Valid {
+		status.StartedAt = &row.CreatedAt.Time
+	}
+	if row.FinalizedAt.Valid {
+		status.CompletedAt = &row.FinalizedAt.Time
+	}
+
+	return status, nil
+}
+
+func (r *PostgresRepository) GetGenerationStatusByLanguage(ctx context.Context, analysisID string, language string) (*entity.SpecGenerationStatus, error) {
+	if _, err := uuid.Parse(analysisID); err != nil {
+		return nil, err
+	}
+
+	row, err := r.queries.GetSpecGenerationStatusByLanguage(ctx, db.GetSpecGenerationStatusByLanguageParams{
+		AnalysisID: []byte(analysisID),
+		Language:   []byte(language),
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

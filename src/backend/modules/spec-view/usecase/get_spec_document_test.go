@@ -28,7 +28,7 @@ func (m *mockRepository) CheckAnalysisExists(_ context.Context, _ string) (bool,
 	return m.analysisExists, m.analysisExistsErr
 }
 
-func (m *mockRepository) CheckSpecDocumentExists(_ context.Context, _ string) (bool, error) {
+func (m *mockRepository) CheckSpecDocumentExistsByLanguage(_ context.Context, _ string, _ string) (bool, error) {
 	return m.specDocExists, m.specDocExistsErr
 }
 
@@ -42,6 +42,10 @@ func (m *mockRepository) GetSpecDocumentByLanguage(_ context.Context, _ string, 
 }
 
 func (m *mockRepository) GetGenerationStatus(_ context.Context, _ string) (*entity.SpecGenerationStatus, error) {
+	return m.status, m.statusErr
+}
+
+func (m *mockRepository) GetGenerationStatusByLanguage(_ context.Context, _ string, _ string) (*entity.SpecGenerationStatus, error) {
 	return m.status, m.statusErr
 }
 

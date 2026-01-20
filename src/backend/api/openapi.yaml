@@ -793,11 +793,20 @@ paths:
       description: |
         Returns the current status of spec document generation.
         Useful for polling during generation.
+        If language is specified, returns status for that specific language.
       tags:
         - Spec View
       security:
         - cookieAuth: []
         - {}
+      parameters:
+        - name: language
+          in: query
+          required: false
+          description: Language to check status for (e.g., English, Korean)
+          schema:
+            type: string
+          example: English
       responses:
         "200":
           description: Generation status retrieved
@@ -805,6 +814,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SpecGenerationStatusResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
