@@ -41,6 +41,18 @@ func (r *PostgresRepository) CheckSpecDocumentExists(ctx context.Context, analys
 	return r.queries.CheckSpecDocumentExists(ctx, uid)
 }
 
+func (r *PostgresRepository) DeleteSpecDocumentByLanguage(ctx context.Context, analysisID string, language string) error {
+	uid, err := parseUUID(analysisID)
+	if err != nil {
+		return err
+	}
+
+	return r.queries.DeleteSpecDocumentByLanguage(ctx, db.DeleteSpecDocumentByLanguageParams{
+		AnalysisID: uid,
+		Language:   language,
+	})
+}
+
 func (r *PostgresRepository) GetSpecDocumentByLanguage(ctx context.Context, analysisID string, language string) (*entity.SpecDocument, error) {
 	uid, err := parseUUID(analysisID)
 	if err != nil {

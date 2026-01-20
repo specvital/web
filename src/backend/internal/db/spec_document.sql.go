@@ -37,6 +37,21 @@ func (q *Queries) CheckSpecDocumentExists(ctx context.Context, analysisID pgtype
 	return exists, err
 }
 
+const deleteSpecDocumentByLanguage = `-- name: DeleteSpecDocumentByLanguage :exec
+DELETE FROM spec_documents
+WHERE analysis_id = $1 AND language = $2
+`
+
+type DeleteSpecDocumentByLanguageParams struct {
+	AnalysisID pgtype.UUID `json:"analysis_id"`
+	Language   string      `json:"language"`
+}
+
+func (q *Queries) DeleteSpecDocumentByLanguage(ctx context.Context, arg DeleteSpecDocumentByLanguageParams) error {
+	_, err := q.db.Exec(ctx, deleteSpecDocumentByLanguage, arg.AnalysisID, arg.Language)
+	return err
+}
+
 const getSpecBehaviorSourceInfo = `-- name: GetSpecBehaviorSourceInfo :many
 SELECT
     b.id AS behavior_id,

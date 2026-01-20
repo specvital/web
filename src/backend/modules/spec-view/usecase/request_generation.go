@@ -57,7 +57,16 @@ func (uc *RequestGenerationUseCase) Execute(ctx context.Context, input RequestGe
 		return nil, domain.ErrAnalysisNotFound
 	}
 
-	if !input.IsForceRegenerate {
+	language := input.Language
+	if language == "" {
+		language = "English"
+	}
+
+	if input.IsForceRegenerate {
+		if err := uc.repo.DeleteSpecDocumentByLanguage(ctx, input.AnalysisID, language); err != nil {
+			return nil, fmt.Errorf("delete existing spec document: %w", err)
+		}
+	} else {
 		docExists, err := uc.repo.CheckSpecDocumentExists(ctx, input.AnalysisID)
 		if err != nil {
 			return nil, err
@@ -96,11 +105,6 @@ func (uc *RequestGenerationUseCase) Execute(ctx context.Context, input RequestGe
 		if !quotaResult.IsAllowed {
 			return nil, domain.ErrQuotaExceeded
 		}
-	}
-
-	language := input.Language
-	if language == "" {
-		language = "en"
 	}
 
 	var userIDPtr *string

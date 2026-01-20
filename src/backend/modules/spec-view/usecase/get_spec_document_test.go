@@ -32,6 +32,10 @@ func (m *mockRepository) CheckSpecDocumentExists(_ context.Context, _ string) (b
 	return m.specDocExists, m.specDocExistsErr
 }
 
+func (m *mockRepository) DeleteSpecDocumentByLanguage(_ context.Context, _ string, _ string) error {
+	return nil
+}
+
 func (m *mockRepository) GetSpecDocumentByLanguage(_ context.Context, _ string, language string) (*entity.SpecDocument, error) {
 	m.calledLanguage = language
 	return m.document, m.documentErr

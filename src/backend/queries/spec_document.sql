@@ -92,3 +92,7 @@ SELECT EXISTS(
 SELECT EXISTS(
     SELECT 1 FROM analyses WHERE id = $1 AND status = 'completed'
 ) AS exists;
+
+-- name: DeleteSpecDocumentByLanguage :exec
+DELETE FROM spec_documents
+WHERE analysis_id = $1 AND language = $2;
