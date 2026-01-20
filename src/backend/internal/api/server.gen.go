@@ -1097,6 +1097,12 @@ type GetRecentRepositoriesParams struct {
 	Ownership *OwnershipFilterParam `form:"ownership,omitempty" json:"ownership,omitempty"`
 }
 
+// GetSpecDocumentParams defines parameters for GetSpecDocument.
+type GetSpecDocumentParams struct {
+	// Language Filter by language. If not specified, returns the most recent document.
+	Language *SpecLanguage `form:"language,omitempty" json:"language,omitempty"`
+}
+
 // GetUserAnalyzedRepositoriesParams defines parameters for GetUserAnalyzedRepositories.
 type GetUserAnalyzedRepositoriesParams struct {
 	// Cursor Pagination cursor for next page (opaque string from previous response)
@@ -1453,7 +1459,7 @@ type ServerInterface interface {
 	GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID)
 	// Get specification document for analysis
 	// (GET /api/spec-view/{analysisId})
-	GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID)
+	GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecDocumentParams)
 	// Check usage quota before operation
 	// (POST /api/usage/check-quota)
 	CheckQuota(w http.ResponseWriter, r *http.Request)
@@ -1600,7 +1606,7 @@ func (_ Unimplemented) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Re
 
 // Get specification document for analysis
 // (GET /api/spec-view/{analysisId})
-func (_ Unimplemented) GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+func (_ Unimplemented) GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecDocumentParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2222,8 +2228,19 @@ func (siw *ServerInterfaceWrapper) GetSpecDocument(w http.ResponseWriter, r *htt
 
 	r = r.WithContext(ctx)
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetSpecDocumentParams
+
+	// ------------- Optional query parameter "language" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "language", r.URL.Query(), &params.Language)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetSpecDocument(w, r, analysisID)
+		siw.Handler.GetSpecDocument(w, r, analysisID, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3670,6 +3687,7 @@ func (response GetSpecGenerationStatus500ApplicationProblemPlusJSONResponse) Vis
 
 type GetSpecDocumentRequestObject struct {
 	AnalysisID openapi_types.UUID `json:"analysisId"`
+	Params     GetSpecDocumentParams
 }
 
 type GetSpecDocumentResponseObject interface {
@@ -4872,10 +4890,11 @@ func (sh *strictHandler) GetSpecGenerationStatus(w http.ResponseWriter, r *http.
 }
 
 // GetSpecDocument operation middleware
-func (sh *strictHandler) GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+func (sh *strictHandler) GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecDocumentParams) {
 	var request GetSpecDocumentRequestObject
 
 	request.AnalysisID = analysisID
+	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.GetSpecDocument(ctx, request.(GetSpecDocumentRequestObject))

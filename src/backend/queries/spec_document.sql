@@ -11,6 +11,19 @@ WHERE sd.analysis_id = $1
 ORDER BY sd.created_at DESC
 LIMIT 1;
 
+-- name: GetSpecDocumentByAnalysisIDAndLanguage :one
+SELECT
+    sd.id,
+    sd.analysis_id,
+    sd.language,
+    sd.executive_summary,
+    sd.model_id,
+    sd.created_at
+FROM spec_documents sd
+WHERE sd.analysis_id = $1 AND sd.language = $2
+ORDER BY sd.created_at DESC
+LIMIT 1;
+
 -- name: GetSpecDomainsByDocumentID :many
 SELECT
     d.id,

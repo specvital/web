@@ -10,6 +10,8 @@ import (
 
 type GetSpecDocumentInput struct {
 	AnalysisID string
+	// Language is optional. If empty, returns the most recent document.
+	Language string
 }
 
 type GetSpecDocumentOutput struct {
@@ -30,7 +32,7 @@ func (uc *GetSpecDocumentUseCase) Execute(ctx context.Context, input GetSpecDocu
 		return nil, domain.ErrInvalidAnalysisID
 	}
 
-	doc, err := uc.repo.GetSpecDocument(ctx, input.AnalysisID)
+	doc, err := uc.repo.GetSpecDocumentByLanguage(ctx, input.AnalysisID, input.Language)
 	if err != nil {
 		return nil, err
 	}

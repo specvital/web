@@ -31,7 +31,7 @@ func (m *mockSpecViewRepository) CheckSpecDocumentExists(_ context.Context, _ st
 	return m.documentExists, m.documentErr
 }
 
-func (m *mockSpecViewRepository) GetSpecDocument(_ context.Context, _ string) (*entity.SpecDocument, error) {
+func (m *mockSpecViewRepository) GetSpecDocumentByLanguage(_ context.Context, _ string, _ string) (*entity.SpecDocument, error) {
 	return nil, nil
 }
 

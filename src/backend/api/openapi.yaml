@@ -708,11 +708,19 @@ paths:
         Retrieves the AI-generated specification document for a given analysis.
         Returns full document hierarchy: domains → features → behaviors.
         If document is being generated, returns status with progress.
+        Optionally filter by language parameter.
       tags:
         - Spec View
       security:
         - cookieAuth: []
         - {}
+      parameters:
+        - name: language
+          in: query
+          required: false
+          description: Filter by language. If not specified, returns the most recent document.
+          schema:
+            $ref: "#/components/schemas/SpecLanguage"
       responses:
         "200":
           description: Spec document retrieved successfully

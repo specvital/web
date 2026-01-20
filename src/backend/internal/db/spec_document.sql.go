@@ -171,6 +171,48 @@ func (q *Queries) GetSpecDocumentByAnalysisID(ctx context.Context, analysisID pg
 	return i, err
 }
 
+const getSpecDocumentByAnalysisIDAndLanguage = `-- name: GetSpecDocumentByAnalysisIDAndLanguage :one
+SELECT
+    sd.id,
+    sd.analysis_id,
+    sd.language,
+    sd.executive_summary,
+    sd.model_id,
+    sd.created_at
+FROM spec_documents sd
+WHERE sd.analysis_id = $1 AND sd.language = $2
+ORDER BY sd.created_at DESC
+LIMIT 1
+`
+
+type GetSpecDocumentByAnalysisIDAndLanguageParams struct {
+	AnalysisID pgtype.UUID `json:"analysis_id"`
+	Language   string      `json:"language"`
+}
+
+type GetSpecDocumentByAnalysisIDAndLanguageRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	AnalysisID       pgtype.UUID        `json:"analysis_id"`
+	Language         string             `json:"language"`
+	ExecutiveSummary pgtype.Text        `json:"executive_summary"`
+	ModelID          string             `json:"model_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) GetSpecDocumentByAnalysisIDAndLanguage(ctx context.Context, arg GetSpecDocumentByAnalysisIDAndLanguageParams) (GetSpecDocumentByAnalysisIDAndLanguageRow, error) {
+	row := q.db.QueryRow(ctx, getSpecDocumentByAnalysisIDAndLanguage, arg.AnalysisID, arg.Language)
+	var i GetSpecDocumentByAnalysisIDAndLanguageRow
+	err := row.Scan(
+		&i.ID,
+		&i.AnalysisID,
+		&i.Language,
+		&i.ExecutiveSummary,
+		&i.ModelID,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getSpecDomainsByDocumentID = `-- name: GetSpecDomainsByDocumentID :many
 SELECT
     d.id,

@@ -1,0 +1,170 @@
+package usecase
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/specvital/web/src/backend/modules/spec-view/domain"
+	"github.com/specvital/web/src/backend/modules/spec-view/domain/entity"
+)
+
+type mockRepository struct {
+	document          *entity.SpecDocument
+	documentErr       error
+	status            *entity.SpecGenerationStatus
+	statusErr         error
+	analysisExists    bool
+	analysisExistsErr error
+	specDocExists     bool
+	specDocExistsErr  error
+
+	// Captured parameters for verification
+	calledLanguage string
+}
+
+func (m *mockRepository) CheckAnalysisExists(_ context.Context, _ string) (bool, error) {
+	return m.analysisExists, m.analysisExistsErr
+}
+
+func (m *mockRepository) CheckSpecDocumentExists(_ context.Context, _ string) (bool, error) {
+	return m.specDocExists, m.specDocExistsErr
+}
+
+func (m *mockRepository) GetSpecDocumentByLanguage(_ context.Context, _ string, language string) (*entity.SpecDocument, error) {
+	m.calledLanguage = language
+	return m.document, m.documentErr
+}
+
+func (m *mockRepository) GetGenerationStatus(_ context.Context, _ string) (*entity.SpecGenerationStatus, error) {
+	return m.status, m.statusErr
+}
+
+func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
+	t.Run("returns error when analysisID is empty", func(t *testing.T) {
+		uc := NewGetSpecDocumentUseCase(&mockRepository{})
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{})
+		if !errors.Is(err, domain.ErrInvalidAnalysisID) {
+			t.Errorf("Execute() error = %v, want %v", err, domain.ErrInvalidAnalysisID)
+		}
+	})
+
+	t.Run("returns document when found without language filter", func(t *testing.T) {
+		doc := &entity.SpecDocument{
+			ID:         "doc-1",
+			AnalysisID: "analysis-1",
+			Language:   "English",
+			CreatedAt:  time.Now(),
+		}
+		mock := &mockRepository{document: doc}
+		uc := NewGetSpecDocumentUseCase(mock)
+		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+			Language:   "",
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if result.Document == nil {
+			t.Fatal("Execute() Document is nil")
+		}
+		if result.Document.ID != "doc-1" {
+			t.Errorf("Execute() Document.ID = %q, want %q", result.Document.ID, "doc-1")
+		}
+		if mock.calledLanguage != "" {
+			t.Errorf("Repository called with language = %q, want empty", mock.calledLanguage)
+		}
+	})
+
+	t.Run("returns document when found with language filter", func(t *testing.T) {
+		doc := &entity.SpecDocument{
+			ID:         "doc-2",
+			AnalysisID: "analysis-1",
+			Language:   "Korean",
+			CreatedAt:  time.Now(),
+		}
+		mock := &mockRepository{document: doc}
+		uc := NewGetSpecDocumentUseCase(mock)
+		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+			Language:   "Korean",
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if result.Document == nil {
+			t.Fatal("Execute() Document is nil")
+		}
+		if result.Document.Language != "Korean" {
+			t.Errorf("Execute() Document.Language = %q, want %q", result.Document.Language, "Korean")
+		}
+		if mock.calledLanguage != "Korean" {
+			t.Errorf("Repository called with language = %q, want %q", mock.calledLanguage, "Korean")
+		}
+	})
+
+	t.Run("returns generation status when document not found but generation in progress", func(t *testing.T) {
+		status := &entity.SpecGenerationStatus{
+			AnalysisID: "analysis-1",
+			Status:     entity.StatusRunning,
+		}
+		uc := NewGetSpecDocumentUseCase(&mockRepository{
+			document: nil,
+			status:   status,
+		})
+		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if result.GenerationStatus == nil {
+			t.Fatal("Execute() GenerationStatus is nil")
+		}
+		if result.GenerationStatus.Status != entity.StatusRunning {
+			t.Errorf("Execute() GenerationStatus.Status = %v, want %v", result.GenerationStatus.Status, entity.StatusRunning)
+		}
+	})
+
+	t.Run("returns ErrDocumentNotFound when no document and no generation status", func(t *testing.T) {
+		uc := NewGetSpecDocumentUseCase(&mockRepository{
+			document: nil,
+			status:   nil,
+		})
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+		})
+		if !errors.Is(err, domain.ErrDocumentNotFound) {
+			t.Errorf("Execute() error = %v, want %v", err, domain.ErrDocumentNotFound)
+		}
+	})
+
+	t.Run("returns ErrDocumentNotFound when status is not_found", func(t *testing.T) {
+		status := &entity.SpecGenerationStatus{
+			AnalysisID: "analysis-1",
+			Status:     entity.StatusNotFound,
+		}
+		uc := NewGetSpecDocumentUseCase(&mockRepository{
+			document: nil,
+			status:   status,
+		})
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+		})
+		if !errors.Is(err, domain.ErrDocumentNotFound) {
+			t.Errorf("Execute() error = %v, want %v", err, domain.ErrDocumentNotFound)
+		}
+	})
+
+	t.Run("propagates repository error", func(t *testing.T) {
+		dbErr := errors.New("database error")
+		uc := NewGetSpecDocumentUseCase(&mockRepository{documentErr: dbErr})
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+		})
+		if !errors.Is(err, dbErr) {
+			t.Errorf("Execute() error = %v, want %v", err, dbErr)
+		}
+	})
+}

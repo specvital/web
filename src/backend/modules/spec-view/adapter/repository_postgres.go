@@ -41,13 +41,35 @@ func (r *PostgresRepository) CheckSpecDocumentExists(ctx context.Context, analys
 	return r.queries.CheckSpecDocumentExists(ctx, uid)
 }
 
-func (r *PostgresRepository) GetSpecDocument(ctx context.Context, analysisID string) (*entity.SpecDocument, error) {
+func (r *PostgresRepository) GetSpecDocumentByLanguage(ctx context.Context, analysisID string, language string) (*entity.SpecDocument, error) {
 	uid, err := parseUUID(analysisID)
 	if err != nil {
 		return nil, err
 	}
 
-	docRow, err := r.queries.GetSpecDocumentByAnalysisID(ctx, uid)
+	var docRow db.GetSpecDocumentByAnalysisIDRow
+	if language == "" {
+		// No language specified: return the most recent document
+		docRow, err = r.queries.GetSpecDocumentByAnalysisID(ctx, uid)
+	} else {
+		// Language specified: return document for that language
+		langRow, langErr := r.queries.GetSpecDocumentByAnalysisIDAndLanguage(ctx, db.GetSpecDocumentByAnalysisIDAndLanguageParams{
+			AnalysisID: uid,
+			Language:   language,
+		})
+		if langErr != nil {
+			err = langErr
+		} else {
+			docRow = db.GetSpecDocumentByAnalysisIDRow{
+				ID:               langRow.ID,
+				AnalysisID:       langRow.AnalysisID,
+				Language:         langRow.Language,
+				ExecutiveSummary: langRow.ExecutiveSummary,
+				ModelID:          langRow.ModelID,
+				CreatedAt:        langRow.CreatedAt,
+			}
+		}
+	}
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

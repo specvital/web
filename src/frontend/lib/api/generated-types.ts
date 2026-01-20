@@ -536,6 +536,7 @@ export interface paths {
          * @description Retrieves the AI-generated specification document for a given analysis.
          *     Returns full document hierarchy: domains → features → behaviors.
          *     If document is being generated, returns status with progress.
+         *     Optionally filter by language parameter.
          *
          */
         get: operations["getSpecDocument"];
@@ -2344,7 +2345,10 @@ export interface operations {
     };
     getSpecDocument: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Filter by language. If not specified, returns the most recent document. */
+                language?: components["schemas"]["SpecLanguage"];
+            };
             header?: never;
             path: {
                 /**

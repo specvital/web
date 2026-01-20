@@ -62,8 +62,14 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 func (h *Handler) GetSpecDocument(ctx context.Context, request api.GetSpecDocumentRequestObject) (api.GetSpecDocumentResponseObject, error) {
 	analysisID := request.AnalysisID.String()
 
+	language := ""
+	if request.Params.Language != nil {
+		language = string(*request.Params.Language)
+	}
+
 	result, err := h.getSpecDocument.Execute(ctx, usecase.GetSpecDocumentInput{
 		AnalysisID: analysisID,
+		Language:   language,
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrDocumentNotFound) {
