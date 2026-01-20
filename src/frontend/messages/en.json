@@ -263,7 +263,8 @@
       "switchLanguageTooltip": "Generate in different language",
       "currentLanguage": "Current",
       "regenerateTooltip": "Regenerate document",
-      "regenerateAriaLabel": "Regenerate AI specification document"
+      "regenerateAriaLabel": "Regenerate AI specification document",
+      "noSummary": "No summary available. Click regenerate to generate a new document."
     },
     "stats": {
       "domains": "{count, plural, =1 {1 domain} other {# domains}}",

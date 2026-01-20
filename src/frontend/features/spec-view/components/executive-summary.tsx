@@ -47,10 +47,7 @@ export const ExecutiveSummary = ({
 }: ExecutiveSummaryProps) => {
   const t = useTranslations("specView");
 
-  if (!document.executiveSummary) {
-    return null;
-  }
-
+  const hasExecutiveSummary = !!document.executiveSummary;
   const { behaviorCount, domainCount, featureCount } = calculateDocumentStats(document);
   const currentLanguage = document.language;
   const isDisabled = isRegenerating || isGeneratingOtherLanguage;
@@ -160,10 +157,16 @@ export const ExecutiveSummary = ({
           {t("stats.behaviors", { count: behaviorCount })}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm leading-relaxed whitespace-pre-line">{document.executiveSummary}</p>
-        <StatusLegend />
-      </CardContent>
+      {hasExecutiveSummary ? (
+        <CardContent className="space-y-4">
+          <p className="text-sm leading-relaxed whitespace-pre-line">{document.executiveSummary}</p>
+          <StatusLegend />
+        </CardContent>
+      ) : (
+        <CardContent>
+          <p className="text-sm text-muted-foreground">{t("executiveSummary.noSummary")}</p>
+        </CardContent>
+      )}
     </Card>
   );
 };

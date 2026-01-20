@@ -263,7 +263,8 @@
       "switchLanguageTooltip": "다른 언어로 생성",
       "currentLanguage": "현재",
       "regenerateTooltip": "문서 재생성",
-      "regenerateAriaLabel": "AI 스펙 문서 재생성"
+      "regenerateAriaLabel": "AI 스펙 문서 재생성",
+      "noSummary": "요약이 없습니다. 재생성 버튼을 클릭하여 새 문서를 생성하세요."
     },
     "stats": {
       "domains": "도메인 {count}개",
