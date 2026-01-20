@@ -104,13 +104,19 @@
       "statusTodo": "Todo",
       "statusXfail": "Expected Fail",
       "matchCount": "{count} matches",
-      "resultSummary": "{filtered} of {total} tests"
+      "resultSummary": "{filtered} of {total} tests",
+      "searchBehaviorsPlaceholder": "Search behaviors...",
+      "resultSummaryWithType": "{filtered} of {total} {type}"
     },
     "viewMode": {
       "list": "List view",
       "tree": "Tree view",
       "document": "Document view",
       "documentUnavailable": "Generate document first"
+    },
+    "tabs": {
+      "tests": "Tests",
+      "spec": "AI Spec"
     },
     "status": {
       "loading": "Loading...",

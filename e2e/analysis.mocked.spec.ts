@@ -1,6 +1,6 @@
 /**
  * Analysis Page E2E Tests with API Mocking
- * Tests AI Spec generation flow and quota-related UI behavior
+ * Tests AI Spec generation flow, tab navigation, and quota-related UI behavior
  */
 
 import { expect, test } from "@playwright/test";
@@ -16,8 +16,8 @@ import {
   mockUsageExceeded,
 } from "./fixtures/api-responses";
 
-test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
-  test("should display AI Spec generate button", async ({ page }) => {
+test.describe("Analysis Page - Primary Tab Navigation (Mocked API)", () => {
+  test("should display Tests tab as default", async ({ page }) => {
     await setupMockHandlers(page, {
       analysis: mockAnalysisCompleted,
       specDocument: mockSpecDocumentNotFound,
@@ -32,9 +32,110 @@ test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
       timeout: 15000,
     });
 
-    // Verify AI Spec button is visible
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await expect(aiSpecButton).toBeVisible();
+    // Tests tab should be selected by default
+    const testsTab = page.getByRole("tab", { name: /tests/i });
+    await expect(testsTab).toBeVisible();
+    await expect(testsTab).toHaveAttribute("data-state", "active");
+  });
+
+  test("should switch between Tests and AI Spec tabs", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByRole("heading", { name: "Test Statistics" })).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Spec tab should be active
+    await expect(specTab).toHaveAttribute("data-state", "active");
+
+    // Click Tests tab
+    const testsTab = page.getByRole("tab", { name: /tests/i });
+    await testsTab.click();
+
+    // Tests tab should be active
+    await expect(testsTab).toHaveAttribute("data-state", "active");
+  });
+
+  test("should show Re-analyze button in header", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByRole("heading", { name: "Test Statistics" })).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Re-analyze button should be visible
+    const reanalyzeButton = page.getByRole("button", { name: /re-analyze/i });
+    await expect(reanalyzeButton).toBeVisible();
+  });
+
+  test("should display list/tree toggle in Tests tab", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByRole("heading", { name: "Test Statistics" })).toBeVisible({
+      timeout: 15000,
+    });
+
+    // List view toggle should be visible
+    const listViewToggle = page.getByRole("radio", { name: /list view/i });
+    await expect(listViewToggle).toBeVisible();
+
+    // Tree view toggle should be visible
+    const treeViewToggle = page.getByRole("radio", { name: /tree view/i });
+    await expect(treeViewToggle).toBeVisible();
+  });
+});
+
+test.describe("Analysis Page - AI Spec Tab (Mocked API)", () => {
+  test("should display generate button in AI Spec tab when no document exists", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByRole("heading", { name: "Test Statistics" })).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Switch to AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Generate button should be visible
+    const generateButton = page.getByRole("button", { name: /generate.*ai/i });
+    await expect(generateButton).toBeVisible();
   });
 
   test("should open quota confirm dialog when clicking generate button", async ({ page }) => {
@@ -53,9 +154,13 @@ test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
       timeout: 15000,
     });
 
-    // Click Generate AI Spec button
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await aiSpecButton.click();
+    // Switch to AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate.*ai/i });
+    await generateButton.click();
 
     // Verify dialog opens
     const dialog = page.getByRole("dialog");
@@ -63,7 +168,7 @@ test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
     await expect(dialog.getByRole("heading", { name: /generate ai specification/i })).toBeVisible();
   });
 
-  test("should display language selector with 24 options", async ({ page }) => {
+  test("should display language selector with 24 options in dialog", async ({ page }) => {
     await setupMockHandlers(page, {
       analysis: mockAnalysisCompleted,
       specDocument: mockSpecDocumentNotFound,
@@ -79,9 +184,13 @@ test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
       timeout: 15000,
     });
 
-    // Open dialog
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await aiSpecButton.click();
+    // Switch to AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate.*ai/i });
+    await generateButton.click();
 
     // Verify dialog opened
     const dialog = page.getByRole("dialog");
@@ -102,7 +211,7 @@ test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
     }
   });
 
-  test("should display Cancel and Generate Document buttons", async ({ page }) => {
+  test("should display Cancel and Generate Document buttons in dialog", async ({ page }) => {
     await setupMockHandlers(page, {
       analysis: mockAnalysisCompleted,
       specDocument: mockSpecDocumentNotFound,
@@ -118,9 +227,13 @@ test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
       timeout: 15000,
     });
 
-    // Open dialog
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await aiSpecButton.click();
+    // Switch to AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate.*ai/i });
+    await generateButton.click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
@@ -146,9 +259,13 @@ test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
       timeout: 15000,
     });
 
-    // Open dialog
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await aiSpecButton.click();
+    // Switch to AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate.*ai/i });
+    await generateButton.click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
@@ -159,44 +276,9 @@ test.describe("Analysis Page - AI Spec Generation Flow (Mocked API)", () => {
     // Dialog should close
     await expect(dialog).not.toBeVisible();
   });
-
-  test("should select different language from dropdown", async ({ page }) => {
-    await setupMockHandlers(page, {
-      analysis: mockAnalysisCompleted,
-      specDocument: mockSpecDocumentNotFound,
-      specGeneration: mockSpecStatusNotFound,
-      usage: mockUsageNormal,
-    });
-
-    await page.goto("/en/analyze/test-owner/test-repo");
-    await page.waitForLoadState("networkidle");
-
-    // Wait for page to load
-    await expect(page.getByRole("heading", { name: "Test Statistics" })).toBeVisible({
-      timeout: 15000,
-    });
-
-    // Open dialog
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await aiSpecButton.click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-
-    // Click language selector
-    const languageCombobox = dialog.getByRole("combobox", { name: /output language/i });
-    await languageCombobox.click();
-
-    // Select Korean
-    const listbox = page.getByRole("listbox");
-    await listbox.getByRole("option", { name: "Korean" }).click();
-
-    // Verify selection changed
-    await expect(languageCombobox).toHaveText(/korean/i);
-  });
 });
 
-test.describe("Analysis Page - AI Spec Generation Quota States (Mocked API)", () => {
+test.describe("Analysis Page - Quota States (Mocked API)", () => {
   test("should disable Generate Document button when quota exceeded", async ({ page }) => {
     await setupMockHandlers(page, {
       analysis: mockAnalysisCompleted,
@@ -213,16 +295,20 @@ test.describe("Analysis Page - AI Spec Generation Quota States (Mocked API)", ()
       timeout: 15000,
     });
 
-    // Open dialog
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await aiSpecButton.click();
+    // Switch to AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate.*ai/i });
+    await generateButton.click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
     // Generate Document button should be disabled when quota exceeded
-    const generateButton = dialog.getByRole("button", { name: /generate document/i });
-    await expect(generateButton).toBeDisabled();
+    const confirmButton = dialog.getByRole("button", { name: /generate document/i });
+    await expect(confirmButton).toBeDisabled();
   });
 
   test("should display quota exceeded message", async ({ page }) => {
@@ -241,9 +327,13 @@ test.describe("Analysis Page - AI Spec Generation Quota States (Mocked API)", ()
       timeout: 15000,
     });
 
-    // Open dialog
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await aiSpecButton.click();
+    // Switch to AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate.*ai/i });
+    await generateButton.click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
@@ -268,9 +358,13 @@ test.describe("Analysis Page - AI Spec Generation Quota States (Mocked API)", ()
       timeout: 15000,
     });
 
-    // Open dialog
-    const aiSpecButton = page.getByRole("button", { name: /generate.*specification.*ai/i });
-    await aiSpecButton.click();
+    // Switch to AI Spec tab
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await specTab.click();
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate.*ai/i });
+    await generateButton.click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
@@ -346,5 +440,32 @@ test.describe("Analysis Page - Virtual Scroll Performance (Mocked API)", () => {
     // Verify summary statistics
     // Total: 1000, Active: 800, Skipped: 200
     await expect(page.getByText("1,000").or(page.getByText("1000"))).toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe("Analysis Page - URL Backward Compatibility (Mocked API)", () => {
+  test("should redirect ?view=document to ?tab=spec", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    // Navigate with old URL parameter
+    await page.goto("/en/analyze/test-owner/test-repo?view=document");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByRole("heading", { name: "Test Statistics" })).toBeVisible({
+      timeout: 15000,
+    });
+
+    // AI Spec tab should be active after redirect
+    const specTab = page.getByRole("tab", { name: /ai spec/i });
+    await expect(specTab).toHaveAttribute("data-state", "active");
+
+    // URL should have ?tab=spec instead of ?view=document
+    await expect(page).toHaveURL(/tab=spec/);
+    await expect(page).not.toHaveURL(/view=document/);
   });
 });

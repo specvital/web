@@ -14,10 +14,11 @@ const DEBOUNCE_DELAY = 300;
 type SearchInputProps = {
   matchCount?: number;
   onChange: (value: string) => void;
+  placeholder?: string;
   value: string;
 };
 
-export const SearchInput = ({ matchCount, onChange, value }: SearchInputProps) => {
+export const SearchInput = ({ matchCount, onChange, placeholder, value }: SearchInputProps) => {
   const t = useTranslations("analyze.filter");
   const inputRef = useRef<HTMLInputElement>(null);
   const [localValue, setLocalValue] = useState(value);
@@ -66,7 +67,7 @@ export const SearchInput = ({ matchCount, onChange, value }: SearchInputProps) =
           className={cn("pl-9", localValue && "pr-9")}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder={t("searchPlaceholder")}
+          placeholder={placeholder ?? t("searchPlaceholder")}
           ref={inputRef}
           type="text"
           value={localValue}
