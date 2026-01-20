@@ -901,6 +901,9 @@ type UpdateStatusResponse struct {
 	// LatestCommitSHA Latest commit SHA from remote
 	LatestCommitSHA *string `json:"latestCommitSha,omitempty"`
 
+	// ParserOutdated Whether the parser version has been updated since last analysis
+	ParserOutdated bool `json:"parserOutdated"`
+
 	// Status Repository update status:
 	// - up-to-date: Latest analysis is current with HEAD
 	// - new-commits: New commits available since last analysis

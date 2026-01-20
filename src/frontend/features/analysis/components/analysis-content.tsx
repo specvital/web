@@ -11,6 +11,7 @@ import { SpecPanel } from "./spec-panel";
 import { StatsCard } from "./stats-card";
 import { TabNavigation } from "./tab-navigation";
 import { TestsPanel } from "./tests-panel";
+import { UpdateBanner } from "./update-banner";
 import { usePrimaryTab } from "../hooks/use-primary-tab";
 
 type AnalysisContentProps = {
@@ -36,6 +37,8 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
       initial={shouldReduceMotion ? false : "hidden"}
       variants={containerVariants}
     >
+      <UpdateBanner owner={result.owner} repo={result.repo} />
+
       <div className="space-y-6">
         <AnalysisHeader
           analyzedAt={result.analyzedAt}

@@ -23,4 +23,5 @@ export { TestsToolbar } from "./tests-toolbar";
 export { TestSuiteAccordion } from "./test-suite-accordion";
 export { TreeNode } from "./tree-node";
 export { TreeView } from "./tree-view";
+export { UpdateBanner } from "./update-banner";
 export { ViewModeToggle } from "./view-mode-toggle";

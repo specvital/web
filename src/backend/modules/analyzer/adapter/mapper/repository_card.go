@@ -62,7 +62,8 @@ func ToUpdateStatusResponse(result *entity.UpdateStatusResult) api.UpdateStatusR
 		return api.UpdateStatusResponse{Status: api.Unknown}
 	}
 	resp := api.UpdateStatusResponse{
-		Status: toAPIUpdateStatus(result.Status),
+		ParserOutdated: result.ParserOutdated,
+		Status:         toAPIUpdateStatus(result.Status),
 	}
 	if result.AnalyzedCommitSHA != "" {
 		resp.AnalyzedCommitSHA = &result.AnalyzedCommitSHA

@@ -1624,6 +1624,7 @@ components:
       type: object
       required:
         - status
+        - parserOutdated
       properties:
         status:
           $ref: "#/components/schemas/UpdateStatus"
@@ -1635,6 +1636,10 @@ components:
           type: string
           description: Commit SHA from last analysis
           example: abc123def456
+        parserOutdated:
+          type: boolean
+          description: Whether the parser version has been updated since last analysis
+          example: false
 
     BookmarkResponse:
       type: object

@@ -187,7 +187,7 @@ func setupTestHandlerWithMocks(repo *mockRepository, queue *mockQueueService, gi
 	analyzeRepositoryUC := usecase.NewAnalyzeRepositoryUseCase(gitClient, queue, repo, systemConfig, tokenProvider)
 	getAnalysisUC := usecase.NewGetAnalysisUseCase(queue, repo)
 	listRepositoryCardsUC := usecase.NewListRepositoryCardsUseCase(gitClient, repo, tokenProvider)
-	getUpdateStatusUC := usecase.NewGetUpdateStatusUseCase(gitClient, repo, tokenProvider)
+	getUpdateStatusUC := usecase.NewGetUpdateStatusUseCase(gitClient, repo, systemConfig, tokenProvider)
 	getRepositoryStatsUC := usecase.NewGetRepositoryStatsUseCase(repo)
 	reanalyzeRepositoryUC := usecase.NewReanalyzeRepositoryUseCase(gitClient, queue, repo, tokenProvider)
 

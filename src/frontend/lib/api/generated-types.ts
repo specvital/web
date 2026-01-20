@@ -1094,6 +1094,11 @@ export interface components {
              * @example abc123def456
              */
             analyzedCommitSha?: string;
+            /**
+             * @description Whether the parser version has been updated since last analysis
+             * @example false
+             */
+            parserOutdated: boolean;
         };
         BookmarkResponse: {
             /** @description Operation success status */

@@ -37,5 +37,6 @@ type RepositoryStats struct {
 type UpdateStatusResult struct {
 	AnalyzedCommitSHA string
 	LatestCommitSHA   string
+	ParserOutdated    bool
 	Status            UpdateStatus
 }

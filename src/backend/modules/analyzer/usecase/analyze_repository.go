@@ -57,7 +57,7 @@ func (uc *AnalyzeRepositoryUseCase) Execute(ctx context.Context, input AnalyzeRe
 
 	completed, err := uc.repository.GetLatestCompletedAnalysis(ctx, input.Owner, input.Repo)
 	if err == nil {
-		if uc.shouldReturnCachedAnalysis(ctx, completed, latestSHA) {
+		if uc.shouldReturnCachedAnalysis(completed) {
 			analysis, buildErr := buildAnalysisFromCompleted(ctx, uc.repository, completed)
 			if buildErr != nil {
 				return nil, fmt.Errorf("build analysis for %s/%s: %w", input.Owner, input.Repo, buildErr)
@@ -102,25 +102,13 @@ func (uc *AnalyzeRepositoryUseCase) Execute(ctx context.Context, input AnalyzeRe
 }
 
 // shouldReturnCachedAnalysis determines if the cached analysis can be returned.
-// Returns false when re-analysis is needed:
-// - Different commit SHA
+// Cache-first policy: Returns cached analysis even with new commits or parser updates.
+// Returns false (needs re-analysis) only when:
 // - NULL parser_version (legacy data before version tracking)
-// - Different parser version from current system config
-func (uc *AnalyzeRepositoryUseCase) shouldReturnCachedAnalysis(ctx context.Context, completed *port.CompletedAnalysis, latestSHA string) bool {
-	if completed.CommitSHA != latestSHA {
-		return false
-	}
-
+//
+// Note: Neither commit SHA difference nor parser version mismatch triggers re-analysis.
+// Users can manually trigger reanalysis via the update banner.
+func (uc *AnalyzeRepositoryUseCase) shouldReturnCachedAnalysis(completed *port.CompletedAnalysis) bool {
 	// Legacy data without parser_version → needs re-analysis
-	if completed.ParserVersion == nil {
-		return false
-	}
-
-	currentVersion, err := uc.systemConfig.GetParserVersion(ctx)
-	if err != nil {
-		// System config unavailable → allow cached result to avoid blocking users
-		return true
-	}
-
-	return *completed.ParserVersion == currentVersion
+	return completed.ParserVersion != nil
 }

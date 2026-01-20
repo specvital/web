@@ -172,19 +172,22 @@ func TestAnalyzeRepository_SameCommitSameVersion_ReturnsCached(t *testing.T) {
 	}
 }
 
-func TestAnalyzeRepository_SameCommitDifferentVersion_EnqueuesReanalysis(t *testing.T) {
+// TestAnalyzeRepository_DifferentParserVersion_ReturnsCached verifies cache-first policy:
+// Even when parser version differs, cached analysis is returned.
+// Users can manually trigger reanalysis via the update banner.
+func TestAnalyzeRepository_DifferentParserVersion_ReturnsCached(t *testing.T) {
 	t.Parallel()
 
 	mocks := newAnalyzeRepoMocks()
 	oldVersion := "v1.0.0"
 	mocks.gitClient.latestSHA = "abc123"
-	mocks.systemConfig.parserVersion = "v2.0.0"
+	mocks.systemConfig.parserVersion = "v2.0.0" // Different from cached
 	mocks.repository.completedAnalysis = &port.CompletedAnalysis{
 		CommitSHA:     "abc123",
 		CompletedAt:   time.Now(),
 		ID:            "analysis-1",
 		Owner:         "owner",
-		ParserVersion: &oldVersion,
+		ParserVersion: &oldVersion, // Cached with old parser version
 		Repo:          "repo",
 		TotalSuites:   5,
 		TotalTests:    100,
@@ -199,14 +202,11 @@ func TestAnalyzeRepository_SameCommitDifferentVersion_EnqueuesReanalysis(t *test
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if result.Progress == nil {
-		t.Fatal("expected progress result, got nil")
+	if result.Analysis == nil {
+		t.Fatal("expected cached analysis result with cache-first policy")
 	}
-	if !mocks.queue.enqueueCalled {
-		t.Error("expected enqueue when parser version differs")
-	}
-	if mocks.queue.enqueuedCommitSHA != "abc123" {
-		t.Errorf("expected enqueued SHA abc123, got %s", mocks.queue.enqueuedCommitSHA)
+	if mocks.queue.enqueueCalled {
+		t.Error("expected no enqueue with cache-first policy when parser version differs")
 	}
 }
 
@@ -244,15 +244,18 @@ func TestAnalyzeRepository_NullParserVersion_EnqueuesReanalysis(t *testing.T) {
 	}
 }
 
-func TestAnalyzeRepository_DifferentCommit_EnqueuesAnalysis(t *testing.T) {
+// TestAnalyzeRepository_DifferentCommit_ReturnsCached verifies cache-first policy:
+// Even when new commits exist, cached analysis is returned.
+// Users can manually trigger reanalysis via the update banner.
+func TestAnalyzeRepository_DifferentCommit_ReturnsCached(t *testing.T) {
 	t.Parallel()
 
 	mocks := newAnalyzeRepoMocks()
 	version := "v1.0.0"
-	mocks.gitClient.latestSHA = "def456"
+	mocks.gitClient.latestSHA = "def456" // Different from cached
 	mocks.systemConfig.parserVersion = version
 	mocks.repository.completedAnalysis = &port.CompletedAnalysis{
-		CommitSHA:     "abc123",
+		CommitSHA:     "abc123", // Cached with old commit
 		CompletedAt:   time.Now(),
 		ID:            "analysis-1",
 		Owner:         "owner",
@@ -271,14 +274,11 @@ func TestAnalyzeRepository_DifferentCommit_EnqueuesAnalysis(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if result.Progress == nil {
-		t.Fatal("expected progress result, got nil")
+	if result.Analysis == nil {
+		t.Fatal("expected cached analysis result with cache-first policy")
 	}
-	if !mocks.queue.enqueueCalled {
-		t.Error("expected enqueue when commit SHA differs")
-	}
-	if mocks.queue.enqueuedCommitSHA != "def456" {
-		t.Errorf("expected enqueued SHA def456, got %s", mocks.queue.enqueuedCommitSHA)
+	if mocks.queue.enqueueCalled {
+		t.Error("expected no enqueue with cache-first policy when only commit SHA differs")
 	}
 }
 

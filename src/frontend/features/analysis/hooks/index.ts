@@ -4,5 +4,6 @@ export { useDataViewMode } from "./use-data-view-mode";
 export { useFilterState } from "./use-filter-state";
 export { usePrimaryTab } from "./use-primary-tab";
 export { useShare } from "./use-share";
+export { updateStatusKeys, useUpdateStatus } from "./use-update-status";
 // @deprecated Use usePrimaryTab and useDataViewMode instead
 export { useViewMode } from "./use-view-mode";
