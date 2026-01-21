@@ -3,6 +3,7 @@ export {
   DocsSidebar,
   DocsSidebarItem,
   DocsTopicCard,
+  GithubAccessContent,
   TestDetectionContent,
   UsageBillingContent,
 } from "./components";
