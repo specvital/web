@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 type NavItem = {
   href: string;
-  labelKey: "dashboard" | "explore" | "pricing";
+  labelKey: "dashboard" | "explore" | "pricing" | "docs";
   requiresAuth?: boolean;
 };
 
@@ -16,6 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", labelKey: "dashboard", requiresAuth: true },
   { href: "/explore", labelKey: "explore" },
   { href: "/pricing", labelKey: "pricing" },
+  { href: "/docs", labelKey: "docs" },
 ];
 
 type NavigationTabsProps = {
@@ -35,6 +36,9 @@ export const NavigationTabs = ({ className }: NavigationTabsProps) => {
     }
     if (href === "/explore") {
       return pathname === "/explore" || pathname.startsWith("/explore/");
+    }
+    if (href === "/docs") {
+      return pathname === "/docs" || pathname.startsWith("/docs/");
     }
     return pathname === href;
   };
