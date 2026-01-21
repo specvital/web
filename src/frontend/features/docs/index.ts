@@ -4,4 +4,5 @@ export {
   DocsSidebarItem,
   DocsTopicCard,
   TestDetectionContent,
+  UsageBillingContent,
 } from "./components";

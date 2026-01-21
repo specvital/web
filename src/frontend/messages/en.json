@@ -692,6 +692,178 @@
         "slug": "specview-generation"
       }
     },
+    "usageBilling": {
+      "meta": {
+        "title": "Usage & Billing | SpecVital Docs",
+        "description": "Learn about usage tracking, quotas, cache behavior, and billing cycles in SpecVital."
+      },
+      "title": "Usage & Billing",
+      "subtitle": "Understanding how usage is tracked and when quotas reset.",
+      "sections": {
+        "whatCounts": {
+          "title": "What Counts as Usage?",
+          "description": "SpecVital tracks usage for two main features: Analysis runs and AI Spec Document generation. Not all actions count toward your quota.",
+          "keyPoint": {
+            "title": "Cached Results Are Free",
+            "description": "Viewing cached analysis results never counts as usage. You're only charged when new work is performed."
+          },
+          "table": {
+            "event": "Action",
+            "description": "Description",
+            "countsUsage": "Counts?",
+            "yes": "Yes",
+            "no": "No"
+          },
+          "events": {
+            "analysisRun": {
+              "name": "Analysis Run",
+              "description": "Parsing test files from a repository"
+            },
+            "specDocGeneration": {
+              "name": "AI Spec Doc Generation",
+              "description": "AI generates specification document (counted by test count)"
+            },
+            "cacheHit": {
+              "name": "View Cached Results",
+              "description": "Viewing previously analyzed results"
+            },
+            "viewResults": {
+              "name": "View Analysis",
+              "description": "Browsing test lists, searching, filtering"
+            },
+            "exportDownload": {
+              "name": "Export / Download",
+              "description": "Downloading markdown or sharing links"
+            }
+          }
+        },
+        "usageTypes": {
+          "title": "Two Types of Usage",
+          "description": "SpecVital has separate quotas for different features, each tracked independently.",
+          "analysis": {
+            "title": "Analysis Runs",
+            "description": "Counted each time you analyze a repository. One run per repository, regardless of test count.",
+            "item1": "Initial analysis of a new repository",
+            "item2": "Reanalysis after new commits or parser updates"
+          },
+          "specview": {
+            "title": "AI Spec Docs",
+            "description": "Counted by the number of tests in the generated document. More tests = more usage.",
+            "item1": "100 tests = 100 usage units",
+            "item2": "Regenerating uses the new test count"
+          }
+        },
+        "cache": {
+          "title": "Cache Behavior",
+          "description": "SpecVital caches analysis results to save your quota and speed up access. Understanding when cache is used helps optimize your usage.",
+          "table": {
+            "scenario": "Scenario",
+            "cached": "Cached?",
+            "usageDeducted": "Usage Deducted?",
+            "yes": "Yes",
+            "no": "No"
+          },
+          "scenarios": {
+            "sameCommit": {
+              "name": "Same commit, same parser",
+              "description": "Viewing a repository you already analyzed"
+            },
+            "newCommit": {
+              "name": "New commits available",
+              "description": "Repository has new commits since last analysis"
+            },
+            "parserUpdate": {
+              "name": "Parser updated",
+              "description": "SpecVital parser version changed"
+            },
+            "manualReanalysis": {
+              "name": "Manual reanalysis",
+              "description": "You click 'Update Now' or 'Reanalyze'"
+            }
+          },
+          "tip": {
+            "title": "Efficient Usage",
+            "description": "Cached results are served instantly and never count toward your quota. Only update when you need the latest analysis."
+          }
+        },
+        "cycle": {
+          "title": "Billing Cycle",
+          "description": "Your usage quota resets monthly. The reset date is based on when you first signed up.",
+          "howItWorks": {
+            "title": "How Monthly Reset Works",
+            "step1Title": "Start Date",
+            "step1Desc": "Your billing cycle starts on the day you create your account.",
+            "step2Title": "30-Day Cycle",
+            "step2Desc": "Usage accumulates for 30 days from your start date.",
+            "step3Title": "Automatic Reset",
+            "step3Desc": "On day 31, your usage counters reset to zero automatically."
+          }
+        },
+        "limits": {
+          "title": "Plan Limits",
+          "description": "Each plan has different monthly limits for analysis and AI spec generation.",
+          "table": {
+            "plan": "Plan",
+            "analysis": "Analysis / month",
+            "specview": "AI Spec Docs / month"
+          },
+          "plans": {
+            "free": "Free",
+            "pro": "Pro",
+            "pro_plus": "Pro+",
+            "enterprise": "Enterprise"
+          },
+          "freeAnalysis": "100 runs",
+          "freeSpecview": "500 tests",
+          "proAnalysis": "Unlimited",
+          "proSpecview": "5,000 tests",
+          "proPlusAnalysis": "Unlimited",
+          "proPlusSpecview": "50,000 tests",
+          "enterpriseAnalysis": "Unlimited",
+          "enterpriseSpecview": "Custom"
+        },
+        "warnings": {
+          "title": "Quota Warnings",
+          "description": "SpecVital warns you before you run out of quota so you can plan accordingly.",
+          "approaching": {
+            "title": "Approaching Limit (80%)",
+            "description": "When you reach 80% of your quota, you'll see a warning indicator in the UI. Consider upgrading or waiting for reset."
+          },
+          "exceeded": {
+            "title": "Quota Exceeded (100%)",
+            "description": "When you hit your limit, you won't be able to perform new analyses or generate spec docs until reset. Existing results remain accessible."
+          }
+        },
+        "checkUsage": {
+          "title": "Checking Your Usage",
+          "description": "You can monitor your usage in several places throughout the app.",
+          "items": {
+            "accountPage": "Account page shows current usage and limits",
+            "generateDialog": "AI Spec generation dialog shows remaining quota",
+            "resetDate": "Reset date displayed with days remaining"
+          }
+        },
+        "faq": {
+          "title": "FAQ",
+          "q1": {
+            "question": "Does viewing cached results use my quota?",
+            "answer": "No. Viewing previously analyzed results is always free. Usage is only counted when new analysis or generation work is performed."
+          },
+          "q2": {
+            "question": "What happens when I exceed my quota?",
+            "answer": "You won't be able to start new analyses or generate new spec documents until your quota resets. All existing results remain accessible, and you can still browse, search, and export."
+          },
+          "q3": {
+            "question": "Does regenerating a spec doc count as usage?",
+            "answer": "Yes. Each generation counts based on the number of tests at that time. If your repository grew from 100 to 150 tests, regenerating will use 150 units."
+          },
+          "q4": {
+            "question": "Can I buy more quota mid-cycle?",
+            "answer": "Currently, quota cannot be purchased separately. You can upgrade your plan for higher limits. We're considering usage-based options for the future."
+          }
+        }
+      }
+    },
     "testDetection": {
       "meta": {
         "title": "Test Detection | SpecVital Docs",
