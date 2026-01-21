@@ -15,7 +15,7 @@ class AnalysisTimeoutError extends Error {
   }
 }
 
-const INITIAL_INTERVAL_MS = 1000;
+const INITIAL_INTERVAL_MS = 300;
 const MAX_INTERVAL_MS = 5000;
 const BACKOFF_MULTIPLIER = 1.5;
 const MAX_WAIT_MS = 5 * 60 * 1000; // 5 minutes
