@@ -68,28 +68,6 @@ test.describe("Analysis Page - Primary Tab Navigation (Mocked API)", () => {
     await expect(testsTab).toHaveAttribute("data-state", "active");
   });
 
-  // Skip: Re-analyze button removed from analysis page header in UI redesign (cff5b21)
-  // Reanalyze functionality moved to dashboard repository cards and update banner
-  test.skip("should show Re-analyze button in header", async ({ page }) => {
-    await setupMockHandlers(page, {
-      analysis: mockAnalysisCompleted,
-      specDocument: mockSpecDocumentNotFound,
-      usage: mockUsageNormal,
-    });
-
-    await page.goto("/en/analyze/test-owner/test-repo");
-    await page.waitForLoadState("networkidle");
-
-    // Wait for analysis to load
-    await expect(page.getByText("Total")).toBeVisible({
-      timeout: 15000,
-    });
-
-    // Re-analyze button should be visible
-    const reanalyzeButton = page.getByRole("button", { name: /re-analyze/i });
-    await expect(reanalyzeButton).toBeVisible();
-  });
-
   test("should display list/tree toggle in Tests tab", async ({ page }) => {
     await setupMockHandlers(page, {
       analysis: mockAnalysisCompleted,
