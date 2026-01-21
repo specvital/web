@@ -9,6 +9,7 @@ import { useAuth, useSpecLoginDialog } from "@/features/auth";
 import {
   DocumentView,
   EmptyDocument,
+  FilterEmptyState,
   GenerationProgressModal,
   GenerationStatus,
   QuotaConfirmDialog,
@@ -19,7 +20,6 @@ import {
 } from "@/features/spec-view";
 import type { GenerationState, SpecLanguage } from "@/features/spec-view";
 
-import { FilterEmptyState } from "./filter-empty-state";
 import { SpecToolbar } from "./spec-toolbar";
 import { useFilterState } from "../hooks/use-filter-state";
 
@@ -226,10 +226,16 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
   const isGenerating = effectiveState === "pending" || effectiveState === "running";
   const isGeneratingOtherLanguage = isWaitingForGeneration && specDocument !== null;
 
+  const resetFilters = () => {
+    setQuery(null);
+    setFrameworks(null);
+    setStatuses(null);
+  };
+
   const renderContent = () => {
     if (specDocument) {
       if (hasFilter && matchCount === 0) {
-        return <FilterEmptyState />;
+        return <FilterEmptyState onClearFilters={resetFilters} />;
       }
       return (
         <DocumentView

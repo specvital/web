@@ -26,6 +26,12 @@ export const TestsPanel = ({ availableFrameworks, suites, totalCount }: TestsPan
   const hasFilter = query.trim().length > 0 || frameworks.length > 0 || statuses.length > 0;
   const hasResults = filteredSuites.length > 0;
 
+  const resetFilters = () => {
+    setQuery(null);
+    setFrameworks(null);
+    setStatuses(null);
+  };
+
   return (
     <div aria-labelledby="tab-tests" className="space-y-4" id="tabpanel-tests" role="tabpanel">
       <TestsToolbar
@@ -44,7 +50,7 @@ export const TestsPanel = ({ availableFrameworks, suites, totalCount }: TestsPan
       />
 
       {hasFilter && !hasResults ? (
-        <FilterEmptyState />
+        <FilterEmptyState filterInfo={{ frameworks, query, statuses }} onReset={resetFilters} />
       ) : dataViewMode === "tree" ? (
         <TreeView suites={filteredSuites} />
       ) : (
