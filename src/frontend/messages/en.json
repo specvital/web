@@ -269,7 +269,12 @@
       "noSummary": "No summary available. Click regenerate to generate a new document.",
       "availableLanguages": "Available Languages",
       "generateNew": "Generate New",
-      "versionLabel": "v{version}"
+      "versionLabel": "v{version}",
+      "versionLatest": "v{version} (latest)",
+      "versionUnknown": "Version",
+      "versionHistory": "Version History",
+      "switchVersionTooltip": "View previous versions",
+      "latestLabel": "latest"
     },
     "stats": {
       "domains": "{count, plural, =1 {1 domain} other {# domains}}",

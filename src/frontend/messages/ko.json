@@ -269,7 +269,12 @@
       "noSummary": "요약이 없습니다. 재생성 버튼을 클릭하여 새 문서를 생성하세요.",
       "availableLanguages": "이용 가능한 언어",
       "generateNew": "새로 생성",
-      "versionLabel": "v{version}"
+      "versionLabel": "v{version}",
+      "versionLatest": "v{version} (최신)",
+      "versionUnknown": "버전",
+      "versionHistory": "버전 기록",
+      "switchVersionTooltip": "이전 버전 보기",
+      "latestLabel": "최신"
     },
     "stats": {
       "domains": "도메인 {count}개",

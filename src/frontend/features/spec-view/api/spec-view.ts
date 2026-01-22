@@ -6,6 +6,7 @@ import type {
   SpecDocumentResponse,
   SpecGenerationStatusResponse,
   SpecLanguage,
+  VersionHistoryResponse,
 } from "../types";
 
 export class QuotaExceededError extends Error {
@@ -27,12 +28,25 @@ export class NoSubscriptionError extends Error {
   }
 }
 
+type FetchSpecDocumentOptions = {
+  language?: SpecLanguage;
+  version?: number;
+};
+
 export const fetchSpecDocument = async (
   analysisId: string,
-  language?: SpecLanguage
+  options?: FetchSpecDocumentOptions
 ): Promise<SpecDocumentResponse> => {
-  const url = language
-    ? `/api/spec-view/${analysisId}?language=${encodeURIComponent(language)}`
+  const params = new URLSearchParams();
+  if (options?.language) {
+    params.set("language", options.language);
+  }
+  if (options?.version !== undefined) {
+    params.set("version", String(options.version));
+  }
+  const queryString = params.toString();
+  const url = queryString
+    ? `/api/spec-view/${analysisId}?${queryString}`
     : `/api/spec-view/${analysisId}`;
   const response = await apiFetch(url);
 
@@ -42,8 +56,8 @@ export const fetchSpecDocument = async (
   }
 
   if (response.status === 404) {
-    const statusUrl = language
-      ? `/api/spec-view/status/${analysisId}?language=${encodeURIComponent(language)}`
+    const statusUrl = options?.language
+      ? `/api/spec-view/status/${analysisId}?language=${encodeURIComponent(options.language)}`
       : `/api/spec-view/status/${analysisId}`;
     const statusResponse = await apiFetch(statusUrl);
 
@@ -101,6 +115,21 @@ export const fetchGenerationStatus = async (
   const url = language
     ? `/api/spec-view/status/${analysisId}?language=${encodeURIComponent(language)}`
     : `/api/spec-view/status/${analysisId}`;
+  const response = await apiFetch(url);
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.detail || response.statusText);
+  }
+
+  return response.json();
+};
+
+export const fetchVersionHistory = async (
+  analysisId: string,
+  language: SpecLanguage
+): Promise<VersionHistoryResponse> => {
+  const url = `/api/spec-view/${analysisId}/versions?language=${encodeURIComponent(language)}`;
   const response = await apiFetch(url);
 
   if (!response.ok) {

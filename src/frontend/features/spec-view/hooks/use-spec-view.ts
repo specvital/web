@@ -28,14 +28,19 @@ const DEFAULT_LANGUAGE: SpecLanguage = "Korean";
 
 export const specViewKeys = {
   all: ["spec-view"] as const,
-  document: (analysisId: string, language?: SpecLanguage) =>
-    language
-      ? ([...specViewKeys.all, "document", analysisId, language] as const)
-      : ([...specViewKeys.all, "document", analysisId] as const),
+  document: (analysisId: string, language?: SpecLanguage, version?: number) =>
+    version !== undefined
+      ? ([...specViewKeys.all, "document", analysisId, language, version] as const)
+      : language
+        ? ([...specViewKeys.all, "document", analysisId, language] as const)
+        : ([...specViewKeys.all, "document", analysisId] as const),
+  versions: (analysisId: string, language: SpecLanguage) =>
+    [...specViewKeys.all, "versions", analysisId, language] as const,
 };
 
 type UseSpecViewOptions = {
   language?: SpecLanguage;
+  version?: number;
 };
 
 /**
@@ -71,7 +76,7 @@ export const useSpecView = (
   analysisId: string,
   options: UseSpecViewOptions = {}
 ): UseSpecViewReturn => {
-  const { language } = options;
+  const { language, version } = options;
   const t = useTranslations("specView.toast");
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -83,12 +88,12 @@ export const useSpecView = (
   useEffect(() => {
     pollingStartTimeRef.current = null;
     previousStatusRef.current = null;
-  }, [analysisId, language]);
+  }, [analysisId, language, version]);
 
   const query = useQuery({
     enabled: Boolean(analysisId),
-    queryFn: () => fetchSpecDocument(analysisId, language),
-    queryKey: specViewKeys.document(analysisId, language),
+    queryFn: () => fetchSpecDocument(analysisId, { language, version }),
+    queryKey: specViewKeys.document(analysisId, language, version),
     refetchInterval: (query) => {
       const response = query.state.data;
 
@@ -111,7 +116,7 @@ export const useSpecView = (
           previousStatusRef.current = status;
           // Invalidate to fetch completed document data
           queryClient.invalidateQueries({
-            queryKey: specViewKeys.document(analysisId, language),
+            queryKey: specViewKeys.document(analysisId, language, version),
           });
           pollingStartTimeRef.current = null;
           return false;

@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  Calendar,
   Check,
   ChevronDown,
   FileText,
   Globe,
+  History,
   Languages,
   Plus,
   RefreshCw,
@@ -28,26 +28,20 @@ import { cn } from "@/lib/utils";
 
 import { StatusLegend } from "./status-legend";
 import { SPEC_LANGUAGES } from "../constants/spec-languages";
-import type { SpecDocument, SpecLanguage } from "../types";
+import type { SpecDocument, SpecLanguage, VersionInfo } from "../types";
 import { calculateDocumentStats } from "../utils/stats";
 
 type ExecutiveSummaryProps = {
   document: SpecDocument;
   isGeneratingOtherLanguage?: boolean;
+  isLoadingVersions?: boolean;
   isRegenerating?: boolean;
+  latestVersion?: number;
   onGenerateNewLanguage?: (language: SpecLanguage) => void;
   onLanguageSwitch?: (language: SpecLanguage) => void;
   onRegenerate?: () => void;
-};
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString(undefined, {
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  onVersionSwitch?: (version: number) => void;
+  versions?: VersionInfo[];
 };
 
 const formatShortDate = (dateString: string): string => {
@@ -60,18 +54,24 @@ const formatShortDate = (dateString: string): string => {
 export const ExecutiveSummary = ({
   document,
   isGeneratingOtherLanguage = false,
+  isLoadingVersions = false,
   isRegenerating = false,
+  latestVersion,
   onGenerateNewLanguage,
   onLanguageSwitch,
   onRegenerate,
+  onVersionSwitch,
+  versions = [],
 }: ExecutiveSummaryProps) => {
   const t = useTranslations("specView");
 
   const hasExecutiveSummary = !!document.executiveSummary;
   const { behaviorCount, domainCount, featureCount } = calculateDocumentStats(document);
   const currentLanguage = document.language;
+  const currentVersion = document.version;
   const availableLanguages = document.availableLanguages ?? [];
   const isDisabled = isRegenerating || isGeneratingOtherLanguage;
+  const isLatestVersion = latestVersion === undefined || currentVersion === latestVersion;
 
   // Build sets for available vs new languages
   const availableLanguageSet = new Set(availableLanguages.map((l) => l.language));
@@ -201,15 +201,83 @@ export const ExecutiveSummary = ({
                 </Tooltip>
               )
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge className="text-xs gap-1" variant="secondary">
-                  <Calendar className="h-3 w-3" />
-                  {formatDate(document.createdAt)}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>{t("executiveSummary.dateTooltip")}</TooltipContent>
-            </Tooltip>
+            {onVersionSwitch && versions.length > 1 ? (
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        className="h-auto px-2.5 py-1 gap-1.5 text-xs font-normal"
+                        disabled={isDisabled || isLoadingVersions}
+                        variant="secondary"
+                      >
+                        <History className="h-3 w-3" />
+                        {formatShortDate(document.createdAt)}
+                        {isLatestVersion && (
+                          <span className="text-muted-foreground">
+                            ({t("executiveSummary.latestLabel")})
+                          </span>
+                        )}
+                        <ChevronDown className="h-3 w-3 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>{t("executiveSummary.switchVersionTooltip")}</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="w-56 max-h-80 overflow-y-auto">
+                  <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <History className="h-3 w-3" />
+                    {t("executiveSummary.versionHistory")}
+                  </DropdownMenuLabel>
+                  {versions.map((versionInfo) => {
+                    const isCurrentVersion = versionInfo.version === currentVersion;
+                    const isLatest = versionInfo.version === latestVersion;
+                    return (
+                      <DropdownMenuItem
+                        className={cn(
+                          "flex items-center justify-between",
+                          isCurrentVersion && "bg-muted font-medium"
+                        )}
+                        key={versionInfo.version}
+                        onClick={() => onVersionSwitch(versionInfo.version)}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isCurrentVersion ? (
+                            <Check className="h-3.5 w-3.5 text-primary" />
+                          ) : (
+                            <span className="w-3.5" />
+                          )}
+                          <span>{formatShortDate(versionInfo.createdAt)}</span>
+                          {isLatest && (
+                            <span className="text-muted-foreground">
+                              ({t("executiveSummary.latestLabel")})
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {t("executiveSummary.versionLabel", { version: versionInfo.version })}
+                        </span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className="text-xs gap-1" variant="secondary">
+                    <History className="h-3 w-3" />
+                    {formatShortDate(document.createdAt)}
+                    {currentVersion !== undefined && (
+                      <span className="text-muted-foreground">
+                        ({t("executiveSummary.latestLabel")})
+                      </span>
+                    )}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>{t("executiveSummary.dateTooltip")}</TooltipContent>
+              </Tooltip>
+            )}
             {onRegenerate && (
               <Tooltip>
                 <TooltipTrigger asChild>

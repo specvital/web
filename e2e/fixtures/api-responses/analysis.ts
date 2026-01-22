@@ -113,6 +113,18 @@ export interface RequestSpecGenerationResponse {
   analysisId: string;
 }
 
+export interface VersionInfo {
+  version: number;
+  createdAt: string;
+  modelId?: string;
+}
+
+export interface VersionHistoryResponse {
+  data: VersionInfo[];
+  language: SpecLanguage;
+  latestVersion: number;
+}
+
 // Sample analysis data
 const sampleAnalysisId = "550e8400-e29b-41d4-a716-446655440000";
 const now = new Date().toISOString();
@@ -392,3 +404,82 @@ export const SPEC_LANGUAGES = [
 ] as const;
 
 export type SpecLanguage = (typeof SPEC_LANGUAGES)[number];
+
+// Version history mock data
+const versionHistoryCreatedAt = new Date().toISOString();
+
+export const mockVersionHistoryMultiple: VersionHistoryResponse = {
+  data: [
+    {
+      version: 2,
+      createdAt: versionHistoryCreatedAt,
+      modelId: "gemini-2.0-flash",
+    },
+    {
+      version: 1,
+      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+      modelId: "gemini-2.0-flash",
+    },
+  ],
+  language: "English",
+  latestVersion: 2,
+};
+
+export const mockVersionHistorySingle: VersionHistoryResponse = {
+  data: [
+    {
+      version: 1,
+      createdAt: versionHistoryCreatedAt,
+      modelId: "gemini-2.0-flash",
+    },
+  ],
+  language: "English",
+  latestVersion: 1,
+};
+
+// Spec document for version 1 (older version)
+export const mockSpecDocumentVersion1: SpecDocumentResponse = {
+  status: "completed",
+  data: {
+    id: "doc-123-v1",
+    analysisId: sampleAnalysisId,
+    language: "English",
+    version: 1,
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    executiveSummary: "Test Repository Specification v1 - Previous version of the document.",
+    modelId: "gemini-2.0-flash",
+    availableLanguages: [
+      {
+        language: "English",
+        latestVersion: 2,
+        createdAt: versionHistoryCreatedAt,
+      },
+      {
+        language: "Korean",
+        latestVersion: 1,
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+      },
+    ],
+    domains: [
+      {
+        id: "domain-1",
+        name: "User Authentication",
+        description: "Handles user login and registration flows",
+        features: [
+          {
+            id: "feature-1",
+            name: "Login Flow",
+            description: "Validates user credentials",
+            behaviors: [
+              {
+                id: "spec-1",
+                description: "should authenticate user",
+                status: "active",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+};

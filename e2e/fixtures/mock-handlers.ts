@@ -19,6 +19,7 @@ import type {
   AnalysisCompletedResponse,
   SpecDocumentResponse,
   RequestSpecGenerationResponse,
+  VersionHistoryResponse,
 } from "./api-responses";
 
 export interface MockHandlersOptions {
@@ -35,7 +36,9 @@ export interface MockHandlersOptions {
   // Analysis page mocks
   analysis?: AnalysisCompletedResponse;
   specDocument?: SpecDocumentResponse;
+  specDocumentByVersion?: Record<number, SpecDocumentResponse>;
   specGeneration?: RequestSpecGenerationResponse;
+  versionHistory?: VersionHistoryResponse;
   // Dynamic handlers for testing specific scenarios
   onRepositoriesRequest?: (url: URL) => UserAnalyzedRepositoriesResponse | null;
   onBookmark?: (owner: string, repo: string, method: string) => BookmarkResponse;
@@ -265,11 +268,28 @@ export async function setupMockHandlers(
     });
   }
 
-  // /api/spec-view/{analysisId} - Get spec document
-  if (options.specDocument) {
+  // /api/spec-view/{analysisId} - Get spec document (supports version query param)
+  if (options.specDocument || options.specDocumentByVersion) {
     handlers.push({
-      pattern: /\/api\/spec-view\/[0-9a-f-]+$/,
+      pattern: /\/api\/spec-view\/[0-9a-f-]+(\?.*)?$/,
       handler: async (route) => {
+        const url = new URL(route.request().url());
+        const versionParam = url.searchParams.get("version");
+
+        // If version is specified and we have version-specific documents
+        if (versionParam && options.specDocumentByVersion) {
+          const version = parseInt(versionParam, 10);
+          const versionDoc = options.specDocumentByVersion[version];
+          if (versionDoc) {
+            return route.fulfill({
+              status: 200,
+              contentType: "application/json",
+              body: JSON.stringify(versionDoc),
+            });
+          }
+        }
+
+        // Default response
         const response = options.specDocument;
         if (response?.status === "generating" && response.generationStatus?.status === "not_found") {
           return route.fulfill({
@@ -282,6 +302,20 @@ export async function setupMockHandlers(
           status: 200,
           contentType: "application/json",
           body: JSON.stringify(response),
+        });
+      },
+    });
+  }
+
+  // /api/spec-view/{analysisId}/versions - Get version history
+  if (options.versionHistory) {
+    handlers.push({
+      pattern: /\/api\/spec-view\/[0-9a-f-]+\/versions/,
+      handler: async (route) => {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(options.versionHistory),
         });
       },
     });

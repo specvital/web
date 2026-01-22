@@ -19,6 +19,7 @@ export {
   useGenerationProgress,
   useQuotaConfirmDialog,
   useSpecView,
+  useVersionHistory,
 } from "./hooks";
 export type { GenerationState } from "./hooks";
 

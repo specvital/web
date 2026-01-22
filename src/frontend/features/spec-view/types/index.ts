@@ -22,6 +22,8 @@ export type SpecDocumentResponse = components["schemas"]["SpecDocumentResponse"]
 export type SpecDocumentCompleted = components["schemas"]["SpecDocumentCompleted"];
 export type SpecDocumentGenerating = components["schemas"]["SpecDocumentGenerating"];
 export type AvailableLanguageInfo = components["schemas"]["AvailableLanguageInfo"];
+export type VersionInfo = components["schemas"]["VersionInfo"];
+export type VersionHistoryResponse = components["schemas"]["VersionHistoryResponse"];
 
 // Generation types
 export type SpecGenerationStatus = components["schemas"]["SpecGenerationStatus"];

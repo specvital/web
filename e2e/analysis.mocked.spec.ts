@@ -10,12 +10,15 @@ import {
   mockAnalysisLarge,
   mockSpecDocumentNotFound,
   mockSpecDocumentCompleted,
+  mockSpecDocumentVersion1,
   mockSpecStatusNotFound,
   mockSpecGenerationAccepted,
   mockSpecGenerationRunning,
   SPEC_LANGUAGES,
   mockUsageNormal,
   mockUsageExceeded,
+  mockVersionHistoryMultiple,
+  mockVersionHistorySingle,
 } from "./fixtures/api-responses";
 
 test.describe("Analysis Page - InlineStats Display (Mocked API)", () => {
@@ -938,5 +941,151 @@ test.describe("Analysis Page - Spec 403 Handling (Mocked API)", () => {
       page.getByText(/subscription|upgrade|plan/i)
         .or(page.getByRole("link", { name: /subscription|upgrade|pricing/i }))
     ).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe("Analysis Page - Version History Dropdown (Mocked API)", () => {
+  test("should display version dropdown when multiple versions exist", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      versionHistory: mockVersionHistoryMultiple,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Version dropdown should be visible (shows date with "latest" indicator)
+    const versionButton = page.getByRole("button", { name: /latest/i });
+    await expect(versionButton).toBeVisible();
+  });
+
+  test("should display version badge when only single version exists", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      versionHistory: mockVersionHistorySingle,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // With only one version, it should show as a badge with date and "latest" indicator
+    await expect(page.getByText(/latest/i)).toBeVisible();
+  });
+
+  test("should show version history dropdown with all versions", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      versionHistory: mockVersionHistoryMultiple,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click version dropdown
+    const versionButton = page.getByRole("button", { name: /latest/i });
+    await versionButton.click();
+
+    // Verify dropdown menu is open
+    const menu = page.getByRole("menu");
+    await expect(menu).toBeVisible();
+
+    // Check for Version History header
+    await expect(menu.getByText(/version history/i)).toBeVisible();
+
+    // Check for versions in the list (dates with version numbers)
+    await expect(menu.getByRole("menuitem", { name: /latest/i })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: /v1/i })).toBeVisible();
+  });
+
+  test("should switch to previous version when selected", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      specDocumentByVersion: {
+        1: mockSpecDocumentVersion1,
+        2: mockSpecDocumentCompleted,
+      },
+      versionHistory: mockVersionHistoryMultiple,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click version dropdown
+    const versionButton = page.getByRole("button", { name: /latest/i });
+    await versionButton.click();
+
+    // Select older version (v1)
+    const v1Option = page.getByRole("menuitem", { name: /v1/i });
+    await v1Option.click();
+
+    // Wait for document to reload with v1 content
+    await expect(page.getByText(/Test Repository Specification v1/i)).toBeVisible({
+      timeout: 5000,
+    });
+  });
+
+  test("should mark current version with checkmark indicator", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      versionHistory: mockVersionHistoryMultiple,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click version dropdown
+    const versionButton = page.getByRole("button", { name: /latest/i });
+    await versionButton.click();
+
+    // Latest version should be highlighted as current (bg-muted class)
+    const latestOption = page.getByRole("menuitem", { name: /latest/i });
+    await expect(latestOption).toBeVisible();
+    // Current version should have highlight styling
+    await expect(latestOption).toHaveClass(/bg-muted|font-medium/);
   });
 });

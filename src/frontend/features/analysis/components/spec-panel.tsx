@@ -17,6 +17,7 @@ import {
   useGenerationProgress,
   useQuotaConfirmDialog,
   useSpecView,
+  useVersionHistory,
 } from "@/features/spec-view";
 import type { GenerationState, SpecLanguage } from "@/features/spec-view";
 
@@ -54,6 +55,7 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
   // Local state: tracking whether user initiated a generation
   const [isWaitingForGeneration, setIsWaitingForGeneration] = useState(false);
   const [pendingLanguage, setPendingLanguage] = useState<SpecLanguage | null>(null);
+  const [selectedVersion, setSelectedVersion] = useState<number | undefined>(undefined);
 
   // Spec view - pass pendingLanguage to poll correct status during generation
   const {
@@ -64,7 +66,17 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
     serverStatus,
   } = useSpecView(analysisId, {
     language: pendingLanguage ?? undefined,
+    version: selectedVersion,
   });
+
+  // Version history - only fetch when we have a document with a language
+  const { data: versionHistory, isLoading: isLoadingVersions } = useVersionHistory(
+    analysisId,
+    specDocument?.language,
+    {
+      enabled: Boolean(specDocument?.language),
+    }
+  );
 
   // Document filter
   const { matchCount } = useDocumentFilter(specDocument);
@@ -212,6 +224,14 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
    */
   const handleExistingLanguageSwitch = (language: SpecLanguage) => {
     setPendingLanguage(language);
+    setSelectedVersion(undefined); // Reset to latest version when switching language
+  };
+
+  /**
+   * Switch to a specific version (free, instant).
+   */
+  const handleVersionSwitch = (version: number) => {
+    setSelectedVersion(version);
   };
 
   /**
@@ -257,10 +277,14 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
         <DocumentView
           document={specDocument}
           isGeneratingOtherLanguage={isGeneratingOtherLanguage}
+          isLoadingVersions={isLoadingVersions}
           isRegenerating={isGenerating && !isGeneratingOtherLanguage}
+          latestVersion={versionHistory?.latestVersion}
           onGenerateNewLanguage={handleGenerateNewLanguage}
           onLanguageSwitch={handleExistingLanguageSwitch}
           onRegenerate={handleRegenerate}
+          onVersionSwitch={handleVersionSwitch}
+          versions={versionHistory?.data}
         />
       );
     }

@@ -8,24 +8,32 @@ import { TocSidebar } from "./toc-sidebar";
 import { VirtualizedDocumentView } from "./virtualized-document-view";
 import { DocumentNavigationProvider } from "../contexts";
 import { useDocumentFilter } from "../hooks/use-document-filter";
-import type { SpecDocument, SpecLanguage } from "../types";
+import type { SpecDocument, SpecLanguage, VersionInfo } from "../types";
 
 type DocumentViewProps = {
   document: SpecDocument;
   isGeneratingOtherLanguage?: boolean;
+  isLoadingVersions?: boolean;
   isRegenerating?: boolean;
+  latestVersion?: number;
   onGenerateNewLanguage?: (language: SpecLanguage) => void;
   onLanguageSwitch?: (language: SpecLanguage) => void;
   onRegenerate?: () => void;
+  onVersionSwitch?: (version: number) => void;
+  versions?: VersionInfo[];
 };
 
 export const DocumentView = ({
   document,
   isGeneratingOtherLanguage,
+  isLoadingVersions,
   isRegenerating,
+  latestVersion,
   onGenerateNewLanguage,
   onLanguageSwitch,
   onRegenerate,
+  onVersionSwitch,
+  versions,
 }: DocumentViewProps) => {
   const { clearFilters, filteredDocument, filterInfo, hasFilter, matchCount } =
     useDocumentFilter(document);
@@ -42,10 +50,14 @@ export const DocumentView = ({
           <ExecutiveSummary
             document={document}
             isGeneratingOtherLanguage={isGeneratingOtherLanguage}
+            isLoadingVersions={isLoadingVersions}
             isRegenerating={isRegenerating}
+            latestVersion={latestVersion}
             onGenerateNewLanguage={onGenerateNewLanguage}
             onLanguageSwitch={onLanguageSwitch}
             onRegenerate={onRegenerate}
+            onVersionSwitch={onVersionSwitch}
+            versions={versions}
           />
 
           {showEmptyState ? (

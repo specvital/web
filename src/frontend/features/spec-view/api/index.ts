@@ -1,6 +1,7 @@
 export {
   fetchGenerationStatus,
   fetchSpecDocument,
+  fetchVersionHistory,
   NoSubscriptionError,
   QuotaExceededError,
   requestSpecGeneration,
