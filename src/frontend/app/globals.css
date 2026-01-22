@@ -72,6 +72,13 @@
     --accent-blue: oklch(0.555 0.150 255);
     --accent-violet: oklch(0.580 0.180 290);
     --accent-cyan: oklch(0.720 0.130 195);
+    /* AI Feature colors */
+    --ai-primary: oklch(0.580 0.180 290);
+    --ai-secondary: oklch(0.720 0.130 195);
+    --ai-gradient-from: oklch(0.580 0.180 290 / 0.15);
+    --ai-gradient-to: oklch(0.720 0.130 195 / 0.15);
+    --ai-border: oklch(0.580 0.180 290 / 0.3);
+    --ai-glow: oklch(0.580 0.180 290 / 0.4);
     /* Status colors for test results */
     --status-active: oklch(0.580 0.160 145);
     --status-focused: oklch(0.580 0.180 290);
@@ -123,6 +130,13 @@
     --accent-blue: oklch(0.600 0.160 255);
     --accent-violet: oklch(0.650 0.180 290);
     --accent-cyan: oklch(0.780 0.130 195);
+    /* AI Feature colors - brighter for dark mode */
+    --ai-primary: oklch(0.700 0.200 290);
+    --ai-secondary: oklch(0.800 0.140 195);
+    --ai-gradient-from: oklch(0.700 0.200 290 / 0.15);
+    --ai-gradient-to: oklch(0.800 0.140 195 / 0.15);
+    --ai-border: oklch(0.700 0.200 290 / 0.35);
+    --ai-glow: oklch(0.700 0.200 290 / 0.5);
     /* Status colors - brighter for dark backgrounds */
     --status-active: oklch(0.680 0.180 145);
     --status-focused: oklch(0.680 0.200 290);
