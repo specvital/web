@@ -110,6 +110,7 @@ const localeToSpecLanguage = (locale: string): SpecLanguage | null => {
 type OpenOptions = {
   analysisId: string;
   estimatedCost?: number;
+  initialLanguage?: SpecLanguage;
   isRegenerate?: boolean;
   locale?: string;
   onConfirm: (language: SpecLanguage, isForceRegenerate: boolean) => void;
@@ -119,21 +120,26 @@ type OpenOptions = {
 const open = ({
   analysisId,
   estimatedCost,
+  initialLanguage,
   isRegenerate = false,
   locale,
   onConfirm,
   usage,
 }: OpenOptions) => {
   if (!store.isOpen) {
-    // Determine default language: stored preference > locale > English
+    // Determine default language: initialLanguage > stored preference > locale > English
     let defaultLanguage: SpecLanguage = "English";
-    const storedPreference = getStoredLanguagePreference(analysisId);
-    if (storedPreference) {
-      defaultLanguage = storedPreference;
-    } else if (locale) {
-      const localeLanguage = localeToSpecLanguage(locale);
-      if (localeLanguage) {
-        defaultLanguage = localeLanguage;
+    if (initialLanguage) {
+      defaultLanguage = initialLanguage;
+    } else {
+      const storedPreference = getStoredLanguagePreference(analysisId);
+      if (storedPreference) {
+        defaultLanguage = storedPreference;
+      } else if (locale) {
+        const localeLanguage = localeToSpecLanguage(locale);
+        if (localeLanguage) {
+          defaultLanguage = localeLanguage;
+        }
       }
     }
 

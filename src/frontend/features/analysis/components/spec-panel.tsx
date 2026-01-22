@@ -210,6 +210,7 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
     openQuotaConfirmDialog({
       analysisId,
       estimatedCost: totalTests,
+      initialLanguage: specDocument?.language,
       isRegenerate: true,
       locale,
       onConfirm: (selectedLanguage, isForceRegenerate) =>
@@ -246,6 +247,7 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
     openQuotaConfirmDialog({
       analysisId,
       estimatedCost: totalTests,
+      initialLanguage: language,
       locale,
       onConfirm: () => startGeneration(language, false),
       usage: usageData ?? null,
