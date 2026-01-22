@@ -218,6 +218,83 @@ export const mockSpecDocumentNotFound: SpecDocumentResponse = {
   },
 };
 
+// Spec document completed with content (for language switch, regeneration, TOC tests)
+export const mockSpecDocumentCompleted: SpecDocumentResponse = {
+  status: "completed",
+  document: {
+    id: "doc-123",
+    analysisId: sampleAnalysisId,
+    language: "English",
+    generatedAt: now,
+    domains: [
+      {
+        id: "domain-1",
+        name: "User Authentication",
+        description: "Handles user login and registration flows",
+        features: [
+          {
+            id: "feature-1",
+            name: "Login Flow",
+            description: "Validates user credentials and issues session tokens",
+            specifications: [
+              {
+                id: "spec-1",
+                description: "should authenticate with valid email and password",
+                type: "functional",
+              },
+              {
+                id: "spec-2",
+                description: "should reject invalid credentials",
+                type: "edge_case",
+              },
+            ],
+          },
+          {
+            id: "feature-2",
+            name: "Registration Flow",
+            description: "Creates new user accounts with email verification",
+            specifications: [
+              {
+                id: "spec-3",
+                description: "should create user with valid email",
+                type: "functional",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "domain-2",
+        name: "Payment Processing",
+        description: "Handles payment transactions and billing",
+        features: [
+          {
+            id: "feature-3",
+            name: "Checkout Flow",
+            description: "Processes payment and creates orders",
+            specifications: [
+              {
+                id: "spec-4",
+                description: "should process payment with valid card",
+                type: "functional",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    executiveSummary: {
+      title: "Test Repository Specification",
+      overview: "This document describes the test specifications for the test repository.",
+      totalFeatures: 3,
+      totalSpecifications: 4,
+    },
+  },
+  generationStatus: {
+    status: "completed",
+  },
+};
+
 // Spec generation status - not found (document not yet generated)
 export const mockSpecStatusNotFound: RequestSpecGenerationResponse = {
   status: "not_found",

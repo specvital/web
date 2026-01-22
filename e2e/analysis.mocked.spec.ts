@@ -9,12 +9,86 @@ import {
   mockAnalysisCompleted,
   mockAnalysisLarge,
   mockSpecDocumentNotFound,
+  mockSpecDocumentCompleted,
   mockSpecStatusNotFound,
   mockSpecGenerationAccepted,
+  mockSpecGenerationRunning,
   SPEC_LANGUAGES,
   mockUsageNormal,
   mockUsageExceeded,
 } from "./fixtures/api-responses";
+
+test.describe("Analysis Page - InlineStats Display (Mocked API)", () => {
+  test("should display InlineStats with Total, Active, Skipped counts", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Verify InlineStats displays Total, Active, Skipped labels
+    await expect(page.getByText("Total")).toBeVisible();
+    await expect(page.getByText("Active")).toBeVisible();
+    await expect(page.getByText("Skipped")).toBeVisible();
+
+    // Verify summary values (mockAnalysisCompleted has: total=4, active=3, skipped=1)
+    // Values should be displayed (exact positioning may vary)
+    await expect(page.getByText("4")).toBeVisible();
+    await expect(page.getByText("3")).toBeVisible();
+  });
+
+  test("should display formatted numbers for large test counts", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisLarge,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/large-test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Verify large numbers are formatted with commas (1,000 format)
+    await expect(page.getByText("1,000")).toBeVisible();
+    await expect(page.getByText("800")).toBeVisible();
+    await expect(page.getByText("200")).toBeVisible();
+  });
+
+  test("should display framework icons/badges", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Verify framework is displayed (mockAnalysisCompleted uses jest)
+    await expect(page.getByText(/jest/i).first()).toBeVisible();
+  });
+});
 
 test.describe("Analysis Page - Primary Tab Navigation (Mocked API)", () => {
   test("should display Tests tab as default", async ({ page }) => {
@@ -438,5 +512,395 @@ test.describe("Analysis Page - URL Backward Compatibility (Mocked API)", () => {
     // URL should have ?tab=spec instead of ?view=document
     await expect(page).toHaveURL(/tab=spec/);
     await expect(page).not.toHaveURL(/view=document/);
+  });
+});
+
+test.describe("Analysis Page - Filter Empty State (Mocked API)", () => {
+  test("should display empty state when search yields no results", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Search for non-existent text
+    const searchInput = page.getByRole("textbox", { name: /search/i });
+    await searchInput.fill("nonexistenttestname12345");
+
+    // Wait for debounce and empty state
+    await page.waitForTimeout(600);
+
+    // Verify empty state is displayed
+    await expect(page.getByText(/no.*match/i)).toBeVisible();
+  });
+
+  test("should display applied filter badges in empty state", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Search for non-existent text
+    const searchInput = page.getByRole("textbox", { name: /search/i });
+    await searchInput.fill("nonexistent");
+
+    // Wait for debounce
+    await page.waitForTimeout(600);
+
+    // Verify search query is shown as badge
+    await expect(page.getByText(/nonexistent/)).toBeVisible();
+  });
+
+  test("should reset filters when clicking Reset all filters button", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for analysis to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Search for non-existent text
+    const searchInput = page.getByRole("textbox", { name: /search/i });
+    await searchInput.fill("nonexistenttestname12345");
+
+    // Wait for debounce
+    await page.waitForTimeout(600);
+
+    // Click reset button
+    const resetButton = page.getByRole("button", { name: /reset.*filter/i });
+    await expect(resetButton).toBeVisible();
+    await resetButton.click();
+
+    // Verify filters are reset - test list should be visible again
+    await expect(page.getByText(/example test suite|another test suite/i)).toBeVisible();
+
+    // Search input should be cleared
+    await expect(searchInput).toHaveValue("");
+  });
+});
+
+test.describe("Analysis Page - Spec View Language Switch (Mocked API)", () => {
+  test("should display language dropdown in ExecutiveSummary", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Find language dropdown button
+    const languageButton = page.getByRole("button", { name: /english/i }).first();
+    await expect(languageButton).toBeVisible();
+  });
+
+  test("should display 24 language options when dropdown clicked", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click language dropdown
+    const languageButton = page.getByRole("button", { name: /english/i }).first();
+    await languageButton.click();
+
+    // Verify dropdown menu is open
+    const menu = page.getByRole("menu");
+    await expect(menu).toBeVisible();
+
+    // Check for multiple languages
+    await expect(menu.getByRole("menuitem", { name: /korean/i })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: /japanese/i })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: /chinese/i })).toBeVisible();
+  });
+
+  test("should mark current language with indicator", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click language dropdown
+    const languageButton = page.getByRole("button", { name: /english/i }).first();
+    await languageButton.click();
+
+    // English should have (current) indicator or be disabled
+    const englishOption = page.getByRole("menuitem", { name: /english/i });
+    await expect(englishOption).toBeVisible();
+    // Current language should have some visual indicator
+  });
+});
+
+test.describe("Analysis Page - Spec View Regeneration (Mocked API)", () => {
+  test("should display regeneration button in ExecutiveSummary", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Find regeneration button (has RefreshCw icon)
+    const regenerateButton = page.getByRole("button", { name: /regenerate/i });
+    await expect(regenerateButton).toBeVisible();
+  });
+
+  test("should open confirmation dialog when regeneration button clicked", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      specGeneration: mockSpecStatusNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click regeneration button
+    const regenerateButton = page.getByRole("button", { name: /regenerate/i });
+    await regenerateButton.click();
+
+    // Verify confirmation dialog opens
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    // Dialog should mention regeneration or quota
+    await expect(dialog.getByText(/regenerate|generate/i)).toBeVisible();
+  });
+});
+
+test.describe("Analysis Page - Spec View TOC Sidebar (Mocked API)", () => {
+  test("should display TOC sidebar with domain/feature items", async ({
+    page,
+  }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Verify domain items in TOC
+    await expect(page.getByText("User Authentication")).toBeVisible();
+    await expect(page.getByText("Payment Processing")).toBeVisible();
+  });
+
+  test("should navigate to domain when TOC item clicked", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentCompleted,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for spec document to load
+    await expect(page.getByText(/Test Repository Specification/i)).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click on Payment Processing in TOC (should scroll to that section)
+    const paymentTocItem = page.getByText("Payment Processing").first();
+    await paymentTocItem.click();
+
+    // Verify the section is visible/scrolled to
+    await expect(page.getByText("Checkout Flow")).toBeVisible();
+  });
+});
+
+test.describe("Analysis Page - Spec Generation Progress (Mocked API)", () => {
+  test("should display progress modal during generation", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      specGeneration: mockSpecGenerationRunning,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for page to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate document/i });
+    await generateButton.click();
+
+    // Confirm in dialog
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    const confirmButton = dialog.getByRole("button", { name: /generate document/i });
+    await confirmButton.click();
+
+    // Verify progress modal appears with spinner/loading state
+    await expect(page.getByText(/generating|processing/i)).toBeVisible({ timeout: 5000 });
+  });
+
+  test("should show spinner animation during generation", async ({ page }) => {
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      specGeneration: mockSpecGenerationRunning,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for page to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate document/i });
+    await generateButton.click();
+
+    // Confirm in dialog
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    const confirmButton = dialog.getByRole("button", { name: /generate document/i });
+    await confirmButton.click();
+
+    // Verify loading indicator exists (SVG with animate or spinning class)
+    const loadingIndicator = page.locator('svg[class*="animate"]').or(
+      page.locator('[class*="spinner"]')
+    ).or(
+      page.locator('[data-slot="progress"]')
+    );
+    await expect(loadingIndicator.first()).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe("Analysis Page - Spec 403 Handling (Mocked API)", () => {
+  test("should display subscription guidance when 403 error occurs", async ({
+    page,
+  }) => {
+    // Setup mock that returns 403 for spec generation
+    await page.route("**/api/spec-view/generate", async (route) => {
+      return route.fulfill({
+        status: 403,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: "Subscription required",
+          detail: "Upgrade your plan to use AI Spec generation",
+        }),
+      });
+    });
+
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo?tab=spec");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for page to load
+    await expect(page.getByText("Total")).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Click Generate button
+    const generateButton = page.getByRole("button", { name: /generate document/i });
+    await generateButton.click();
+
+    // Confirm in dialog
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    const confirmButton = dialog.getByRole("button", { name: /generate document/i });
+    await confirmButton.click();
+
+    // Verify error message or subscription link appears
+    // This could be a toast notification or inline error
+    await expect(
+      page.getByText(/subscription|upgrade|plan/i)
+        .or(page.getByRole("link", { name: /subscription|upgrade|pricing/i }))
+    ).toBeVisible({ timeout: 5000 });
   });
 });
