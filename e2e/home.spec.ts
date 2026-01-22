@@ -34,10 +34,13 @@ test.describe("Homepage", () => {
 
     // Click start button and wait for navigation
     const button = page.getByRole("button", { name: /analyze|분석 시작/i });
-    await button.click();
+    await expect(button).toBeEnabled();
 
-    // Wait for navigation to complete (Next.js router transition)
-    await page.waitForURL(/\/analyze\/facebook\/react/, { timeout: 15000 });
+    // Use Promise.all to wait for navigation after click
+    await Promise.all([
+      page.waitForURL(/\/analyze\/facebook\/react/, { timeout: 30000 }),
+      button.click(),
+    ]);
   });
 
   test("should show error for invalid URL format", async ({ page }) => {

@@ -1,13 +1,11 @@
+import path from "node:path";
+
 import { defineConfig, devices } from "@playwright/test";
 
 import { AUTH_FILE, BACKEND_URL, FRONTEND_URL } from "./e2e/constants";
 
 const WEBSERVER_TIMEOUT_MS = 3 * 60 * 1000;
 const isCI = !!process.env.CI;
-
-const backendCommand = isCI
-  ? "cd src/backend && go run ./cmd/server"
-  : 'cd src/backend && DATABASE_URL="$LOCAL_DATABASE_URL" air';
 
 export default defineConfig({
   testDir: "./e2e",
@@ -21,9 +19,9 @@ export default defineConfig({
     : [["html", { open: "never", outputFolder: "playwright-report" }]],
   use: {
     baseURL: FRONTEND_URL,
-    trace: isCI ? "on-first-retry" : "on",
-    screenshot: isCI ? "only-on-failure" : "on",
-    video: isCI ? "retain-on-failure" : "on",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
   projects: [
     {
@@ -56,16 +54,22 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: backendCommand,
+      command: isCI ? "go run ./cmd/server" : "air",
+      cwd: path.join(__dirname, "src/backend"),
+      env: isCI ? {} : { DATABASE_URL: process.env.LOCAL_DATABASE_URL ?? "" },
       url: `${BACKEND_URL}/health`,
       reuseExistingServer: !isCI,
       timeout: WEBSERVER_TIMEOUT_MS,
+      gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
     },
     {
-      command: "cd src/frontend && PLAYWRIGHT=1 pnpm dev",
+      command: "pnpm dev",
+      cwd: path.join(__dirname, "src/frontend"),
+      env: { PLAYWRIGHT: "1" },
       url: FRONTEND_URL,
       reuseExistingServer: !isCI,
       timeout: WEBSERVER_TIMEOUT_MS,
+      gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
     },
   ],
 });
