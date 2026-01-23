@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Loader2, LogIn } from "lucide-react";
+import { AlertCircle, LogIn } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -16,9 +16,16 @@ import {
 import { useAuth } from "@/features/auth";
 import { AnalyzeDialog } from "@/features/home";
 
-import { useDebouncedSearch, useGlobalSearchStore, useStaticActions } from "../hooks";
+import {
+  useDebouncedSearch,
+  useGlobalSearchStore,
+  useRecentItems,
+  useStaticActions,
+} from "../hooks";
+import { RecentSearchItem } from "./recent-search-item";
 import { RepositorySearchItem } from "./repository-search-item";
 import { SearchKeyboardHints } from "./search-keyboard-hints";
+import { SearchSkeleton } from "./search-skeleton";
 
 export const GlobalSearchDialog = () => {
   const { close, isOpen } = useGlobalSearchStore();
@@ -26,6 +33,7 @@ export const GlobalSearchDialog = () => {
   const { analyzeDialogOpen, commandItems, navigationItems, setAnalyzeDialogOpen } =
     useStaticActions();
   const { login } = useAuth();
+  const { addItem, recentItems } = useRecentItems();
 
   const {
     groupedResults,
@@ -38,6 +46,21 @@ export const GlobalSearchDialog = () => {
   } = useDebouncedSearch();
 
   const [inputValue, setInputValue] = useState("");
+
+  const handleNavigateToRepository = (
+    owner: string,
+    repo: string,
+    repoId: string,
+    fullName: string
+  ) => {
+    addItem({
+      fullName,
+      id: repoId,
+      name: repo,
+      owner,
+    });
+    navigateToRepository(owner, repo);
+  };
 
   const handleValueChange = (value: string) => {
     setInputValue(value);
@@ -55,6 +78,7 @@ export const GlobalSearchDialog = () => {
   const hasQuery = inputValue.trim().length > 0;
   const showRepositoryResults = hasQuery && hasResults;
   const showStaticActions = !hasQuery;
+  const showRecentItems = !hasQuery && recentItems.length > 0;
   const showLoginPrompt = hasQuery && !isAuthenticated;
   const showNoResults = hasQuery && !hasResults && !isLoading;
 
@@ -82,12 +106,7 @@ export const GlobalSearchDialog = () => {
             </CommandEmpty>
           )}
 
-          {isLoading && hasQuery && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin mx-auto mb-2" />
-              {t("loading")}
-            </div>
-          )}
+          {isLoading && hasQuery && <SearchSkeleton />}
 
           {hasError && hasQuery && !isLoading && (
             <div className="py-6 text-center text-sm text-destructive">
@@ -118,7 +137,14 @@ export const GlobalSearchDialog = () => {
                   {groupedResults.repositories.map((result) => (
                     <RepositorySearchItem
                       key={result.item.id}
-                      onSelect={() => navigateToRepository(result.item.owner, result.item.name)}
+                      onSelect={() =>
+                        handleNavigateToRepository(
+                          result.item.owner,
+                          result.item.name,
+                          result.item.id,
+                          result.item.fullName
+                        )
+                      }
                       result={result}
                     />
                   ))}
@@ -130,7 +156,14 @@ export const GlobalSearchDialog = () => {
                   {groupedResults.bookmarks.map((result) => (
                     <RepositorySearchItem
                       key={result.item.id}
-                      onSelect={() => navigateToRepository(result.item.owner, result.item.name)}
+                      onSelect={() =>
+                        handleNavigateToRepository(
+                          result.item.owner,
+                          result.item.name,
+                          result.item.id,
+                          result.item.fullName
+                        )
+                      }
                       result={result}
                     />
                   ))}
@@ -142,13 +175,34 @@ export const GlobalSearchDialog = () => {
                   {groupedResults.community.map((result) => (
                     <RepositorySearchItem
                       key={result.item.id}
-                      onSelect={() => navigateToRepository(result.item.owner, result.item.name)}
+                      onSelect={() =>
+                        handleNavigateToRepository(
+                          result.item.owner,
+                          result.item.name,
+                          result.item.id,
+                          result.item.fullName
+                        )
+                      }
                       result={result}
                     />
                   ))}
                 </CommandGroup>
               )}
             </>
+          )}
+
+          {showRecentItems && (
+            <CommandGroup heading={t("categories.recent")}>
+              {recentItems.map((item) => (
+                <RecentSearchItem
+                  item={item}
+                  key={item.id}
+                  onSelect={() =>
+                    handleNavigateToRepository(item.owner, item.name, item.id, item.fullName)
+                  }
+                />
+              ))}
+            </CommandGroup>
           )}
 
           {showStaticActions && (

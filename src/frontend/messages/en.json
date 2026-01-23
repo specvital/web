@@ -586,6 +586,7 @@
     "categories": {
       "navigation": "Navigation",
       "commands": "Commands",
+      "recent": "Recent",
       "repositories": "My Repositories",
       "bookmarks": "Bookmarks",
       "community": "Community"

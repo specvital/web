@@ -586,6 +586,7 @@
     "categories": {
       "navigation": "페이지 이동",
       "commands": "명령",
+      "recent": "최근 항목",
       "repositories": "내 리포지토리",
       "bookmarks": "북마크",
       "community": "커뮤니티"
