@@ -31,6 +31,7 @@ import { AnalyzeDialog } from "@/features/home";
 import { isValidLocale, LANGUAGE_NAMES } from "@/i18n/config";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { TaskBadge, TasksDropdownSection } from "@/lib/background-tasks";
 import { slideInUp, useReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -141,25 +142,29 @@ const MobileAuthAction = () => {
         <DropdownMenuTrigger asChild>
           <Button
             aria-label={t("account")}
-            className="flex-col gap-0.5"
+            className="relative flex-col gap-0.5"
             size="mobile-nav"
             variant="mobile-nav"
           >
-            {user.avatarUrl ? (
-              <img
-                alt={user.login}
-                className="size-6 rounded-full"
-                crossOrigin="anonymous"
-                referrerPolicy="no-referrer"
-                src={user.avatarUrl}
-              />
-            ) : (
-              <User className="size-5" />
-            )}
+            <div className="relative">
+              {user.avatarUrl ? (
+                <img
+                  alt={user.login}
+                  className="size-6 rounded-full"
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
+                  src={user.avatarUrl}
+                />
+              ) : (
+                <User className="size-5" />
+              )}
+              <TaskBadge />
+            </div>
             <span className="text-[10px] font-normal">{t("account")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top" sideOffset={12}>
+          <TasksDropdownSection />
           <DropdownMenuItem asChild>
             <Link href="/dashboard">
               <LayoutDashboard className="mr-2 size-4" />

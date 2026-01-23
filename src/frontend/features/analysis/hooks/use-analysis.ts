@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import type { AnalysisResponse, AnalysisResult } from "@/lib/api/types";
+import { addTask, getTask, removeTask, updateTask } from "@/lib/background-tasks";
 import { invalidationEvents, useInvalidationTrigger } from "@/lib/query";
 
 import { fetchAnalysis } from "../api";
@@ -100,6 +101,38 @@ export const useAnalysis = (owner: string, repo: string): UseAnalysisReturn => {
       triggerInvalidation(invalidationEvents.ANALYSIS_COMPLETED);
     }
   }, [response?.status, triggerInvalidation]);
+
+  // Sync with global TaskStore for background progress tracking
+  const taskId = `analysis-${owner}-${repo}`;
+  useEffect(() => {
+    if (status === "queued") {
+      const existingTask = getTask(taskId);
+      if (!existingTask) {
+        addTask({
+          id: taskId,
+          metadata: { owner, repo },
+          startedAt: null,
+          status: "queued",
+          type: "analysis",
+        });
+      }
+    } else if (status === "analyzing") {
+      const existingTask = getTask(taskId);
+      if (existingTask && existingTask.status !== "processing") {
+        updateTask(taskId, { startedAt: new Date().toISOString(), status: "processing" });
+      } else if (!existingTask) {
+        addTask({
+          id: taskId,
+          metadata: { owner, repo },
+          startedAt: new Date().toISOString(),
+          status: "processing",
+          type: "analysis",
+        });
+      }
+    } else if (status === "completed" || status === "failed" || status === "error") {
+      removeTask(taskId);
+    }
+  }, [status, owner, repo, taskId]);
 
   const isLoading =
     query.isPending || status === "queued" || status === "analyzing" || status === "pending";

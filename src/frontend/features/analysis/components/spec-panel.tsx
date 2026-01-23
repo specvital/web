@@ -20,6 +20,7 @@ import {
   useVersionHistory,
 } from "@/features/spec-view";
 import type { GenerationState, SpecLanguage } from "@/features/spec-view";
+import { addTask, getTask, removeTask, updateTask } from "@/lib/background-tasks";
 
 import { SpecToolbar } from "./spec-toolbar";
 import { useFilterState } from "../hooks/use-filter-state";
@@ -27,10 +28,18 @@ import { useFilterState } from "../hooks/use-filter-state";
 type SpecPanelProps = {
   analysisId: string;
   availableFrameworks: string[];
+  owner: string;
+  repo: string;
   totalTests: number;
 };
 
-export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecPanelProps) => {
+export const SpecPanel = ({
+  analysisId,
+  availableFrameworks,
+  owner,
+  repo,
+  totalTests,
+}: SpecPanelProps) => {
   const t = useTranslations("specView.toast");
   const locale = useLocale();
 
@@ -123,6 +132,17 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
       effectiveState === "running"
     ) {
       updateProgressStatus(effectiveState === "requesting" ? "pending" : effectiveState);
+
+      // Update TaskStore status
+      const taskId = `spec-generation-${analysisId}`;
+      const existingTask = getTask(taskId);
+      if (existingTask) {
+        if (effectiveState === "pending" && existingTask.status !== "queued") {
+          updateTask(taskId, { status: "queued" });
+        } else if (effectiveState === "running" && existingTask.status !== "processing") {
+          updateTask(taskId, { startedAt: new Date().toISOString(), status: "processing" });
+        }
+      }
     }
 
     // Handle completion
@@ -130,6 +150,9 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
       updateProgressStatus("completed");
       setIsWaitingForGeneration(false);
       setPendingLanguage(null);
+
+      // Remove from TaskStore on completion
+      removeTask(`spec-generation-${analysisId}`);
 
       if (isProgressInBackground) {
         toast.success(t("generationComplete.title"), {
@@ -144,6 +167,9 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
       setIsWaitingForGeneration(false);
       setPendingLanguage(null);
 
+      // Remove from TaskStore on failure
+      removeTask(`spec-generation-${analysisId}`);
+
       if (isProgressInBackground) {
         toast.error(t("generateFailed.title"));
       }
@@ -152,6 +178,7 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
 
     prevEffectiveStateRef.current = effectiveState;
   }, [
+    analysisId,
     effectiveState,
     isWaitingForGeneration,
     isProgressInBackground,
@@ -183,6 +210,20 @@ export const SpecPanel = ({ analysisId, availableFrameworks, totalTests }: SpecP
       analysisId,
       onViewDocument: () => {},
       status: "pending",
+    });
+
+    // Register task to global TaskStore
+    addTask({
+      id: `spec-generation-${analysisId}`,
+      metadata: {
+        analysisId,
+        language,
+        owner,
+        repo,
+      },
+      startedAt: null,
+      status: "queued",
+      type: "spec-generation",
     });
   };
 

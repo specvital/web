@@ -555,6 +555,22 @@
     "continueWithGitHub": "Continue with GitHub",
     "freeNote": "Test analysis stays free for everyone"
   },
+  "backgroundTasks": {
+    "badge": {
+      "ariaLabel": "{count, plural, =1 {1 task in progress} other {# tasks in progress}}"
+    },
+    "dropdown": {
+      "title": "Tasks",
+      "processing": "Processing {time}",
+      "queued": "Queued",
+      "viewPage": "View",
+      "moreCount": "+{count} more"
+    },
+    "taskType": {
+      "analysis": "Analysis",
+      "spec-generation": "Spec Generation"
+    }
+  },
   "account": {
     "title": "Account",
     "plan": {

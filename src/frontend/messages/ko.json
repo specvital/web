@@ -555,6 +555,22 @@
     "continueWithGitHub": "GitHub으로 계속하기",
     "freeNote": "테스트 분석은 모두에게 무료입니다"
   },
+  "backgroundTasks": {
+    "badge": {
+      "ariaLabel": "{count, plural, =1 {진행 중인 작업 1개} other {진행 중인 작업 #개}}"
+    },
+    "dropdown": {
+      "title": "작업",
+      "processing": "처리 중 {time}",
+      "queued": "대기 중",
+      "viewPage": "보기",
+      "moreCount": "+{count}개 더"
+    },
+    "taskType": {
+      "analysis": "분석",
+      "spec-generation": "스펙 생성"
+    }
+  },
   "account": {
     "title": "계정",
     "plan": {

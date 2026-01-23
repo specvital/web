@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
+import { TaskBadge, TasksDropdownSection } from "@/lib/background-tasks";
 
 import { useAuth } from "../hooks";
 
@@ -25,7 +26,7 @@ export const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="h-8 w-8 rounded-full p-0" size="sm" variant="ghost">
+        <Button className="relative h-8 w-8 rounded-full p-0" size="sm" variant="ghost">
           {user.avatarUrl ? (
             <img
               alt={user.login}
@@ -37,6 +38,7 @@ export const UserMenu = () => {
           ) : (
             <User className="h-4 w-4" />
           )}
+          <TaskBadge />
           <span className="sr-only">{t("openUserMenu")}</span>
         </Button>
       </DropdownMenuTrigger>
@@ -48,6 +50,7 @@ export const UserMenu = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <TasksDropdownSection />
         <DropdownMenuItem asChild>
           <Link href="/account">
             <Settings className="mr-2 h-4 w-4" />

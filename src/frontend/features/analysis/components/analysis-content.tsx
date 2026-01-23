@@ -76,6 +76,8 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
             <SpecPanel
               analysisId={result.id}
               availableFrameworks={availableFrameworks}
+              owner={result.owner}
+              repo={result.repo}
               totalTests={result.summary.total}
             />
           )}
