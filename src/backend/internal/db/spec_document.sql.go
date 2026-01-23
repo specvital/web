@@ -42,6 +42,57 @@ func (q *Queries) CheckSpecDocumentExistsByLanguage(ctx context.Context, arg Che
 	return exists, err
 }
 
+const getAiSpecSummariesByAnalysisIDs = `-- name: GetAiSpecSummariesByAnalysisIDs :many
+SELECT
+    sd.analysis_id,
+    sd.user_id,
+    COUNT(DISTINCT sd.language) AS language_count,
+    MAX(sd.created_at) AS latest_generated_at
+FROM spec_documents sd
+WHERE sd.analysis_id = ANY($1::uuid[])
+  AND sd.user_id = $2
+GROUP BY sd.analysis_id, sd.user_id
+`
+
+type GetAiSpecSummariesByAnalysisIDsParams struct {
+	AnalysisIds []pgtype.UUID `json:"analysis_ids"`
+	UserID      pgtype.UUID   `json:"user_id"`
+}
+
+type GetAiSpecSummariesByAnalysisIDsRow struct {
+	AnalysisID        pgtype.UUID `json:"analysis_id"`
+	UserID            pgtype.UUID `json:"user_id"`
+	LanguageCount     int64       `json:"language_count"`
+	LatestGeneratedAt interface{} `json:"latest_generated_at"`
+}
+
+// Returns AI Spec summary aggregation for multiple analysis IDs
+// Used for Dashboard RepositoryCard to show [AI Spec] badge
+func (q *Queries) GetAiSpecSummariesByAnalysisIDs(ctx context.Context, arg GetAiSpecSummariesByAnalysisIDsParams) ([]GetAiSpecSummariesByAnalysisIDsRow, error) {
+	rows, err := q.db.Query(ctx, getAiSpecSummariesByAnalysisIDs, arg.AnalysisIds, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAiSpecSummariesByAnalysisIDsRow
+	for rows.Next() {
+		var i GetAiSpecSummariesByAnalysisIDsRow
+		if err := rows.Scan(
+			&i.AnalysisID,
+			&i.UserID,
+			&i.LanguageCount,
+			&i.LatestGeneratedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAvailableLanguagesByAnalysisID = `-- name: GetAvailableLanguagesByAnalysisID :many
 SELECT
     sd.language,

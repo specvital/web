@@ -229,3 +229,16 @@ SELECT
     sd.created_at
 FROM spec_documents sd
 WHERE sd.analysis_id = @analysis_id AND sd.user_id = @user_id AND sd.language = @language AND sd.version = @version;
+
+-- name: GetAiSpecSummariesByAnalysisIDs :many
+-- Returns AI Spec summary aggregation for multiple analysis IDs
+-- Used for Dashboard RepositoryCard to show [AI Spec] badge
+SELECT
+    sd.analysis_id,
+    sd.user_id,
+    COUNT(DISTINCT sd.language) AS language_count,
+    MAX(sd.created_at) AS latest_generated_at
+FROM spec_documents sd
+WHERE sd.analysis_id = ANY(@analysis_ids::uuid[])
+  AND sd.user_id = @user_id
+GROUP BY sd.analysis_id, sd.user_id;

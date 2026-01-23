@@ -160,6 +160,18 @@ type AddAnalyzedRepositoryResponse struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// AiSpecSummary defines model for AiSpecSummary.
+type AiSpecSummary struct {
+	// HasSpec Whether completed AI Spec exists for this repository
+	HasSpec bool `json:"hasSpec"`
+
+	// LanguageCount Number of languages with completed specs
+	LanguageCount *int `json:"languageCount,omitempty"`
+
+	// LatestGeneratedAt Most recent spec generation timestamp
+	LatestGeneratedAt *time.Time `json:"latestGeneratedAt,omitempty"`
+}
+
 // AnalysisResponse defines model for AnalysisResponse.
 type AnalysisResponse struct {
 	union json.RawMessage
@@ -571,6 +583,8 @@ type RefreshResponse struct {
 
 // RepositoryCard defines model for RepositoryCard.
 type RepositoryCard struct {
+	AiSpecSummary *AiSpecSummary `json:"aiSpecSummary,omitempty"`
+
 	// FullName Full repository name in owner/name format
 	FullName string `json:"fullName"`
 

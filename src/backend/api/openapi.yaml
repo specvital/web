@@ -1628,6 +1628,8 @@ components:
           $ref: "#/components/schemas/AnalysisSummary"
         updateStatus:
           $ref: "#/components/schemas/UpdateStatus"
+        aiSpecSummary:
+          $ref: "#/components/schemas/AiSpecSummary"
 
     AnalysisSummary:
       type: object
@@ -2578,3 +2580,21 @@ components:
           description: When the current usage period resets
         plan:
           $ref: "#/components/schemas/PlanInfo"
+
+    # AI Spec Summary for Dashboard
+    AiSpecSummary:
+      type: object
+      required:
+        - hasSpec
+      properties:
+        hasSpec:
+          type: boolean
+          description: Whether completed AI Spec exists for this repository
+        languageCount:
+          type: integer
+          minimum: 0
+          description: Number of languages with completed specs
+        latestGeneratedAt:
+          type: string
+          format: date-time
+          description: Most recent spec generation timestamp

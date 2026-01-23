@@ -1057,6 +1057,7 @@ export interface components {
             isAnalyzedByMe: boolean;
             latestAnalysis?: components["schemas"]["AnalysisSummary"];
             updateStatus: components["schemas"]["UpdateStatus"];
+            aiSpecSummary?: components["schemas"]["AiSpecSummary"];
         };
         AnalysisSummary: {
             /**
@@ -1674,6 +1675,17 @@ export interface components {
              */
             resetAt: string;
             plan: components["schemas"]["PlanInfo"];
+        };
+        AiSpecSummary: {
+            /** @description Whether completed AI Spec exists for this repository */
+            hasSpec: boolean;
+            /** @description Number of languages with completed specs */
+            languageCount?: number;
+            /**
+             * Format: date-time
+             * @description Most recent spec generation timestamp
+             */
+            latestGeneratedAt?: string;
         };
     };
     responses: {
