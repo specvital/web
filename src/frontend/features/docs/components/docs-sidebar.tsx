@@ -38,7 +38,7 @@ const SidebarContent = ({ t }: SidebarContentProps) => {
         <nav aria-label={t("sidebar.ariaLabel")} className="space-y-1 p-2">
           {SIDEBAR_ITEMS.map(({ icon, key }) => (
             <DocsSidebarItem
-              href={`/docs/how-it-works/${t(`topics.${key}.slug`)}`}
+              href={`/docs/${t(`topics.${key}.slug`)}`}
               icon={icon}
               key={key}
               title={t(`topics.${key}.title`)}

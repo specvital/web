@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 
 import { DocsSidebar } from "@/features/docs";
 
-type HowItWorksLayoutProps = {
+type DocsContentLayoutProps = {
   children: ReactNode;
 };
 
-const HowItWorksLayout = ({ children }: HowItWorksLayoutProps) => {
+const DocsContentLayout = ({ children }: DocsContentLayoutProps) => {
   return (
     <div className="container mx-auto flex max-w-6xl gap-8 px-4 py-8">
       <DocsSidebar />
@@ -15,4 +15,4 @@ const HowItWorksLayout = ({ children }: HowItWorksLayoutProps) => {
   );
 };
 
-export default HowItWorksLayout;
+export default DocsContentLayout;

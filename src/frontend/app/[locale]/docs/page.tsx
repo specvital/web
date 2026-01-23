@@ -1,7 +1,6 @@
-import type { Metadata } from "next";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { redirect } from "next/navigation";
 
-import { DocsLandingContent } from "@/features/docs";
+import { routing } from "@/i18n/routing";
 
 export const dynamic = "force-static";
 
@@ -11,29 +10,13 @@ type DocsPageProps = {
   }>;
 };
 
+export const generateStaticParams = () => {
+  return routing.locales.map((locale) => ({ locale }));
+};
+
 const DocsPage = async ({ params }: DocsPageProps) => {
   const { locale } = await params;
-  setRequestLocale(locale);
-
-  return (
-    <main id="main-content">
-      <DocsLandingContent />
-    </main>
-  );
+  redirect(`/${locale}/docs/test-detection`);
 };
 
 export default DocsPage;
-
-export const generateMetadata = async ({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> => {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "docs" });
-
-  return {
-    description: t("landing.description"),
-    title: t("landing.title"),
-  };
-};

@@ -1,8 +1,6 @@
 export {
-  DocsLandingContent,
   DocsSidebar,
   DocsSidebarItem,
-  DocsTopicCard,
   GithubAccessContent,
   QueueProcessingContent,
   SpecviewGenerationContent,

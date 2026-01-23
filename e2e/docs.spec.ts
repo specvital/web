@@ -13,13 +13,11 @@ test.describe("Documentation Pages", () => {
         .getByRole("link", { name: "Docs" });
       await expect(docsLink).toBeVisible();
 
-      // Click Docs link and wait for navigation
-      await Promise.all([
-        page.waitForURL("/en/docs"),
-        docsLink.click(),
-      ]);
+      // Click Docs link - redirects to first doc page
+      await docsLink.click();
+      await expect(page).toHaveURL("/en/docs/test-detection");
 
-      // Verify Docs link shows active state (has [active] attribute in accessibility tree)
+      // Verify Docs link shows active state
       await expect(docsLink).toHaveAttribute("aria-current", "page");
     });
 
@@ -37,62 +35,6 @@ test.describe("Documentation Pages", () => {
     });
   });
 
-  test.describe("Landing Page", () => {
-    test("should display documentation landing page with all cards", async ({
-      page,
-    }) => {
-      await page.goto("/en/docs");
-
-      // Verify page title
-      await expect(
-        page.getByRole("heading", { name: "Documentation", level: 1 })
-      ).toBeVisible();
-
-      // Verify "How It Works" section
-      await expect(
-        page.getByRole("heading", { name: "How It Works", level: 2 })
-      ).toBeVisible();
-
-      // Verify 5 documentation cards exist
-      const expectedCards = [
-        {
-          title: "Test Detection",
-          href: "/en/docs/how-it-works/test-detection",
-        },
-        { title: "Usage & Billing", href: "/en/docs/how-it-works/usage-billing" },
-        { title: "GitHub Access", href: "/en/docs/how-it-works/github-access" },
-        {
-          title: "Queue Processing",
-          href: "/en/docs/how-it-works/queue-processing",
-        },
-        {
-          title: "AI Spec Generation",
-          href: "/en/docs/how-it-works/specview-generation",
-        },
-      ];
-
-      for (const card of expectedCards) {
-        const cardLink = page.getByRole("link", { name: new RegExp(card.title) });
-        await expect(cardLink).toBeVisible();
-        await expect(cardLink).toHaveAttribute("href", card.href);
-      }
-    });
-
-    test("should navigate to individual doc page when card is clicked", async ({
-      page,
-    }) => {
-      await page.goto("/en/docs");
-
-      // Click Test Detection card
-      await page
-        .getByRole("link", { name: /Test Detection/ })
-        .click();
-
-      // Verify navigation to test-detection page
-      await expect(page).toHaveURL("/en/docs/how-it-works/test-detection");
-    });
-  });
-
   test.describe("Sidebar Navigation", () => {
     // Desktop: sidebar is always visible (lg:block)
     // Mobile: sidebar is hidden, use sheet/dialog
@@ -100,7 +42,7 @@ test.describe("Documentation Pages", () => {
     test("should display sidebar with all navigation links on desktop", async ({
       page,
     }) => {
-      await page.goto("/en/docs/how-it-works/test-detection");
+      await page.goto("/en/docs/test-detection");
 
       // Desktop sidebar should be visible
       const docNav = page.getByRole("navigation", {
@@ -119,7 +61,7 @@ test.describe("Documentation Pages", () => {
     test("should navigate to another doc page from sidebar", async ({
       page,
     }) => {
-      await page.goto("/en/docs/how-it-works/test-detection");
+      await page.goto("/en/docs/test-detection");
 
       // Click Usage & Billing link in desktop sidebar
       const docNav = page.getByRole("navigation", {
@@ -128,14 +70,14 @@ test.describe("Documentation Pages", () => {
       await docNav.getByRole("link", { name: "Usage & Billing" }).click();
 
       // Verify navigation
-      await expect(page).toHaveURL("/en/docs/how-it-works/usage-billing");
+      await expect(page).toHaveURL("/en/docs/usage-billing");
       await expect(
         page.getByRole("heading", { name: "Usage & Billing", level: 1 })
       ).toBeVisible();
     });
 
     test("should highlight current page in sidebar", async ({ page }) => {
-      await page.goto("/en/docs/how-it-works/test-detection");
+      await page.goto("/en/docs/test-detection");
 
       // Verify Test Detection link is highlighted (uses bg-primary/10 class for active state)
       const docNav = page.getByRole("navigation", {
@@ -150,7 +92,7 @@ test.describe("Documentation Pages", () => {
     test("should display Test Detection page with supported frameworks table", async ({
       page,
     }) => {
-      await page.goto("/en/docs/how-it-works/test-detection");
+      await page.goto("/en/docs/test-detection");
 
       // Verify page heading
       await expect(
@@ -172,7 +114,7 @@ test.describe("Documentation Pages", () => {
     test("should display Usage & Billing page with plan limits table", async ({
       page,
     }) => {
-      await page.goto("/en/docs/how-it-works/usage-billing");
+      await page.goto("/en/docs/usage-billing");
 
       // Verify page heading
       await expect(
@@ -194,7 +136,7 @@ test.describe("Documentation Pages", () => {
     test("should display GitHub Access page with OAuth scopes table", async ({
       page,
     }) => {
-      await page.goto("/en/docs/how-it-works/github-access");
+      await page.goto("/en/docs/github-access");
 
       // Verify page heading
       await expect(
@@ -215,7 +157,7 @@ test.describe("Documentation Pages", () => {
     test("should display Queue Processing page with priority tiers table", async ({
       page,
     }) => {
-      await page.goto("/en/docs/how-it-works/queue-processing");
+      await page.goto("/en/docs/queue-processing");
 
       // Verify page heading
       await expect(
@@ -236,7 +178,7 @@ test.describe("Documentation Pages", () => {
     test("should display AI Spec Generation page with test classification table", async ({
       page,
     }) => {
-      await page.goto("/en/docs/how-it-works/specview-generation");
+      await page.goto("/en/docs/specview-generation");
 
       // Verify page heading
       await expect(
