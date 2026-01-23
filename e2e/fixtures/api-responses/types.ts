@@ -3,6 +3,13 @@
  * Subset of generated-types.ts for E2E testing
  */
 
+// AI Spec Summary
+export interface AiSpecSummary {
+  hasSpec: boolean;
+  languageCount?: number;
+  latestGeneratedAt?: string;
+}
+
 // Repository Card
 export interface RepositoryCard {
   id: string;
@@ -13,6 +20,7 @@ export interface RepositoryCard {
   isAnalyzedByMe: boolean;
   updateStatus: "up-to-date" | "new-commits" | "unknown";
   latestAnalysis?: AnalysisSummary;
+  aiSpecSummary?: AiSpecSummary;
 }
 
 export interface AnalysisSummary {

@@ -468,4 +468,130 @@ test.describe("Dashboard Page (Mocked API)", () => {
       await expect(page).toHaveURL(new RegExp(`/analyze/${firstRepo.owner}/${firstRepo.name}`));
     });
   });
+
+  test.describe("AI Spec Badge", () => {
+    test("should display AI Spec badge for repos with AI spec", async ({ page }) => {
+      await setupMockHandlers(page, {
+        repositories: mockRepositoriesPage1,
+        stats: mockStatsNormal,
+      });
+
+      await page.goto("/en/dashboard");
+
+      // Wait for initial load
+      await expect(
+        page.getByRole("button", { name: /add bookmark|remove bookmark/i }).first()
+      ).toBeVisible({ timeout: 10000 });
+
+      // First 5 repos have AI Spec - check that AI Spec badge is visible
+      const aiSpecBadges = page.getByText("AI Spec", { exact: true });
+      await expect(aiSpecBadges.first()).toBeVisible({ timeout: 5000 });
+    });
+
+    test("should show popover with language count on badge hover", async ({ page }) => {
+      await setupMockHandlers(page, {
+        repositories: mockRepositoriesPage1,
+        stats: mockStatsNormal,
+      });
+
+      await page.goto("/en/dashboard");
+
+      // Wait for initial load
+      await expect(
+        page.getByRole("button", { name: /add bookmark|remove bookmark/i }).first()
+      ).toBeVisible({ timeout: 10000 });
+
+      // Click on AI Spec badge to open popover
+      const aiSpecBadge = page.getByText("AI Spec", { exact: true }).first();
+      await aiSpecBadge.click();
+
+      // Verify popover content shows language count info
+      await expect(page.getByText(/Generated in \d+ language/i)).toBeVisible({ timeout: 5000 });
+    });
+
+    test("should not display AI Spec badge for repos without AI spec", async ({ page }) => {
+      // Create mock data where no repos have AI Spec
+      const reposWithoutAiSpec = {
+        ...mockRepositoriesPage1,
+        data: mockRepositoriesPage1.data.map((repo) => ({
+          ...repo,
+          aiSpecSummary: undefined,
+        })),
+      };
+
+      await setupMockHandlers(page, {
+        repositories: reposWithoutAiSpec,
+        stats: mockStatsNormal,
+      });
+
+      await page.goto("/en/dashboard");
+
+      // Wait for initial load
+      await expect(
+        page.getByRole("button", { name: /add bookmark|remove bookmark/i }).first()
+      ).toBeVisible({ timeout: 10000 });
+
+      // AI Spec badge should not be visible
+      const aiSpecBadges = page.getByText("AI Spec", { exact: true });
+      await expect(aiSpecBadges).toHaveCount(0);
+    });
+
+    test("should navigate to analysis page when clicking card with AI Spec badge", async ({
+      page,
+    }) => {
+      await setupMockHandlers(page, {
+        repositories: mockRepositoriesPage1,
+        stats: mockStatsNormal,
+      });
+
+      await page.goto("/en/dashboard");
+
+      // Wait for initial load
+      await expect(
+        page.getByRole("button", { name: /add bookmark|remove bookmark/i }).first()
+      ).toBeVisible({ timeout: 10000 });
+
+      // Get first repo with AI Spec (index 1 has hasSpec: true)
+      const repoWithAiSpec = mockRepositoriesPage1.data[0];
+      const repoCard = page.getByRole("link", { name: new RegExp(repoWithAiSpec.name) }).first();
+      await repoCard.click();
+
+      // Verify navigation to analysis page
+      await expect(page).toHaveURL(
+        new RegExp(`/analyze/${repoWithAiSpec.owner}/${repoWithAiSpec.name}`)
+      );
+    });
+
+    test("should navigate to AI Spec tab when clicking 'View details' link in popover", async ({
+      page,
+    }) => {
+      await setupMockHandlers(page, {
+        repositories: mockRepositoriesPage1,
+        stats: mockStatsNormal,
+      });
+
+      await page.goto("/en/dashboard");
+
+      // Wait for initial load
+      await expect(
+        page.getByRole("button", { name: /add bookmark|remove bookmark/i }).first()
+      ).toBeVisible({ timeout: 10000 });
+
+      // Click on AI Spec badge to open popover
+      const aiSpecBadge = page.getByText("AI Spec", { exact: true }).first();
+      await aiSpecBadge.click();
+
+      // Click "View details →" link in popover
+      const viewDetailsLink = page.getByRole("link", { name: /view details/i });
+      await expect(viewDetailsLink).toBeVisible({ timeout: 5000 });
+
+      const repoWithAiSpec = mockRepositoriesPage1.data[0];
+      await viewDetailsLink.click();
+
+      // Verify navigation to analysis page with tab=spec query param
+      await expect(page).toHaveURL(
+        new RegExp(`/analyze/${repoWithAiSpec.owner}/${repoWithAiSpec.name}.*tab=spec`)
+      );
+    });
+  });
 });

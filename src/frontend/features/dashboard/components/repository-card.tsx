@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 import type { RepositoryCard as RepositoryCardType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
+import { AiSpecBadge } from "./ai-spec-badge";
 import { TestDeltaBadge } from "./test-delta-badge";
 import { type DisplayUpdateStatus, UpdateStatusBadge } from "./update-status-badge";
 
@@ -35,7 +36,7 @@ export const RepositoryCard = ({
   const t = useTranslations("dashboard.card");
   const { isAuthenticated } = useAuth();
   const { open: openLoginModal } = useLoginModal();
-  const { fullName, isBookmarked, latestAnalysis, name, owner, updateStatus } = repo;
+  const { aiSpecSummary, fullName, isBookmarked, latestAnalysis, name, owner, updateStatus } = repo;
   const displayStatus = updateStatus as DisplayUpdateStatus;
   const isAnalyzing = displayStatus === "analyzing";
   const hasNewCommits = updateStatus === "new-commits";
@@ -123,8 +124,11 @@ export const RepositoryCard = ({
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <UpdateStatusBadge status={displayStatus} />
+              {aiSpecSummary?.hasSpec && (
+                <AiSpecBadge owner={owner} repo={name} summary={aiSpecSummary} />
+              )}
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t min-h-[36px]">

@@ -32,6 +32,11 @@ const createRepository = (
       xfail: 0,
     },
   },
+  aiSpecSummary: index <= 5 ? {
+    hasSpec: true,
+    languageCount: index % 3 + 1,
+    latestGeneratedAt: new Date(Date.now() - index * 3600000).toISOString(),
+  } : undefined,
   ...overrides,
 });
 
