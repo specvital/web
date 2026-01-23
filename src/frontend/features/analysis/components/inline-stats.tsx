@@ -11,7 +11,7 @@ type InlineStatsProps = {
 
 export const InlineStats = ({ summary }: InlineStatsProps) => {
   const t = useTranslations("stats");
-  const { active, frameworks, skipped, todo, total } = summary;
+  const { active, focused, frameworks, skipped, todo, total, xfail } = summary;
 
   const sortedFrameworks = [...frameworks].sort((a, b) => b.total - a.total);
 
@@ -32,9 +32,11 @@ export const InlineStats = ({ summary }: InlineStatsProps) => {
           <div className="h-8 w-px bg-border/60 hidden sm:block" />
 
           {/* Status breakdown */}
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-5">
             <StatusItem color="active" label={t("active")} value={active} />
+            {focused > 0 && <StatusItem color="focused" label={t("focused")} value={focused} />}
             <StatusItem color="skipped" label={t("skipped")} value={skipped} />
+            {xfail > 0 && <StatusItem color="xfail" label={t("xfail")} value={xfail} />}
             <StatusItem color="todo" label={t("todo")} value={todo} />
           </div>
         </div>
@@ -65,7 +67,7 @@ export const InlineStats = ({ summary }: InlineStatsProps) => {
 };
 
 type StatusItemProps = {
-  color: "active" | "skipped" | "todo";
+  color: "active" | "focused" | "skipped" | "xfail" | "todo";
   label: string;
   value: number;
 };
@@ -73,8 +75,10 @@ type StatusItemProps = {
 const StatusItem = ({ color, label, value }: StatusItemProps) => {
   const colorClasses = {
     active: "bg-status-active",
+    focused: "bg-status-focused",
     skipped: "bg-status-skipped",
     todo: "bg-status-todo",
+    xfail: "bg-status-xfail",
   };
 
   return (
