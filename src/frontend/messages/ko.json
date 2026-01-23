@@ -577,6 +577,12 @@
       "viewTask": "보기"
     }
   },
+  "globalSearch": {
+    "title": "검색",
+    "description": "페이지, 리포지토리, 명령을 검색합니다.",
+    "placeholder": "검색...",
+    "noResults": "검색 결과가 없습니다"
+  },
   "account": {
     "title": "계정",
     "plan": {

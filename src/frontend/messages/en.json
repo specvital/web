@@ -577,6 +577,12 @@
       "viewTask": "View"
     }
   },
+  "globalSearch": {
+    "title": "Search",
+    "description": "Search pages, repositories, and commands.",
+    "placeholder": "Search...",
+    "noResults": "No results found"
+  },
   "account": {
     "title": "Account",
     "plan": {

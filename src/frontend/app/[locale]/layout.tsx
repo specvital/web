@@ -9,6 +9,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Header, MobileBottomBar } from "@/components/layout";
 import { ThemeProvider } from "@/components/theme";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalSearchProvider } from "@/features/global-search";
 import { isValidLocale, locales } from "@/i18n/config";
 import { QueryProvider } from "@/lib/query";
 import "../globals.css";
@@ -52,12 +53,14 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
           <QueryProvider>
             <NextIntlClientProvider messages={messages}>
               <ThemeProvider>
-                <Header />
-                <main className="flex flex-1 flex-col pb-16 md:pb-0" id="main-content">
-                  {children}
-                </main>
-                <MobileBottomBar />
-                <Toaster richColors />
+                <GlobalSearchProvider>
+                  <Header />
+                  <main className="flex flex-1 flex-col pb-16 md:pb-0" id="main-content">
+                    {children}
+                  </main>
+                  <MobileBottomBar />
+                  <Toaster richColors />
+                </GlobalSearchProvider>
               </ThemeProvider>
             </NextIntlClientProvider>
           </QueryProvider>
