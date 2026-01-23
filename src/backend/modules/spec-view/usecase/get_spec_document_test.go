@@ -57,11 +57,11 @@ func (m *mockRepository) GetSpecDocumentByUser(_ context.Context, _ string, _ st
 	return m.document, m.documentErr
 }
 
-func (m *mockRepository) GetGenerationStatus(_ context.Context, _ string) (*entity.SpecGenerationStatus, error) {
+func (m *mockRepository) GetGenerationStatus(_ context.Context, _ string, _ string) (*entity.SpecGenerationStatus, error) {
 	return m.status, m.statusErr
 }
 
-func (m *mockRepository) GetGenerationStatusByLanguage(_ context.Context, _ string, _ string) (*entity.SpecGenerationStatus, error) {
+func (m *mockRepository) GetGenerationStatusByLanguage(_ context.Context, _ string, _ string, _ string) (*entity.SpecGenerationStatus, error) {
 	return m.status, m.statusErr
 }
 

@@ -312,12 +312,18 @@ func (r *PostgresRepository) buildSpecDocument(ctx context.Context, docRow db.Ge
 	return doc, nil
 }
 
-func (r *PostgresRepository) GetGenerationStatus(ctx context.Context, analysisID string) (*entity.SpecGenerationStatus, error) {
+func (r *PostgresRepository) GetGenerationStatus(ctx context.Context, userID string, analysisID string) (*entity.SpecGenerationStatus, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return nil, err
+	}
 	if _, err := uuid.Parse(analysisID); err != nil {
 		return nil, err
 	}
 
-	row, err := r.queries.GetSpecGenerationStatus(ctx, []byte(analysisID))
+	row, err := r.queries.GetSpecGenerationStatus(ctx, db.GetSpecGenerationStatusParams{
+		UserID:     []byte(userID),
+		AnalysisID: []byte(analysisID),
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -340,12 +346,16 @@ func (r *PostgresRepository) GetGenerationStatus(ctx context.Context, analysisID
 	return status, nil
 }
 
-func (r *PostgresRepository) GetGenerationStatusByLanguage(ctx context.Context, analysisID string, language string) (*entity.SpecGenerationStatus, error) {
+func (r *PostgresRepository) GetGenerationStatusByLanguage(ctx context.Context, userID string, analysisID string, language string) (*entity.SpecGenerationStatus, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return nil, err
+	}
 	if _, err := uuid.Parse(analysisID); err != nil {
 		return nil, err
 	}
 
 	row, err := r.queries.GetSpecGenerationStatusByLanguage(ctx, db.GetSpecGenerationStatusByLanguageParams{
+		UserID:     []byte(userID),
 		AnalysisID: []byte(analysisID),
 		Language:   []byte(language),
 	})

@@ -47,11 +47,11 @@ func (m *mockSpecViewRepository) GetSpecDocumentByUser(_ context.Context, _ stri
 	return nil, nil
 }
 
-func (m *mockSpecViewRepository) GetGenerationStatus(_ context.Context, _ string) (*entity.SpecGenerationStatus, error) {
+func (m *mockSpecViewRepository) GetGenerationStatus(_ context.Context, _ string, _ string) (*entity.SpecGenerationStatus, error) {
 	return m.status, m.statusErr
 }
 
-func (m *mockSpecViewRepository) GetGenerationStatusByLanguage(_ context.Context, _ string, _ string) (*entity.SpecGenerationStatus, error) {
+func (m *mockSpecViewRepository) GetGenerationStatusByLanguage(_ context.Context, _ string, _ string, _ string) (*entity.SpecGenerationStatus, error) {
 	return m.status, m.statusErr
 }
 
@@ -225,21 +225,17 @@ func TestRequestGenerationUseCase_Execute_QuotaCheck(t *testing.T) {
 			expectedOutput: true,
 		},
 		{
-			name: "should skip quota check when no user ID",
+			name: "should reject when user ID is empty",
 			input: RequestGenerationInput{
 				AnalysisID: "test-analysis-id",
 				UserID:     "",
 			},
-			mockRepo: &mockSpecViewRepository{
-				analysisExists: true,
-				documentExists: false,
-				status:         nil,
-			},
+			mockRepo:       &mockSpecViewRepository{},
 			mockQueue:      &mockQueueService{},
 			mockSubRepo:    nil,
 			mockUsageRepo:  nil,
-			expectedErr:    nil,
-			expectedOutput: true,
+			expectedErr:    domain.ErrUnauthorized,
+			expectedOutput: false,
 		},
 		{
 			name: "should propagate error when subscription lookup fails",
@@ -326,6 +322,7 @@ func TestRequestGenerationUseCase_Execute_ForceRegenerate(t *testing.T) {
 				AnalysisID:        "test-analysis-id",
 				IsForceRegenerate: true,
 				Language:          "Korean",
+				UserID:            "test-user-id",
 			},
 			mockRepo: &mockSpecViewRepository{
 				analysisExists: true,
@@ -339,6 +336,7 @@ func TestRequestGenerationUseCase_Execute_ForceRegenerate(t *testing.T) {
 				AnalysisID:        "test-analysis-id",
 				IsForceRegenerate: true,
 				Language:          "",
+				UserID:            "test-user-id",
 			},
 			mockRepo: &mockSpecViewRepository{
 				analysisExists: true,
@@ -351,6 +349,7 @@ func TestRequestGenerationUseCase_Execute_ForceRegenerate(t *testing.T) {
 			input: RequestGenerationInput{
 				AnalysisID:        "test-analysis-id",
 				IsForceRegenerate: false,
+				UserID:            "test-user-id",
 			},
 			mockRepo: &mockSpecViewRepository{
 				analysisExists: true,
@@ -364,6 +363,7 @@ func TestRequestGenerationUseCase_Execute_ForceRegenerate(t *testing.T) {
 			input: RequestGenerationInput{
 				AnalysisID:        "test-analysis-id",
 				IsForceRegenerate: false,
+				UserID:            "test-user-id",
 			},
 			mockRepo: &mockSpecViewRepository{
 				analysisExists: true,
@@ -379,6 +379,7 @@ func TestRequestGenerationUseCase_Execute_ForceRegenerate(t *testing.T) {
 				AnalysisID:        "test-analysis-id",
 				IsForceRegenerate: true,
 				Language:          "English",
+				UserID:            "test-user-id",
 			},
 			mockRepo: &mockSpecViewRepository{
 				analysisExists: true,
@@ -394,6 +395,7 @@ func TestRequestGenerationUseCase_Execute_ForceRegenerate(t *testing.T) {
 				AnalysisID:        "test-analysis-id",
 				IsForceRegenerate: true,
 				Language:          "Korean",
+				UserID:            "test-user-id",
 			},
 			mockRepo: &mockSpecViewRepository{
 				analysisExists: true,

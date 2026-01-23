@@ -45,6 +45,10 @@ func NewRequestGenerationUseCase(
 }
 
 func (uc *RequestGenerationUseCase) Execute(ctx context.Context, input RequestGenerationInput) (*RequestGenerationOutput, error) {
+	if input.UserID == "" {
+		return nil, domain.ErrUnauthorized
+	}
+
 	if input.AnalysisID == "" {
 		return nil, domain.ErrInvalidAnalysisID
 	}
@@ -63,7 +67,8 @@ func (uc *RequestGenerationUseCase) Execute(ctx context.Context, input RequestGe
 	}
 
 	// Always check for in-progress generation (by language) - regardless of force regenerate
-	status, err := uc.repo.GetGenerationStatusByLanguage(ctx, input.AnalysisID, language)
+	// Only check the user's own generation status (per-user personalization)
+	status, err := uc.repo.GetGenerationStatusByLanguage(ctx, input.UserID, input.AnalysisID, language)
 	if err != nil {
 		return nil, err
 	}

@@ -14,10 +14,10 @@ type SpecViewRepository interface {
 	GetAvailableLanguages(ctx context.Context, analysisID string) ([]entity.AvailableLanguageInfo, error)
 	// GetAvailableLanguagesByUser returns available languages for documents owned by the user for the given analysis.
 	GetAvailableLanguagesByUser(ctx context.Context, userID string, analysisID string) ([]entity.AvailableLanguageInfo, error)
-	// GetGenerationStatus returns the latest generation status for an analysis (any language).
-	GetGenerationStatus(ctx context.Context, analysisID string) (*entity.SpecGenerationStatus, error)
-	// GetGenerationStatusByLanguage returns status for a specific analysis + language combination.
-	GetGenerationStatusByLanguage(ctx context.Context, analysisID string, language string) (*entity.SpecGenerationStatus, error)
+	// GetGenerationStatus returns the latest generation status for a user and analysis (any language).
+	GetGenerationStatus(ctx context.Context, userID string, analysisID string) (*entity.SpecGenerationStatus, error)
+	// GetGenerationStatusByLanguage returns status for a specific user, analysis, and language combination.
+	GetGenerationStatusByLanguage(ctx context.Context, userID string, analysisID string, language string) (*entity.SpecGenerationStatus, error)
 	// GetSpecDocumentByLanguage retrieves the latest version spec document for a given analysis and language.
 	// If language is empty, returns the most recent document regardless of language.
 	// Deprecated: Use GetSpecDocumentByUser for access-controlled access.

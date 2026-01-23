@@ -627,9 +627,15 @@ SELECT
 FROM river_job rj
 WHERE rj.kind = 'specview:generate'
   AND rj.args->>'analysis_id' = $1
+  AND rj.args->>'user_id' = $2
 ORDER BY rj.created_at DESC
 LIMIT 1
 `
+
+type GetSpecGenerationStatusParams struct {
+	AnalysisID []byte `json:"analysis_id"`
+	UserID     []byte `json:"user_id"`
+}
 
 type GetSpecGenerationStatusRow struct {
 	State       RiverJobState      `json:"state"`
@@ -638,9 +644,9 @@ type GetSpecGenerationStatusRow struct {
 	Errors      [][]byte           `json:"errors"`
 }
 
-// Returns latest generation status for an analysis (any language)
-func (q *Queries) GetSpecGenerationStatus(ctx context.Context, args []byte) (GetSpecGenerationStatusRow, error) {
-	row := q.db.QueryRow(ctx, getSpecGenerationStatus, args)
+// Returns latest generation status for a specific user and analysis (any language)
+func (q *Queries) GetSpecGenerationStatus(ctx context.Context, arg GetSpecGenerationStatusParams) (GetSpecGenerationStatusRow, error) {
+	row := q.db.QueryRow(ctx, getSpecGenerationStatus, arg.AnalysisID, arg.UserID)
 	var i GetSpecGenerationStatusRow
 	err := row.Scan(
 		&i.State,
@@ -660,13 +666,15 @@ SELECT
 FROM river_job rj
 WHERE rj.kind = 'specview:generate'
   AND rj.args->>'analysis_id' = $1
-  AND rj.args->>'language' = $2
+  AND rj.args->>'user_id' = $2
+  AND rj.args->>'language' = $3
 ORDER BY rj.created_at DESC
 LIMIT 1
 `
 
 type GetSpecGenerationStatusByLanguageParams struct {
 	AnalysisID []byte `json:"analysis_id"`
+	UserID     []byte `json:"user_id"`
 	Language   []byte `json:"language"`
 }
 
@@ -677,9 +685,9 @@ type GetSpecGenerationStatusByLanguageRow struct {
 	Errors      [][]byte           `json:"errors"`
 }
 
-// Returns generation status for a specific analysis + language combination
+// Returns generation status for a specific user, analysis, and language combination
 func (q *Queries) GetSpecGenerationStatusByLanguage(ctx context.Context, arg GetSpecGenerationStatusByLanguageParams) (GetSpecGenerationStatusByLanguageRow, error) {
-	row := q.db.QueryRow(ctx, getSpecGenerationStatusByLanguage, arg.AnalysisID, arg.Language)
+	row := q.db.QueryRow(ctx, getSpecGenerationStatusByLanguage, arg.AnalysisID, arg.UserID, arg.Language)
 	var i GetSpecGenerationStatusByLanguageRow
 	err := row.Scan(
 		&i.State,

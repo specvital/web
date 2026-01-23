@@ -15,6 +15,7 @@ type mockStatusRepository struct {
 	statusByLanguage    *entity.SpecGenerationStatus
 	statusByLanguageErr error
 
+	calledUserID     string
 	calledAnalysisID string
 	calledLanguage   string
 }
@@ -43,11 +44,14 @@ func (m *mockStatusRepository) GetSpecDocumentByUser(_ context.Context, _ string
 	return nil, nil
 }
 
-func (m *mockStatusRepository) GetGenerationStatus(_ context.Context, _ string) (*entity.SpecGenerationStatus, error) {
+func (m *mockStatusRepository) GetGenerationStatus(_ context.Context, userID string, analysisID string) (*entity.SpecGenerationStatus, error) {
+	m.calledUserID = userID
+	m.calledAnalysisID = analysisID
 	return m.status, m.statusErr
 }
 
-func (m *mockStatusRepository) GetGenerationStatusByLanguage(_ context.Context, analysisID string, language string) (*entity.SpecGenerationStatus, error) {
+func (m *mockStatusRepository) GetGenerationStatusByLanguage(_ context.Context, userID string, analysisID string, language string) (*entity.SpecGenerationStatus, error) {
+	m.calledUserID = userID
 	m.calledAnalysisID = analysisID
 	m.calledLanguage = language
 	return m.statusByLanguage, m.statusByLanguageErr
@@ -126,6 +130,9 @@ func TestGetGenerationStatusUseCase_Execute(t *testing.T) {
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
+		}
+		if mock.calledUserID != "user-1" {
+			t.Errorf("Repository called with userID = %q, want %q", mock.calledUserID, "user-1")
 		}
 		if mock.calledAnalysisID != "analysis-1" {
 			t.Errorf("Repository called with analysisID = %q, want %q", mock.calledAnalysisID, "analysis-1")
@@ -239,6 +246,33 @@ func TestGetGenerationStatusUseCase_Execute(t *testing.T) {
 		}
 		if result.Status.Status != entity.StatusNotFound {
 			t.Errorf("Execute() Status.Status = %v, want %v", result.Status.Status, entity.StatusNotFound)
+		}
+		// Verify userID was passed to repository for user-scoped query
+		if mock.calledUserID != "user-b" {
+			t.Errorf("Repository called with userID = %q, want %q", mock.calledUserID, "user-b")
+		}
+	})
+
+	t.Run("passes userID to repository for user-scoped status query with language", func(t *testing.T) {
+		// Ensures generation status query is scoped to the requesting user
+		mock := &mockStatusRepository{statusByLanguage: nil}
+		uc := NewGetGenerationStatusUseCase(mock)
+		_, err := uc.Execute(context.Background(), GetGenerationStatusInput{
+			AnalysisID: "analysis-1",
+			Language:   "Korean",
+			UserID:     "user-a",
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if mock.calledUserID != "user-a" {
+			t.Errorf("Repository called with userID = %q, want %q", mock.calledUserID, "user-a")
+		}
+		if mock.calledAnalysisID != "analysis-1" {
+			t.Errorf("Repository called with analysisID = %q, want %q", mock.calledAnalysisID, "analysis-1")
+		}
+		if mock.calledLanguage != "Korean" {
+			t.Errorf("Repository called with language = %q, want %q", mock.calledLanguage, "Korean")
 		}
 	})
 }

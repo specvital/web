@@ -43,9 +43,9 @@ func (uc *GetGenerationStatusUseCase) Execute(ctx context.Context, input GetGene
 	var err error
 
 	if input.Language != "" {
-		status, err = uc.repo.GetGenerationStatusByLanguage(ctx, input.AnalysisID, input.Language)
+		status, err = uc.repo.GetGenerationStatusByLanguage(ctx, input.UserID, input.AnalysisID, input.Language)
 	} else {
-		status, err = uc.repo.GetGenerationStatus(ctx, input.AnalysisID)
+		status, err = uc.repo.GetGenerationStatus(ctx, input.UserID, input.AnalysisID)
 	}
 	if err != nil {
 		return nil, err
