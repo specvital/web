@@ -11,6 +11,8 @@ import (
 type GetVersionsInput struct {
 	AnalysisID string
 	Language   string
+	// UserID is required. Empty userID returns ErrUnauthorized.
+	UserID string
 }
 
 type GetVersionsOutput struct {
@@ -28,6 +30,10 @@ func NewGetVersionsUseCase(repo port.SpecViewRepository) *GetVersionsUseCase {
 }
 
 func (uc *GetVersionsUseCase) Execute(ctx context.Context, input GetVersionsInput) (*GetVersionsOutput, error) {
+	if input.UserID == "" {
+		return nil, domain.ErrUnauthorized
+	}
+
 	if input.AnalysisID == "" {
 		return nil, domain.ErrInvalidAnalysisID
 	}
@@ -38,7 +44,18 @@ func (uc *GetVersionsUseCase) Execute(ctx context.Context, input GetVersionsInpu
 		return nil, domain.ErrInvalidLanguage
 	}
 
-	versions, err := uc.repo.GetVersionsByLanguage(ctx, input.AnalysisID, input.Language)
+	// Check ownership before returning any data.
+	// ownership == nil means no document exists yet. The user-scoped query
+	// (GetVersionsByUser) provides the final authorization check.
+	ownership, err := uc.repo.CheckSpecDocumentOwnership(ctx, input.AnalysisID)
+	if err != nil {
+		return nil, err
+	}
+	if ownership != nil && ownership.UserID != input.UserID {
+		return nil, domain.ErrForbidden
+	}
+
+	versions, err := uc.repo.GetVersionsByUser(ctx, input.UserID, input.AnalysisID, input.Language)
 	if err != nil {
 		return nil, err
 	}

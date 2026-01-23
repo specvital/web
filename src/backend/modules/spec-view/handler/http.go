@@ -67,6 +67,7 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 }
 
 func (h *Handler) GetSpecDocument(ctx context.Context, request api.GetSpecDocumentRequestObject) (api.GetSpecDocumentResponseObject, error) {
+	userID := middleware.GetUserID(ctx)
 	analysisID := request.AnalysisID.String()
 
 	language := ""
@@ -82,15 +83,24 @@ func (h *Handler) GetSpecDocument(ctx context.Context, request api.GetSpecDocume
 	result, err := h.getSpecDocument.Execute(ctx, usecase.GetSpecDocumentInput{
 		AnalysisID: analysisID,
 		Language:   language,
+		UserID:     userID,
 		Version:    version,
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrDocumentNotFound) {
+		switch {
+		case errors.Is(err, domain.ErrUnauthorized):
+			return api.GetSpecDocument401ApplicationProblemPlusJSONResponse{
+				UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("authentication required"),
+			}, nil
+		case errors.Is(err, domain.ErrForbidden):
+			return api.GetSpecDocument403ApplicationProblemPlusJSONResponse{
+				ForbiddenApplicationProblemPlusJSONResponse: api.NewForbidden("access denied to this resource"),
+			}, nil
+		case errors.Is(err, domain.ErrDocumentNotFound):
 			return api.GetSpecDocument404ApplicationProblemPlusJSONResponse{
 				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("spec document not found"),
 			}, nil
-		}
-		if errors.Is(err, domain.ErrInvalidAnalysisID) {
+		case errors.Is(err, domain.ErrInvalidAnalysisID):
 			return api.GetSpecDocument404ApplicationProblemPlusJSONResponse{
 				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("invalid analysis ID"),
 			}, nil
@@ -258,15 +268,25 @@ func (h *Handler) GetSpecGenerationStatus(ctx context.Context, request api.GetSp
 }
 
 func (h *Handler) GetSpecVersions(ctx context.Context, request api.GetSpecVersionsRequestObject) (api.GetSpecVersionsResponseObject, error) {
+	userID := middleware.GetUserID(ctx)
 	analysisID := request.AnalysisID.String()
 	language := string(request.Params.Language)
 
 	result, err := h.getVersions.Execute(ctx, usecase.GetVersionsInput{
 		AnalysisID: analysisID,
 		Language:   language,
+		UserID:     userID,
 	})
 	if err != nil {
 		switch {
+		case errors.Is(err, domain.ErrUnauthorized):
+			return api.GetSpecVersions401ApplicationProblemPlusJSONResponse{
+				UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("authentication required"),
+			}, nil
+		case errors.Is(err, domain.ErrForbidden):
+			return api.GetSpecVersions403ApplicationProblemPlusJSONResponse{
+				ForbiddenApplicationProblemPlusJSONResponse: api.NewForbidden("access denied to this resource"),
+			}, nil
 		case errors.Is(err, domain.ErrInvalidAnalysisID):
 			return api.GetSpecVersions400ApplicationProblemPlusJSONResponse{
 				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid analysis ID format"),

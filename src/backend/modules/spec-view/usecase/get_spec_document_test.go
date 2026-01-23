@@ -94,11 +94,55 @@ func (m *mockRepository) GetVersionsByUser(_ context.Context, _ string, _ string
 }
 
 func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
+	t.Run("returns ErrUnauthorized when userID is empty", func(t *testing.T) {
+		uc := NewGetSpecDocumentUseCase(&mockRepository{})
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+		})
+		if !errors.Is(err, domain.ErrUnauthorized) {
+			t.Errorf("Execute() error = %v, want %v", err, domain.ErrUnauthorized)
+		}
+	})
+
 	t.Run("returns error when analysisID is empty", func(t *testing.T) {
 		uc := NewGetSpecDocumentUseCase(&mockRepository{})
-		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{})
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			UserID: "user-1",
+		})
 		if !errors.Is(err, domain.ErrInvalidAnalysisID) {
 			t.Errorf("Execute() error = %v, want %v", err, domain.ErrInvalidAnalysisID)
+		}
+	})
+
+	t.Run("returns ErrForbidden when accessing other users document", func(t *testing.T) {
+		mock := &mockRepository{
+			ownership: &entity.DocumentOwnership{
+				DocumentID: "doc-1",
+				UserID:     "owner-user-id",
+			},
+		}
+		uc := NewGetSpecDocumentUseCase(mock)
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+			UserID:     "different-user-id",
+		})
+		if !errors.Is(err, domain.ErrForbidden) {
+			t.Errorf("Execute() error = %v, want %v", err, domain.ErrForbidden)
+		}
+	})
+
+	t.Run("propagates CheckSpecDocumentOwnership error", func(t *testing.T) {
+		dbErr := errors.New("database connection failed")
+		mock := &mockRepository{
+			ownershipErr: dbErr,
+		}
+		uc := NewGetSpecDocumentUseCase(mock)
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+			UserID:     "user-1",
+		})
+		if !errors.Is(err, dbErr) {
+			t.Errorf("Execute() error = %v, want %v", err, dbErr)
 		}
 	})
 
@@ -114,6 +158,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
 			Language:   "",
+			UserID:     "user-1",
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -141,6 +186,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
 			Language:   "Korean",
+			UserID:     "user-1",
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -167,6 +213,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		})
 		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
+			UserID:     "user-1",
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -186,6 +233,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		})
 		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
+			UserID:     "user-1",
 		})
 		if !errors.Is(err, domain.ErrDocumentNotFound) {
 			t.Errorf("Execute() error = %v, want %v", err, domain.ErrDocumentNotFound)
@@ -203,6 +251,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		})
 		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
+			UserID:     "user-1",
 		})
 		if !errors.Is(err, domain.ErrDocumentNotFound) {
 			t.Errorf("Execute() error = %v, want %v", err, domain.ErrDocumentNotFound)
@@ -214,6 +263,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		uc := NewGetSpecDocumentUseCase(&mockRepository{documentErr: dbErr})
 		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
+			UserID:     "user-1",
 		})
 		if !errors.Is(err, dbErr) {
 			t.Errorf("Execute() error = %v, want %v", err, dbErr)
@@ -239,6 +289,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		uc := NewGetSpecDocumentUseCase(mock)
 		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
+			UserID:     "user-1",
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
@@ -269,6 +320,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		uc := NewGetSpecDocumentUseCase(mock)
 		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
+			UserID:     "user-1",
 		})
 		if !errors.Is(err, langErr) {
 			t.Errorf("Execute() error = %v, want %v", err, langErr)
@@ -279,6 +331,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		uc := NewGetSpecDocumentUseCase(&mockRepository{})
 		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
+			UserID:     "user-1",
 			Version:    1,
 		})
 		if !errors.Is(err, domain.ErrInvalidLanguage) {
@@ -291,6 +344,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
 			Language:   "InvalidLang",
+			UserID:     "user-1",
 			Version:    1,
 		})
 		if !errors.Is(err, domain.ErrInvalidLanguage) {
@@ -311,6 +365,7 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
 			Language:   "Korean",
+			UserID:     "user-1",
 			Version:    1,
 		})
 		if err != nil {
@@ -333,10 +388,41 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
 			Language:   "Korean",
+			UserID:     "user-1",
 			Version:    999,
 		})
 		if !errors.Is(err, domain.ErrDocumentNotFound) {
 			t.Errorf("Execute() error = %v, want %v", err, domain.ErrDocumentNotFound)
+		}
+	})
+
+	t.Run("allows owner to access their own document", func(t *testing.T) {
+		doc := &entity.SpecDocument{
+			ID:         "doc-1",
+			AnalysisID: "analysis-1",
+			Language:   "English",
+			CreatedAt:  time.Now(),
+		}
+		mock := &mockRepository{
+			document: doc,
+			ownership: &entity.DocumentOwnership{
+				DocumentID: "doc-1",
+				UserID:     "owner-user-id",
+			},
+		}
+		uc := NewGetSpecDocumentUseCase(mock)
+		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+			AnalysisID: "analysis-1",
+			UserID:     "owner-user-id",
+		})
+		if err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if result.Document == nil {
+			t.Fatal("Execute() Document is nil")
+		}
+		if result.Document.ID != "doc-1" {
+			t.Errorf("Execute() Document.ID = %q, want %q", result.Document.ID, "doc-1")
 		}
 	})
 }
