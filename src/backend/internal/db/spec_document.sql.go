@@ -42,29 +42,6 @@ func (q *Queries) CheckSpecDocumentExistsByLanguage(ctx context.Context, arg Che
 	return exists, err
 }
 
-const checkSpecDocumentOwnership = `-- name: CheckSpecDocumentOwnership :one
-SELECT
-    sd.id,
-    sd.user_id
-FROM spec_documents sd
-WHERE sd.analysis_id = $1
-ORDER BY sd.created_at ASC
-LIMIT 1
-`
-
-type CheckSpecDocumentOwnershipRow struct {
-	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
-}
-
-// Returns the first document owner for the given analysis (ordered by creation time)
-func (q *Queries) CheckSpecDocumentOwnership(ctx context.Context, analysisID pgtype.UUID) (CheckSpecDocumentOwnershipRow, error) {
-	row := q.db.QueryRow(ctx, checkSpecDocumentOwnership, analysisID)
-	var i CheckSpecDocumentOwnershipRow
-	err := row.Scan(&i.ID, &i.UserID)
-	return i, err
-}
-
 const getAvailableLanguagesByAnalysisID = `-- name: GetAvailableLanguagesByAnalysisID :many
 SELECT
     sd.language,

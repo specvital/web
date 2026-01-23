@@ -47,22 +47,11 @@ func (uc *GetSpecDocumentUseCase) Execute(ctx context.Context, input GetSpecDocu
 		}
 	}
 
-	// Check ownership before returning any data.
-	// ownership == nil means no document exists yet, which is allowed to support
-	// viewing generation-in-progress status. The user-scoped query (GetSpecDocumentByUser)
-	// provides the final authorization check for actual document access.
-	ownership, err := uc.repo.CheckSpecDocumentOwnership(ctx, input.AnalysisID)
-	if err != nil {
-		return nil, err
-	}
-	if ownership != nil && ownership.UserID != input.UserID {
-		return nil, domain.ErrForbidden
-	}
-
 	// Check for active generation first (for regeneration scenarios)
 	// If generation is in progress, return generating status even if document exists
 	// Skip generation check when requesting specific version (historical data)
 	var status *entity.SpecGenerationStatus
+	var err error
 	if input.Version == 0 {
 		if input.Language != "" {
 			status, err = uc.repo.GetGenerationStatusByLanguage(ctx, input.AnalysisID, input.Language)

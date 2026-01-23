@@ -44,26 +44,6 @@ func (r *PostgresRepository) CheckSpecDocumentExistsByLanguage(ctx context.Conte
 	})
 }
 
-func (r *PostgresRepository) CheckSpecDocumentOwnership(ctx context.Context, analysisID string) (*entity.DocumentOwnership, error) {
-	uid, err := parseUUID(analysisID)
-	if err != nil {
-		return nil, err
-	}
-
-	row, err := r.queries.CheckSpecDocumentOwnership(ctx, uid)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return &entity.DocumentOwnership{
-		DocumentID: uuidToString(row.ID),
-		UserID:     uuidToString(row.UserID),
-	}, nil
-}
-
 func (r *PostgresRepository) GetAvailableLanguages(ctx context.Context, analysisID string) ([]entity.AvailableLanguageInfo, error) {
 	uid, err := parseUUID(analysisID)
 	if err != nil {

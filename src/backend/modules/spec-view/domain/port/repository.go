@@ -9,9 +9,6 @@ import (
 type SpecViewRepository interface {
 	CheckAnalysisExists(ctx context.Context, analysisID string) (bool, error)
 	CheckSpecDocumentExistsByLanguage(ctx context.Context, analysisID string, language string) (bool, error)
-	// CheckSpecDocumentOwnership returns the first document owner for the given analysis.
-	// Returns document ID and user ID of the original creator, nil if no document exists.
-	CheckSpecDocumentOwnership(ctx context.Context, analysisID string) (*entity.DocumentOwnership, error)
 	// GetAvailableLanguages returns all available languages for an analysis with their latest version info.
 	// Deprecated: Use GetAvailableLanguagesByUser for access-controlled access.
 	GetAvailableLanguages(ctx context.Context, analysisID string) ([]entity.AvailableLanguageInfo, error)

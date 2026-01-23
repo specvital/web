@@ -25,8 +25,6 @@ type mockRepository struct {
 	availableLangsErr    error
 	versions             []entity.VersionInfo
 	versionsErr          error
-	ownership            *entity.DocumentOwnership
-	ownershipErr         error
 
 	// Captured parameters for verification
 	calledLanguage string
@@ -39,10 +37,6 @@ func (m *mockRepository) CheckAnalysisExists(_ context.Context, _ string) (bool,
 
 func (m *mockRepository) CheckSpecDocumentExistsByLanguage(_ context.Context, _ string, _ string) (bool, error) {
 	return m.specDocExists, m.specDocExistsErr
-}
-
-func (m *mockRepository) CheckSpecDocumentOwnership(_ context.Context, _ string) (*entity.DocumentOwnership, error) {
-	return m.ownership, m.ownershipErr
 }
 
 func (m *mockRepository) GetAvailableLanguages(_ context.Context, _ string) ([]entity.AvailableLanguageInfo, error) {
@@ -111,38 +105,6 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		})
 		if !errors.Is(err, domain.ErrInvalidAnalysisID) {
 			t.Errorf("Execute() error = %v, want %v", err, domain.ErrInvalidAnalysisID)
-		}
-	})
-
-	t.Run("returns ErrForbidden when accessing other users document", func(t *testing.T) {
-		mock := &mockRepository{
-			ownership: &entity.DocumentOwnership{
-				DocumentID: "doc-1",
-				UserID:     "owner-user-id",
-			},
-		}
-		uc := NewGetSpecDocumentUseCase(mock)
-		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
-			AnalysisID: "analysis-1",
-			UserID:     "different-user-id",
-		})
-		if !errors.Is(err, domain.ErrForbidden) {
-			t.Errorf("Execute() error = %v, want %v", err, domain.ErrForbidden)
-		}
-	})
-
-	t.Run("propagates CheckSpecDocumentOwnership error", func(t *testing.T) {
-		dbErr := errors.New("database connection failed")
-		mock := &mockRepository{
-			ownershipErr: dbErr,
-		}
-		uc := NewGetSpecDocumentUseCase(mock)
-		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
-			AnalysisID: "analysis-1",
-			UserID:     "user-1",
-		})
-		if !errors.Is(err, dbErr) {
-			t.Errorf("Execute() error = %v, want %v", err, dbErr)
 		}
 	})
 
@@ -396,33 +358,20 @@ func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("allows owner to access their own document", func(t *testing.T) {
-		doc := &entity.SpecDocument{
-			ID:         "doc-1",
-			AnalysisID: "analysis-1",
-			Language:   "English",
-			CreatedAt:  time.Now(),
-		}
+	t.Run("returns ErrDocumentNotFound when user has no document even if other users have documents", func(t *testing.T) {
+		// This tests the per-user personalization: each user has their own AI Spec
+		// User B accessing an analysis where User A has a document should get 404, not 403
 		mock := &mockRepository{
-			document: doc,
-			ownership: &entity.DocumentOwnership{
-				DocumentID: "doc-1",
-				UserID:     "owner-user-id",
-			},
+			document: nil, // GetSpecDocumentByUser returns nil for this user
+			status:   nil, // No generation in progress
 		}
 		uc := NewGetSpecDocumentUseCase(mock)
-		result, err := uc.Execute(context.Background(), GetSpecDocumentInput{
+		_, err := uc.Execute(context.Background(), GetSpecDocumentInput{
 			AnalysisID: "analysis-1",
-			UserID:     "owner-user-id",
+			UserID:     "user-b",
 		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-		if result.Document == nil {
-			t.Fatal("Execute() Document is nil")
-		}
-		if result.Document.ID != "doc-1" {
-			t.Errorf("Execute() Document.ID = %q, want %q", result.Document.ID, "doc-1")
+		if !errors.Is(err, domain.ErrDocumentNotFound) {
+			t.Errorf("Execute() error = %v, want %v", err, domain.ErrDocumentNotFound)
 		}
 	})
 }

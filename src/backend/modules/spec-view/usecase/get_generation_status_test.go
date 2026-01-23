@@ -15,9 +15,6 @@ type mockStatusRepository struct {
 	statusByLanguage    *entity.SpecGenerationStatus
 	statusByLanguageErr error
 
-	ownership    *entity.DocumentOwnership
-	ownershipErr error
-
 	calledAnalysisID string
 	calledLanguage   string
 }
@@ -28,10 +25,6 @@ func (m *mockStatusRepository) CheckAnalysisExists(_ context.Context, _ string) 
 
 func (m *mockStatusRepository) CheckSpecDocumentExistsByLanguage(_ context.Context, _ string, _ string) (bool, error) {
 	return false, nil
-}
-
-func (m *mockStatusRepository) CheckSpecDocumentOwnership(_ context.Context, _ string) (*entity.DocumentOwnership, error) {
-	return m.ownership, m.ownershipErr
 }
 
 func (m *mockStatusRepository) GetAvailableLanguages(_ context.Context, _ string) ([]entity.AvailableLanguageInfo, error) {
@@ -231,78 +224,21 @@ func TestGetGenerationStatusUseCase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("returns forbidden error when document belongs to different user", func(t *testing.T) {
+	t.Run("returns not_found status when user has no generation even if other users have documents", func(t *testing.T) {
+		// This tests the per-user personalization: each user checks their own generation status
 		mock := &mockStatusRepository{
-			ownership: &entity.DocumentOwnership{
-				UserID: "other-user",
-			},
-		}
-		uc := NewGetGenerationStatusUseCase(mock)
-		_, err := uc.Execute(context.Background(), GetGenerationStatusInput{
-			AnalysisID: "analysis-1",
-			UserID:     "user-1",
-		})
-		if !errors.Is(err, domain.ErrForbidden) {
-			t.Errorf("Execute() error = %v, want %v", err, domain.ErrForbidden)
-		}
-	})
-
-	t.Run("allows access when document belongs to same user", func(t *testing.T) {
-		status := &entity.SpecGenerationStatus{
-			AnalysisID: "analysis-1",
-			Status:     entity.StatusRunning,
-		}
-		mock := &mockStatusRepository{
-			ownership: &entity.DocumentOwnership{
-				UserID: "user-1",
-			},
-			status: status,
+			status: nil, // No generation exists for this user
 		}
 		uc := NewGetGenerationStatusUseCase(mock)
 		result, err := uc.Execute(context.Background(), GetGenerationStatusInput{
 			AnalysisID: "analysis-1",
-			UserID:     "user-1",
+			UserID:     "user-b",
 		})
 		if err != nil {
 			t.Fatalf("Execute() error = %v", err)
 		}
-		if result.Status.Status != entity.StatusRunning {
-			t.Errorf("Execute() Status.Status = %v, want %v", result.Status.Status, entity.StatusRunning)
-		}
-	})
-
-	t.Run("allows access when no document exists yet", func(t *testing.T) {
-		status := &entity.SpecGenerationStatus{
-			AnalysisID: "analysis-1",
-			Status:     entity.StatusPending,
-		}
-		mock := &mockStatusRepository{
-			ownership: nil, // no document exists
-			status:    status,
-		}
-		uc := NewGetGenerationStatusUseCase(mock)
-		result, err := uc.Execute(context.Background(), GetGenerationStatusInput{
-			AnalysisID: "analysis-1",
-			UserID:     "user-1",
-		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-		if result.Status.Status != entity.StatusPending {
-			t.Errorf("Execute() Status.Status = %v, want %v", result.Status.Status, entity.StatusPending)
-		}
-	})
-
-	t.Run("propagates ownership check error", func(t *testing.T) {
-		dbErr := errors.New("ownership check failed")
-		mock := &mockStatusRepository{ownershipErr: dbErr}
-		uc := NewGetGenerationStatusUseCase(mock)
-		_, err := uc.Execute(context.Background(), GetGenerationStatusInput{
-			AnalysisID: "analysis-1",
-			UserID:     "user-1",
-		})
-		if !errors.Is(err, dbErr) {
-			t.Errorf("Execute() error = %v, want %v", err, dbErr)
+		if result.Status.Status != entity.StatusNotFound {
+			t.Errorf("Execute() Status.Status = %v, want %v", result.Status.Status, entity.StatusNotFound)
 		}
 	})
 }

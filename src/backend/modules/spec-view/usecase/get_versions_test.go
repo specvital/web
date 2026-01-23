@@ -56,40 +56,6 @@ func TestGetVersionsUseCase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("returns ErrForbidden when accessing other users document", func(t *testing.T) {
-		mock := &mockRepository{
-			ownership: &entity.DocumentOwnership{
-				DocumentID: "doc-1",
-				UserID:     "owner-user-id",
-			},
-		}
-		uc := NewGetVersionsUseCase(mock)
-		_, err := uc.Execute(context.Background(), GetVersionsInput{
-			AnalysisID: "analysis-1",
-			Language:   "Korean",
-			UserID:     "different-user-id",
-		})
-		if !errors.Is(err, domain.ErrForbidden) {
-			t.Errorf("Execute() error = %v, want %v", err, domain.ErrForbidden)
-		}
-	})
-
-	t.Run("propagates CheckSpecDocumentOwnership error", func(t *testing.T) {
-		dbErr := errors.New("database connection failed")
-		mock := &mockRepository{
-			ownershipErr: dbErr,
-		}
-		uc := NewGetVersionsUseCase(mock)
-		_, err := uc.Execute(context.Background(), GetVersionsInput{
-			AnalysisID: "analysis-1",
-			Language:   "Korean",
-			UserID:     "user-1",
-		})
-		if !errors.Is(err, dbErr) {
-			t.Errorf("Execute() error = %v, want %v", err, dbErr)
-		}
-	})
-
 	t.Run("returns versions when found", func(t *testing.T) {
 		versions := []entity.VersionInfo{
 			{Version: 3, CreatedAt: time.Now(), ModelID: "model-3"},
@@ -147,29 +113,19 @@ func TestGetVersionsUseCase_Execute(t *testing.T) {
 		}
 	})
 
-	t.Run("allows owner to access their own versions", func(t *testing.T) {
-		versions := []entity.VersionInfo{
-			{Version: 2, CreatedAt: time.Now(), ModelID: "model-2"},
-			{Version: 1, CreatedAt: time.Now().Add(-time.Hour), ModelID: "model-1"},
-		}
+	t.Run("returns ErrDocumentNotFound when user has no versions even if other users have documents", func(t *testing.T) {
+		// This tests the per-user personalization: each user has their own AI Spec versions
 		mock := &mockRepository{
-			versions: versions,
-			ownership: &entity.DocumentOwnership{
-				DocumentID: "doc-1",
-				UserID:     "owner-user-id",
-			},
+			versions: []entity.VersionInfo{}, // No versions for this user
 		}
 		uc := NewGetVersionsUseCase(mock)
-		result, err := uc.Execute(context.Background(), GetVersionsInput{
+		_, err := uc.Execute(context.Background(), GetVersionsInput{
 			AnalysisID: "analysis-1",
 			Language:   "Korean",
-			UserID:     "owner-user-id",
+			UserID:     "user-b",
 		})
-		if err != nil {
-			t.Fatalf("Execute() error = %v", err)
-		}
-		if len(result.Versions) != 2 {
-			t.Errorf("Execute() Versions length = %d, want 2", len(result.Versions))
+		if !errors.Is(err, domain.ErrDocumentNotFound) {
+			t.Errorf("Execute() error = %v, want %v", err, domain.ErrDocumentNotFound)
 		}
 	})
 }

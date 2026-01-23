@@ -227,13 +227,3 @@ SELECT
     sd.created_at
 FROM spec_documents sd
 WHERE sd.analysis_id = @analysis_id AND sd.user_id = @user_id AND sd.language = @language AND sd.version = @version;
-
--- name: CheckSpecDocumentOwnership :one
--- Returns the first document owner for the given analysis (ordered by creation time)
-SELECT
-    sd.id,
-    sd.user_id
-FROM spec_documents sd
-WHERE sd.analysis_id = $1
-ORDER BY sd.created_at ASC
-LIMIT 1;

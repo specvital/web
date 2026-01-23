@@ -31,10 +31,6 @@ func (m *mockSpecViewRepository) CheckSpecDocumentExistsByLanguage(_ context.Con
 	return m.documentExists, m.documentErr
 }
 
-func (m *mockSpecViewRepository) CheckSpecDocumentOwnership(_ context.Context, _ string) (*entity.DocumentOwnership, error) {
-	return nil, nil
-}
-
 func (m *mockSpecViewRepository) GetAvailableLanguages(_ context.Context, _ string) ([]entity.AvailableLanguageInfo, error) {
 	return nil, nil
 }
