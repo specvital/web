@@ -561,14 +561,20 @@
     },
     "dropdown": {
       "title": "Tasks",
-      "processing": "Processing {time}",
-      "queued": "Queued",
       "viewPage": "View",
-      "moreCount": "+{count} more"
+      "viewAll": "+{count} more - View all"
+    },
+    "status": {
+      "processing": "Processing {time}",
+      "queued": "Queued"
     },
     "taskType": {
       "analysis": "Analysis",
       "spec-generation": "Spec Generation"
+    },
+    "activeTasks": {
+      "title": "Active Tasks",
+      "viewTask": "View"
     }
   },
   "account": {

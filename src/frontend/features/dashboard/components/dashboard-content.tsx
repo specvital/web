@@ -15,13 +15,14 @@ import {
   useRemoveBookmark,
 } from "../hooks";
 import { useBookmarkFilter } from "../hooks/use-bookmark-filter";
+import { useOwnershipFilter } from "../hooks/use-ownership-filter";
 import type { SortOption } from "../types";
+import { ActiveTasksSection } from "./active-tasks-section";
 import { EmptyStateVariant } from "./empty-state-variant";
 import { FilterBar } from "./filter-bar";
 import { InfiniteScrollLoader } from "./infinite-scroll-loader";
 import { RepositoryList } from "./repository-list";
 import { SummarySection } from "./summary-section";
-import { useOwnershipFilter } from "../hooks/use-ownership-filter";
 
 export const DashboardContent = () => {
   const t = useTranslations("dashboard");
@@ -99,6 +100,8 @@ export const DashboardContent = () => {
   return (
     <div className="space-y-8">
       <SummarySection />
+
+      <ActiveTasksSection />
 
       <FilterBar
         hasNextPage={hasNextPage && !bookmarkOnly}

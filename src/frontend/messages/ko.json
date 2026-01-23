@@ -561,14 +561,20 @@
     },
     "dropdown": {
       "title": "작업",
-      "processing": "처리 중 {time}",
-      "queued": "대기 중",
       "viewPage": "보기",
-      "moreCount": "+{count}개 더"
+      "viewAll": "+{count}개 더 - 전체 보기"
+    },
+    "status": {
+      "processing": "처리 중 {time}",
+      "queued": "대기 중"
     },
     "taskType": {
       "analysis": "분석",
       "spec-generation": "스펙 생성"
+    },
+    "activeTasks": {
+      "title": "진행 중인 작업",
+      "viewTask": "보기"
     }
   },
   "account": {

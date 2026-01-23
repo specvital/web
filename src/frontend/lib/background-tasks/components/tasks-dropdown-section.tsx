@@ -1,87 +1,14 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
 
 import { useBackgroundTasks } from "../hooks";
-import type { BackgroundTask, BackgroundTaskStatus } from "../task-store";
-
-const formatElapsedTime = (startedAt: string | null): string => {
-  if (!startedAt) return "";
-
-  const elapsed = Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
-
-  if (elapsed < 60) {
-    return `${elapsed}s`;
-  }
-
-  const minutes = Math.floor(elapsed / 60);
-  const seconds = elapsed % 60;
-  return `${minutes}m ${seconds}s`;
-};
-
-const getTaskPageUrl = (task: BackgroundTask): string | null => {
-  const { analysisId, owner, repo } = task.metadata;
-
-  if (task.type === "spec-generation" && analysisId && owner && repo) {
-    return `/analyze/${owner}/${repo}?tab=spec`;
-  }
-
-  if (task.type === "analysis" && owner && repo) {
-    return `/analyze/${owner}/${repo}`;
-  }
-
-  return null;
-};
-
-type TaskStatusBadgeProps = {
-  startedAt: string | null;
-  status: BackgroundTaskStatus;
-};
-
-const TaskStatusBadge = ({ startedAt, status }: TaskStatusBadgeProps) => {
-  const t = useTranslations("backgroundTasks.dropdown");
-  const [elapsed, setElapsed] = useState(() => formatElapsedTime(startedAt));
-
-  // Reset elapsed when startedAt changes
-  useEffect(() => {
-    setElapsed(formatElapsedTime(startedAt));
-  }, [startedAt]);
-
-  useEffect(() => {
-    if (status !== "processing" || !startedAt) return;
-
-    const interval = setInterval(() => {
-      setElapsed(formatElapsedTime(startedAt));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [status, startedAt]);
-
-  if (status === "processing") {
-    return (
-      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Loader2 className="size-3 animate-spin" />
-        {t("processing", { time: elapsed })}
-      </span>
-    );
-  }
-
-  if (status === "queued") {
-    return (
-      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-        <span className="size-1.5 rounded-full bg-amber-500" />
-        {t("queued")}
-      </span>
-    );
-  }
-
-  return null;
-};
+import type { BackgroundTask } from "../task-store";
+import { getTaskPageUrl } from "../utils";
+import { TaskStatusBadge } from "./task-status-badge";
 
 type TaskItemProps = {
   task: BackgroundTask;
@@ -137,7 +64,7 @@ export const TasksDropdownSection = ({ className }: TasksDropdownSectionProps) =
     return null;
   }
 
-  const MAX_DISPLAY_TASKS = 5;
+  const MAX_DISPLAY_TASKS = 3;
   const displayedTasks = activeTasks.slice(0, MAX_DISPLAY_TASKS);
   const remainingCount = activeTasks.length - MAX_DISPLAY_TASKS;
 
@@ -150,11 +77,13 @@ export const TasksDropdownSection = ({ className }: TasksDropdownSectionProps) =
         <TaskItem key={task.id} task={task} />
       ))}
       {remainingCount > 0 && (
-        <div className="px-2 py-1.5">
-          <p className="text-xs text-muted-foreground">
-            {t("moreCount", { count: remainingCount })}
-          </p>
-        </div>
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href="/dashboard?section=tasks">
+            <span className="text-xs text-muted-foreground">
+              {t("viewAll", { count: remainingCount })}
+            </span>
+          </Link>
+        </DropdownMenuItem>
       )}
       <DropdownMenuSeparator />
     </div>

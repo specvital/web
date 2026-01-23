@@ -20,11 +20,13 @@ vi.mock("@/i18n/navigation", () => ({
 const messages = {
   backgroundTasks: {
     dropdown: {
-      noTasks: "No tasks running",
+      title: "Tasks",
+      viewAll: "+{count} more - View all",
+      viewPage: "View",
+    },
+    status: {
       processing: "Processing {time}",
       queued: "Queued",
-      title: "Tasks",
-      viewPage: "View",
     },
     taskType: {
       analysis: "Analysis",

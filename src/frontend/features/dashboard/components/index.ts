@@ -1,3 +1,4 @@
+export { ActiveTasksSection } from "./active-tasks-section";
 export { DashboardContent } from "./dashboard-content";
 export { DiscoveryCard } from "./discovery-card";
 export { DiscoveryListSheet } from "./discovery-list-sheet";

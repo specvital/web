@@ -1,5 +1,5 @@
 // Components
-export { TaskBadge, TasksDropdownSection } from "./components";
+export { TaskBadge, TasksDropdownSection, TaskStatusBadge } from "./components";
 
 // Task store hooks
 export { useActiveTaskCount, useBackgroundTask, useBackgroundTasks } from "./hooks";
