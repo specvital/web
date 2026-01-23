@@ -12,10 +12,10 @@ export const useTruncateDetection = <T extends HTMLElement>() => {
       setIsTruncated(truncated);
     };
 
-    // 레이아웃 안정화를 위해 짧은 지연 후 체크
+    // Delay check for layout stabilization
     const timeoutId = setTimeout(checkTruncation, 100);
 
-    // window resize 시 재체크
+    // Recheck on window resize
     window.addEventListener("resize", checkTruncation);
 
     return () => {

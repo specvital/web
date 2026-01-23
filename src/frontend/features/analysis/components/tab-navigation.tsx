@@ -55,13 +55,13 @@ export const TabNavigation = ({ activeTab, onTabChange }: TabNavigationProps) =>
               "group relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
               "transition-all duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-              // 기본 탭 스타일
+              // Default tab style
               !tab.isAI && [
                 isActive
                   ? "bg-muted text-foreground"
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
               ],
-              // AI 탭 스타일
+              // AI tab style
               tab.isAI && [
                 isActive
                   ? [
@@ -86,7 +86,7 @@ export const TabNavigation = ({ activeTab, onTabChange }: TabNavigationProps) =>
             role="tab"
             type="button"
           >
-            {/* 아이콘 */}
+            {/* Icon */}
             <span
               className={cn(
                 "transition-all duration-200",
@@ -100,10 +100,10 @@ export const TabNavigation = ({ activeTab, onTabChange }: TabNavigationProps) =>
               {tab.icon}
             </span>
 
-            {/* 라벨 */}
+            {/* Label */}
             <span>{tab.label}</span>
 
-            {/* AI 배지 */}
+            {/* AI badge */}
             {tab.isAI && (
               <span
                 aria-hidden="true"

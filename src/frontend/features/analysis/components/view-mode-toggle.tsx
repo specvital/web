@@ -22,7 +22,7 @@ export const ViewModeToggle = ({ onChange, value }: ViewModeToggleProps) => {
     onChange(newValue as ViewMode);
   };
 
-  // Document 뷰일 때 토글은 선택 해제 상태로 표시
+  // Show toggle as deselected when in document view
   const toggleValue = value === "document" ? undefined : value;
 
   return (
