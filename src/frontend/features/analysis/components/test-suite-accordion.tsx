@@ -45,30 +45,70 @@ export const TestSuiteAccordion = ({ suite }: TestSuiteAccordionProps) => {
             : `Expand ${suite.filePath} test suite`
         }
         className={cn(
-          "flex w-full items-center gap-3 px-4 py-3 rounded-t-lg",
+          "w-full px-4 py-3 rounded-t-lg",
           "transition-all duration-200 ease-in-out",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isExpanded ? "bg-accent/40 hover:bg-accent/60" : "hover:bg-muted/70"
         )}
         onClick={toggleExpanded}
       >
-        {isExpanded ? (
-          <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200" />
-        ) : (
-          <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200" />
-        )}
-        <FileText className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-        <span className={cn("flex-1 text-left text-sm font-medium", !isExpanded && "truncate")}>
-          {suite.filePath}
-          {suite.suiteName && (
-            <span className="ml-2 text-muted-foreground font-normal">› {suite.suiteName}</span>
+        {/* Desktop: single row */}
+        <div className="hidden sm:flex items-center gap-3">
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200" />
+          ) : (
+            <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200" />
           )}
-        </span>
-        <FrameworkBadge framework={suite.framework} />
-        <StatusMiniBar counts={statusCounts} />
-        <span className="text-xs text-muted-foreground flex-shrink-0">
-          {t("testCount", { count: testCount })}
-        </span>
+          <FileText className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+          <span
+            className={cn(
+              "min-w-0 flex-1 text-left text-sm font-medium",
+              !isExpanded && "truncate"
+            )}
+            title={suite.filePath + (suite.suiteName ? ` › ${suite.suiteName}` : "")}
+          >
+            {suite.filePath}
+            {suite.suiteName && (
+              <span className="ml-2 text-muted-foreground font-normal">› {suite.suiteName}</span>
+            )}
+          </span>
+          <FrameworkBadge framework={suite.framework} />
+          <StatusMiniBar counts={statusCounts} />
+          <span className="text-xs text-muted-foreground flex-shrink-0">
+            {t("testCount", { count: testCount })}
+          </span>
+        </div>
+        {/* Mobile: icon area + content area */}
+        <div className="sm:hidden flex items-start gap-3">
+          {/* Icon area - top aligned */}
+          <div className="flex items-center gap-2 pt-0.5">
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200" />
+            ) : (
+              <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200" />
+            )}
+            <FileText className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+          </div>
+          {/* Content area */}
+          <div className="min-w-0 flex-1">
+            <span
+              className={cn("block text-left text-sm font-medium", !isExpanded && "truncate")}
+              title={suite.filePath + (suite.suiteName ? ` › ${suite.suiteName}` : "")}
+            >
+              {suite.filePath}
+              {suite.suiteName && (
+                <span className="ml-2 text-muted-foreground font-normal">› {suite.suiteName}</span>
+              )}
+            </span>
+            <div className="mt-1.5 flex items-center gap-2">
+              <FrameworkBadge framework={suite.framework} />
+              <StatusMiniBar counts={statusCounts} />
+              <span className="text-xs text-muted-foreground">
+                {t("testCount", { count: testCount })}
+              </span>
+            </div>
+          </div>
+        </div>
       </button>
 
       <AnimatePresence initial={false}>
