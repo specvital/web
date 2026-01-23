@@ -581,7 +581,26 @@
     "title": "검색",
     "description": "페이지, 리포지토리, 명령을 검색합니다.",
     "placeholder": "검색...",
-    "noResults": "검색 결과가 없습니다"
+    "noResults": "검색 결과가 없습니다",
+    "categories": {
+      "navigation": "페이지 이동",
+      "commands": "명령"
+    },
+    "hints": {
+      "navigate": "이동",
+      "select": "선택",
+      "close": "닫기"
+    },
+    "actions": {
+      "goToDashboard": "대시보드로 이동",
+      "goToExplore": "탐색으로 이동",
+      "goToAccount": "계정으로 이동",
+      "goToPricing": "요금제로 이동",
+      "goToHome": "홈으로 이동",
+      "newAnalysis": "새 분석 시작",
+      "switchToLight": "라이트 모드로 전환",
+      "switchToDark": "다크 모드로 전환"
+    }
   },
   "account": {
     "title": "계정",

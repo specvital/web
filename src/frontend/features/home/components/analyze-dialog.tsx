@@ -19,12 +19,23 @@ import { UrlInputForm } from "./url-input-form";
 
 type AnalyzeDialogProps = {
   children?: ReactNode;
+  onOpenChange?: (open: boolean) => void;
+  open?: boolean;
   variant?: "header" | "empty-state";
 };
 
-export const AnalyzeDialog = ({ children, variant = "header" }: AnalyzeDialogProps) => {
+export const AnalyzeDialog = ({
+  children,
+  onOpenChange,
+  open,
+  variant = "header",
+}: AnalyzeDialogProps) => {
   const t = useTranslations("analyzeDialog");
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+  const setIsOpen = isControlled ? onOpenChange : setInternalOpen;
 
   const defaultTrigger =
     variant === "header" ? (
@@ -39,15 +50,23 @@ export const AnalyzeDialog = ({ children, variant = "header" }: AnalyzeDialogPro
       </Button>
     );
 
+  const handleOpenChange = (value: boolean) => {
+    setIsOpen?.(value);
+  };
+
+  const handleSuccess = () => {
+    setIsOpen?.(false);
+  };
+
   return (
-    <Dialog onOpenChange={setIsOpen} open={isOpen}>
-      <DialogTrigger asChild>{children ?? defaultTrigger}</DialogTrigger>
+    <Dialog onOpenChange={handleOpenChange} open={isOpen}>
+      {!isControlled && <DialogTrigger asChild>{children ?? defaultTrigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
-        <UrlInputForm onSuccess={() => setIsOpen(false)} />
+        <UrlInputForm onSuccess={handleSuccess} />
       </DialogContent>
     </Dialog>
   );

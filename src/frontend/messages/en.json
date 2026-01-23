@@ -581,7 +581,26 @@
     "title": "Search",
     "description": "Search pages, repositories, and commands.",
     "placeholder": "Search...",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "categories": {
+      "navigation": "Navigation",
+      "commands": "Commands"
+    },
+    "hints": {
+      "navigate": "Navigate",
+      "select": "Select",
+      "close": "Close"
+    },
+    "actions": {
+      "goToDashboard": "Go to Dashboard",
+      "goToExplore": "Go to Explore",
+      "goToAccount": "Go to Account",
+      "goToPricing": "Go to Pricing",
+      "goToHome": "Go to Home",
+      "newAnalysis": "Start New Analysis",
+      "switchToLight": "Switch to Light Mode",
+      "switchToDark": "Switch to Dark Mode"
+    }
   },
   "account": {
     "title": "Account",
