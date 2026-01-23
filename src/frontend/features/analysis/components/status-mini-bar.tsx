@@ -17,11 +17,18 @@ export const StatusMiniBar = ({ className, counts }: StatusMiniBarProps) => {
     return null;
   }
 
-  const activePercent = (active / total) * 100;
-  const skippedPercent = (skipped / total) * 100;
-  const todoPercent = (todo / total) * 100;
+  const segments = [
+    { colorClass: "bg-status-active", count: active, label: "active" },
+    { colorClass: "bg-status-focused", count: focused, label: "focused" },
+    { colorClass: "bg-status-skipped", count: skipped, label: "skipped" },
+    { colorClass: "bg-status-xfail", count: xfail, label: "xfail" },
+    { colorClass: "bg-status-todo", count: todo, label: "todo" },
+  ];
 
-  const ariaLabel = `${active} active, ${skipped} skipped, ${todo} todo out of ${total} tests`;
+  const ariaLabel = segments
+    .map((s) => `${s.count} ${s.label}`)
+    .join(", ")
+    .concat(` out of ${total} tests`);
 
   return (
     <div
@@ -29,13 +36,16 @@ export const StatusMiniBar = ({ className, counts }: StatusMiniBarProps) => {
       className={cn("flex h-1.5 w-16 overflow-hidden rounded-full bg-muted", className)}
       role="img"
     >
-      {activePercent > 0 && (
-        <div className="bg-status-active" style={{ width: `${activePercent}%` }} />
+      {segments.map(
+        (segment) =>
+          segment.count > 0 && (
+            <div
+              className={segment.colorClass}
+              key={segment.label}
+              style={{ width: `${(segment.count / total) * 100}%` }}
+            />
+          )
       )}
-      {skippedPercent > 0 && (
-        <div className="bg-status-skipped" style={{ width: `${skippedPercent}%` }} />
-      )}
-      {todoPercent > 0 && <div className="bg-status-todo" style={{ width: `${todoPercent}%` }} />}
     </div>
   );
 };
