@@ -17,6 +17,7 @@ import {
   UnauthorizedError,
 } from "../api";
 import type {
+  BehaviorCacheStats,
   SpecDocument,
   SpecDocumentResponse,
   SpecGenerationStatusEnum,
@@ -66,6 +67,7 @@ export type AccessErrorType = "unauthorized" | "forbidden" | null;
 
 type UseSpecViewReturn = {
   accessError: AccessErrorType;
+  behaviorCacheStats: BehaviorCacheStats | undefined;
   currentLanguage: SpecLanguage | undefined;
   data: SpecDocument | null;
   error: Error | null;
@@ -236,8 +238,9 @@ export const useSpecView = (
     Date.now() - pollingStartTimeRef.current > MAX_POLLING_DURATION_MS &&
     isActiveGeneration;
 
-  // Extract language from completed document data
+  // Extract language and cache stats from completed document data
   const currentLanguage = data?.language;
+  const behaviorCacheStats = data?.behaviorCacheStats;
 
   // Compute unified generation state
   // Note: serverStatus takes priority over data existence for regeneration scenarios
@@ -259,6 +262,7 @@ export const useSpecView = (
 
   return {
     accessError,
+    behaviorCacheStats,
     currentLanguage,
     data,
     error: query.error || generateMutation.error,

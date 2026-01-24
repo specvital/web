@@ -26,12 +26,14 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
+import { CacheStatsIndicator } from "./cache-stats-indicator";
 import { StatusLegend } from "./status-legend";
 import { SPEC_LANGUAGES } from "../constants/spec-languages";
-import type { SpecDocument, SpecLanguage, VersionInfo } from "../types";
+import type { BehaviorCacheStats, SpecDocument, SpecLanguage, VersionInfo } from "../types";
 import { calculateDocumentStats } from "../utils/stats";
 
 type ExecutiveSummaryProps = {
+  behaviorCacheStats?: BehaviorCacheStats;
   document: SpecDocument;
   isGeneratingOtherLanguage?: boolean;
   isLoadingVersions?: boolean;
@@ -52,6 +54,7 @@ const formatShortDate = (dateString: string): string => {
 };
 
 export const ExecutiveSummary = ({
+  behaviorCacheStats,
   document,
   isGeneratingOtherLanguage = false,
   isLoadingVersions = false,
@@ -100,6 +103,7 @@ export const ExecutiveSummary = ({
             <CardTitle className="text-lg">{t("executiveSummary.title")}</CardTitle>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {behaviorCacheStats && <CacheStatsIndicator stats={behaviorCacheStats} />}
             {currentLanguage && canSwitchLanguage ? (
               <DropdownMenu>
                 <Tooltip>

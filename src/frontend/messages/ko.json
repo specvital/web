@@ -401,6 +401,13 @@
         "description": "스펙 문서 생성 중 오류가 발생했습니다."
       }
     },
+    "cacheStats": {
+      "summary": "{total}개 테스트 중 {cached}개 캐시 사용 ({rate}%)",
+      "allFromCache": "모든 테스트가 캐시에서 로드됨",
+      "costSaved": "AI 호출 {saved}회 절감",
+      "generatedCount": "AI가 새로 생성한 테스트 {count}개",
+      "badgeLabel": "캐시 {rate}%"
+    },
     "accessError": {
       "unauthorized": {
         "title": "로그인 필요",

@@ -16,6 +16,7 @@ export type SpecFeature = components["schemas"]["SpecFeature"];
 export type SpecBehavior = components["schemas"]["SpecBehavior"];
 export type SpecBehaviorSourceInfo = components["schemas"]["SpecBehaviorSourceInfo"];
 export type SpecLanguage = components["schemas"]["SpecLanguage"];
+export type BehaviorCacheStats = components["schemas"]["BehaviorCacheStats"];
 
 // Response types
 export type SpecDocumentResponse = components["schemas"]["SpecDocumentResponse"];

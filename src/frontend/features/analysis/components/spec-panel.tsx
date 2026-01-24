@@ -70,6 +70,7 @@ export const SpecPanel = ({
   // Spec view - pass pendingLanguage to poll correct status during generation
   const {
     accessError,
+    behaviorCacheStats,
     data: specDocument,
     generationState,
     isFetching,
@@ -325,6 +326,7 @@ export const SpecPanel = ({
       }
       return (
         <DocumentView
+          behaviorCacheStats={behaviorCacheStats}
           document={specDocument}
           isGeneratingOtherLanguage={isGeneratingOtherLanguage}
           isLoadingVersions={isLoadingVersions}

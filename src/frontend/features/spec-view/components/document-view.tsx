@@ -8,9 +8,10 @@ import { TocSidebar } from "./toc-sidebar";
 import { VirtualizedDocumentView } from "./virtualized-document-view";
 import { DocumentNavigationProvider } from "../contexts";
 import { useDocumentFilter } from "../hooks/use-document-filter";
-import type { SpecDocument, SpecLanguage, VersionInfo } from "../types";
+import type { BehaviorCacheStats, SpecDocument, SpecLanguage, VersionInfo } from "../types";
 
 type DocumentViewProps = {
+  behaviorCacheStats?: BehaviorCacheStats;
   document: SpecDocument;
   isGeneratingOtherLanguage?: boolean;
   isLoadingVersions?: boolean;
@@ -24,6 +25,7 @@ type DocumentViewProps = {
 };
 
 export const DocumentView = ({
+  behaviorCacheStats,
   document,
   isGeneratingOtherLanguage,
   isLoadingVersions,
@@ -48,6 +50,7 @@ export const DocumentView = ({
 
         <div className="flex-1 space-y-6 min-w-0">
           <ExecutiveSummary
+            behaviorCacheStats={behaviorCacheStats}
             document={document}
             isGeneratingOtherLanguage={isGeneratingOtherLanguage}
             isLoadingVersions={isLoadingVersions}

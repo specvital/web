@@ -1,4 +1,5 @@
 export { BehaviorItem } from "./behavior-item";
+export { CacheStatsIndicator } from "./cache-stats-indicator";
 export { DocumentView } from "./document-view";
 export { DomainSection } from "./domain-section";
 export { DomainStatsBadge } from "./domain-stats-badge";
