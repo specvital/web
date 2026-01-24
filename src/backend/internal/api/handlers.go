@@ -55,8 +55,10 @@ type GitHubAppHandlers interface {
 type SpecViewHandlers interface {
 	GetSpecCacheAvailability(ctx context.Context, request GetSpecCacheAvailabilityRequestObject) (GetSpecCacheAvailabilityResponseObject, error)
 	GetSpecDocument(ctx context.Context, request GetSpecDocumentRequestObject) (GetSpecDocumentResponseObject, error)
+	GetSpecDocumentByRepository(ctx context.Context, request GetSpecDocumentByRepositoryRequestObject) (GetSpecDocumentByRepositoryResponseObject, error)
 	GetSpecGenerationStatus(ctx context.Context, request GetSpecGenerationStatusRequestObject) (GetSpecGenerationStatusResponseObject, error)
 	GetSpecVersions(ctx context.Context, request GetSpecVersionsRequestObject) (GetSpecVersionsResponseObject, error)
+	GetVersionHistoryByRepository(ctx context.Context, request GetVersionHistoryByRepositoryRequestObject) (GetVersionHistoryByRepositoryResponseObject, error)
 	RequestSpecGeneration(ctx context.Context, request RequestSpecGenerationRequestObject) (RequestSpecGenerationResponseObject, error)
 }
 
@@ -307,4 +309,22 @@ func (h *APIHandlers) GetPricing(ctx context.Context, request GetPricingRequestO
 		}, nil
 	}
 	return h.pricing.GetPricing(ctx, request)
+}
+
+func (h *APIHandlers) GetSpecDocumentByRepository(ctx context.Context, request GetSpecDocumentByRepositoryRequestObject) (GetSpecDocumentByRepositoryResponseObject, error) {
+	if h.specView == nil {
+		return GetSpecDocumentByRepository500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View feature not configured"),
+		}, nil
+	}
+	return h.specView.GetSpecDocumentByRepository(ctx, request)
+}
+
+func (h *APIHandlers) GetVersionHistoryByRepository(ctx context.Context, request GetVersionHistoryByRepositoryRequestObject) (GetVersionHistoryByRepositoryResponseObject, error) {
+	if h.specView == nil {
+		return GetVersionHistoryByRepository500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View feature not configured"),
+		}, nil
+	}
+	return h.specView.GetVersionHistoryByRepository(ctx, request)
 }

@@ -72,6 +72,22 @@ func (m *mockCacheAvailabilityRepository) GetLanguagesWithPreviousSpec(_ context
 	return m.langsWithPreviousSpec, m.langsWithPreviousErr
 }
 
+func (m *mockCacheAvailabilityRepository) CheckCodebaseExists(_ context.Context, _, _ string) (bool, error) {
+	return false, nil
+}
+func (m *mockCacheAvailabilityRepository) GetSpecDocumentByRepository(_ context.Context, _, _, _, _ string) (*entity.RepoSpecDocument, error) {
+	return nil, nil
+}
+func (m *mockCacheAvailabilityRepository) GetSpecDocumentByRepositoryAndVersion(_ context.Context, _, _, _, _ string, _ int) (*entity.RepoSpecDocument, error) {
+	return nil, nil
+}
+func (m *mockCacheAvailabilityRepository) GetVersionHistoryByRepository(_ context.Context, _, _, _, _ string) ([]entity.RepoVersionInfo, error) {
+	return nil, nil
+}
+func (m *mockCacheAvailabilityRepository) GetAvailableLanguagesByRepository(_ context.Context, _, _, _ string) ([]entity.AvailableLanguageInfo, error) {
+	return nil, nil
+}
+
 func TestGetCacheAvailabilityUseCase_Execute(t *testing.T) {
 	t.Run("returns ErrUnauthorized when userID is empty", func(t *testing.T) {
 		uc := NewGetCacheAvailabilityUseCase(&mockCacheAvailabilityRepository{})

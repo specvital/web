@@ -50,6 +50,16 @@ const (
 	ProPlus    PlanTier = "pro_plus"
 )
 
+// Defines values for RepoSpecDocumentCompletedStatus.
+const (
+	Completed RepoSpecDocumentCompletedStatus = "completed"
+)
+
+// Defines values for RepoSpecDocumentEmptyStatus.
+const (
+	Empty RepoSpecDocumentEmptyStatus = "empty"
+)
+
 // Defines values for SortByParam.
 const (
 	Name   SortByParam = "name"
@@ -603,6 +613,98 @@ type RateLimitInfo struct {
 type RefreshResponse struct {
 	// Success Token refresh operation result
 	Success bool `json:"success"`
+}
+
+// RepoSpecDocument Spec document with repository context (includes commit SHA)
+type RepoSpecDocument struct {
+	// AnalysisID Analysis ID this document belongs to
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+
+	// AvailableLanguages Available languages for this repository
+	AvailableLanguages *[]AvailableLanguageInfo `json:"availableLanguages,omitempty"`
+	BehaviorCacheStats *BehaviorCacheStats      `json:"behaviorCacheStats,omitempty"`
+
+	// CommitSHA Git commit SHA at the time of analysis
+	CommitSHA string `json:"commitSha"`
+
+	// CreatedAt When this document was created
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Domains Specification domains (top-level hierarchy)
+	Domains []SpecDomain `json:"domains"`
+
+	// ExecutiveSummary AI-generated executive summary
+	ExecutiveSummary *string `json:"executiveSummary,omitempty"`
+
+	// ID Spec document ID
+	ID openapi_types.UUID `json:"id"`
+
+	// Language Target language for spec document generation (24 languages supported)
+	Language SpecLanguage `json:"language"`
+
+	// ModelID AI model ID used for generation
+	ModelID *string `json:"modelId,omitempty"`
+
+	// Version Version number within same language
+	Version int `json:"version"`
+}
+
+// RepoSpecDocumentCompleted defines model for RepoSpecDocumentCompleted.
+type RepoSpecDocumentCompleted struct {
+	// Data Spec document with repository context (includes commit SHA)
+	Data   RepoSpecDocument                `json:"data"`
+	Status RepoSpecDocumentCompletedStatus `json:"status"`
+}
+
+// RepoSpecDocumentCompletedStatus defines model for RepoSpecDocumentCompleted.Status.
+type RepoSpecDocumentCompletedStatus string
+
+// RepoSpecDocumentEmpty defines model for RepoSpecDocumentEmpty.
+type RepoSpecDocumentEmpty struct {
+	// Message Message explaining why no spec document exists
+	Message *string                     `json:"message,omitempty"`
+	Status  RepoSpecDocumentEmptyStatus `json:"status"`
+}
+
+// RepoSpecDocumentEmptyStatus defines model for RepoSpecDocumentEmpty.Status.
+type RepoSpecDocumentEmptyStatus string
+
+// RepoSpecDocumentResponse Response for repository-based spec document query
+type RepoSpecDocumentResponse struct {
+	union json.RawMessage
+}
+
+// RepoVersionHistoryResponse defines model for RepoVersionHistoryResponse.
+type RepoVersionHistoryResponse struct {
+	// Data List of versions across all analyses, ordered by creation date descending
+	Data []RepoVersionInfo `json:"data"`
+
+	// Language Target language for spec document generation (24 languages supported)
+	Language SpecLanguage `json:"language"`
+}
+
+// RepoVersionInfo Version info with commit SHA for repository-based queries
+type RepoVersionInfo struct {
+	// AnalysisID Analysis ID this version belongs to
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+
+	// CommitSHA Git commit SHA at the time of analysis
+	CommitSHA string `json:"commitSha"`
+
+	// CreatedAt When this version was created
+	CreatedAt time.Time `json:"createdAt"`
+
+	// ID Spec document ID
+	ID openapi_types.UUID `json:"id"`
+
+	// Language Target language for spec document generation (24 languages supported)
+	Language *SpecLanguage `json:"language,omitempty"`
+
+	// ModelID AI model ID used for this version
+	ModelID *string `json:"modelId,omitempty"`
+
+	// Version Version number
+	Version int `json:"version"`
 }
 
 // RepositoryCard defines model for RepositoryCard.
@@ -1180,6 +1282,21 @@ type GetRecentRepositoriesParams struct {
 	Ownership *OwnershipFilterParam `form:"ownership,omitempty" json:"ownership,omitempty"`
 }
 
+// GetSpecDocumentByRepositoryParams defines parameters for GetSpecDocumentByRepository.
+type GetSpecDocumentByRepositoryParams struct {
+	// Language Filter by language. If not specified, returns the most recent document.
+	Language *SpecLanguage `form:"language,omitempty" json:"language,omitempty"`
+
+	// Version Specific version number to retrieve. If not specified, returns the latest version.
+	Version *int `form:"version,omitempty" json:"version,omitempty"`
+}
+
+// GetVersionHistoryByRepositoryParams defines parameters for GetVersionHistoryByRepository.
+type GetVersionHistoryByRepositoryParams struct {
+	// Language Language to get version history for
+	Language SpecLanguage `form:"language" json:"language"`
+}
+
 // GetSpecGenerationStatusParams defines parameters for GetSpecGenerationStatus.
 type GetSpecGenerationStatusParams struct {
 	// Language Language to check status for (e.g., English, Korean)
@@ -1413,6 +1530,95 @@ func (t *AnalysisResponse) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsRepoSpecDocumentCompleted returns the union data inside the RepoSpecDocumentResponse as a RepoSpecDocumentCompleted
+func (t RepoSpecDocumentResponse) AsRepoSpecDocumentCompleted() (RepoSpecDocumentCompleted, error) {
+	var body RepoSpecDocumentCompleted
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRepoSpecDocumentCompleted overwrites any union data inside the RepoSpecDocumentResponse as the provided RepoSpecDocumentCompleted
+func (t *RepoSpecDocumentResponse) FromRepoSpecDocumentCompleted(v RepoSpecDocumentCompleted) error {
+	v.Status = "completed"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRepoSpecDocumentCompleted performs a merge with any union data inside the RepoSpecDocumentResponse, using the provided RepoSpecDocumentCompleted
+func (t *RepoSpecDocumentResponse) MergeRepoSpecDocumentCompleted(v RepoSpecDocumentCompleted) error {
+	v.Status = "completed"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRepoSpecDocumentEmpty returns the union data inside the RepoSpecDocumentResponse as a RepoSpecDocumentEmpty
+func (t RepoSpecDocumentResponse) AsRepoSpecDocumentEmpty() (RepoSpecDocumentEmpty, error) {
+	var body RepoSpecDocumentEmpty
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRepoSpecDocumentEmpty overwrites any union data inside the RepoSpecDocumentResponse as the provided RepoSpecDocumentEmpty
+func (t *RepoSpecDocumentResponse) FromRepoSpecDocumentEmpty(v RepoSpecDocumentEmpty) error {
+	v.Status = "empty"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRepoSpecDocumentEmpty performs a merge with any union data inside the RepoSpecDocumentResponse, using the provided RepoSpecDocumentEmpty
+func (t *RepoSpecDocumentResponse) MergeRepoSpecDocumentEmpty(v RepoSpecDocumentEmpty) error {
+	v.Status = "empty"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RepoSpecDocumentResponse) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"status"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t RepoSpecDocumentResponse) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "completed":
+		return t.AsRepoSpecDocumentCompleted()
+	case "empty":
+		return t.AsRepoSpecDocumentEmpty()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t RepoSpecDocumentResponse) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RepoSpecDocumentResponse) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsSpecDocumentCompleted returns the union data inside the SpecDocumentResponse as a SpecDocumentCompleted
 func (t SpecDocumentResponse) AsSpecDocumentCompleted() (SpecDocumentCompleted, error) {
 	var body SpecDocumentCompleted
@@ -1552,6 +1758,12 @@ type ServerInterface interface {
 	// Request spec document generation
 	// (POST /api/spec-view/generate)
 	RequestSpecGeneration(w http.ResponseWriter, r *http.Request)
+	// Get latest spec document for a repository
+	// (GET /api/spec-view/repository/{owner}/{repo})
+	GetSpecDocumentByRepository(w http.ResponseWriter, r *http.Request, owner string, repo string, params GetSpecDocumentByRepositoryParams)
+	// Get version history for a repository across all analyses
+	// (GET /api/spec-view/repository/{owner}/{repo}/versions)
+	GetVersionHistoryByRepository(w http.ResponseWriter, r *http.Request, owner string, repo string, params GetVersionHistoryByRepositoryParams)
 	// Get spec generation status
 	// (GET /api/spec-view/status/{analysisId})
 	GetSpecGenerationStatus(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecGenerationStatusParams)
@@ -1699,6 +1911,18 @@ func (_ Unimplemented) GetUpdateStatus(w http.ResponseWriter, r *http.Request, o
 // Request spec document generation
 // (POST /api/spec-view/generate)
 func (_ Unimplemented) RequestSpecGeneration(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get latest spec document for a repository
+// (GET /api/spec-view/repository/{owner}/{repo})
+func (_ Unimplemented) GetSpecDocumentByRepository(w http.ResponseWriter, r *http.Request, owner string, repo string, params GetSpecDocumentByRepositoryParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get version history for a repository across all analyses
+// (GET /api/spec-view/repository/{owner}/{repo}/versions)
+func (_ Unimplemented) GetVersionHistoryByRepository(w http.ResponseWriter, r *http.Request, owner string, repo string, params GetVersionHistoryByRepositoryParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2284,6 +2508,123 @@ func (siw *ServerInterfaceWrapper) RequestSpecGeneration(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RequestSpecGeneration(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpecDocumentByRepository operation middleware
+func (siw *ServerInterfaceWrapper) GetSpecDocumentByRepository(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "owner" -------------
+	var owner string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "repo" -------------
+	var repo string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "repo", chi.URLParam(r, "repo"), &repo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetSpecDocumentByRepositoryParams
+
+	// ------------- Optional query parameter "language" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "language", r.URL.Query(), &params.Language)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "version" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "version", r.URL.Query(), &params.Version)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpecDocumentByRepository(w, r, owner, repo, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetVersionHistoryByRepository operation middleware
+func (siw *ServerInterfaceWrapper) GetVersionHistoryByRepository(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "owner" -------------
+	var owner string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "repo" -------------
+	var repo string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "repo", chi.URLParam(r, "repo"), &repo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetVersionHistoryByRepositoryParams
+
+	// ------------- Required query parameter "language" -------------
+
+	if paramValue := r.URL.Query().Get("language"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "language"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "language", r.URL.Query(), &params.Language)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetVersionHistoryByRepository(w, r, owner, repo, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3012,6 +3353,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/spec-view/generate", wrapper.RequestSpecGeneration)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/spec-view/repository/{owner}/{repo}", wrapper.GetSpecDocumentByRepository)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/spec-view/repository/{owner}/{repo}/versions", wrapper.GetVersionHistoryByRepository)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/spec-view/status/{analysisId}", wrapper.GetSpecGenerationStatus)
@@ -3872,6 +4219,154 @@ type RequestSpecGeneration500ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response RequestSpecGeneration500ApplicationProblemPlusJSONResponse) VisitRequestSpecGenerationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocumentByRepositoryRequestObject struct {
+	Owner  string `json:"owner"`
+	Repo   string `json:"repo"`
+	Params GetSpecDocumentByRepositoryParams
+}
+
+type GetSpecDocumentByRepositoryResponseObject interface {
+	VisitGetSpecDocumentByRepositoryResponse(w http.ResponseWriter) error
+}
+
+type GetSpecDocumentByRepository200JSONResponse RepoSpecDocumentResponse
+
+func (response GetSpecDocumentByRepository200JSONResponse) VisitGetSpecDocumentByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocumentByRepository400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecDocumentByRepository400ApplicationProblemPlusJSONResponse) VisitGetSpecDocumentByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocumentByRepository401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecDocumentByRepository401ApplicationProblemPlusJSONResponse) VisitGetSpecDocumentByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocumentByRepository403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecDocumentByRepository403ApplicationProblemPlusJSONResponse) VisitGetSpecDocumentByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocumentByRepository404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecDocumentByRepository404ApplicationProblemPlusJSONResponse) VisitGetSpecDocumentByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecDocumentByRepository500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecDocumentByRepository500ApplicationProblemPlusJSONResponse) VisitGetSpecDocumentByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetVersionHistoryByRepositoryRequestObject struct {
+	Owner  string `json:"owner"`
+	Repo   string `json:"repo"`
+	Params GetVersionHistoryByRepositoryParams
+}
+
+type GetVersionHistoryByRepositoryResponseObject interface {
+	VisitGetVersionHistoryByRepositoryResponse(w http.ResponseWriter) error
+}
+
+type GetVersionHistoryByRepository200JSONResponse RepoVersionHistoryResponse
+
+func (response GetVersionHistoryByRepository200JSONResponse) VisitGetVersionHistoryByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetVersionHistoryByRepository400ApplicationProblemPlusJSONResponse struct {
+	BadRequestApplicationProblemPlusJSONResponse
+}
+
+func (response GetVersionHistoryByRepository400ApplicationProblemPlusJSONResponse) VisitGetVersionHistoryByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetVersionHistoryByRepository401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetVersionHistoryByRepository401ApplicationProblemPlusJSONResponse) VisitGetVersionHistoryByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetVersionHistoryByRepository403ApplicationProblemPlusJSONResponse struct {
+	ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response GetVersionHistoryByRepository403ApplicationProblemPlusJSONResponse) VisitGetVersionHistoryByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetVersionHistoryByRepository404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetVersionHistoryByRepository404ApplicationProblemPlusJSONResponse) VisitGetVersionHistoryByRepositoryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetVersionHistoryByRepository500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetVersionHistoryByRepository500ApplicationProblemPlusJSONResponse) VisitGetVersionHistoryByRepositoryResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(500)
 
@@ -4781,6 +5276,12 @@ type StrictServerInterface interface {
 	// Request spec document generation
 	// (POST /api/spec-view/generate)
 	RequestSpecGeneration(ctx context.Context, request RequestSpecGenerationRequestObject) (RequestSpecGenerationResponseObject, error)
+	// Get latest spec document for a repository
+	// (GET /api/spec-view/repository/{owner}/{repo})
+	GetSpecDocumentByRepository(ctx context.Context, request GetSpecDocumentByRepositoryRequestObject) (GetSpecDocumentByRepositoryResponseObject, error)
+	// Get version history for a repository across all analyses
+	// (GET /api/spec-view/repository/{owner}/{repo}/versions)
+	GetVersionHistoryByRepository(ctx context.Context, request GetVersionHistoryByRepositoryRequestObject) (GetVersionHistoryByRepositoryResponseObject, error)
 	// Get spec generation status
 	// (GET /api/spec-view/status/{analysisId})
 	GetSpecGenerationStatus(ctx context.Context, request GetSpecGenerationStatusRequestObject) (GetSpecGenerationStatusResponseObject, error)
@@ -5273,6 +5774,62 @@ func (sh *strictHandler) RequestSpecGeneration(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RequestSpecGenerationResponseObject); ok {
 		if err := validResponse.VisitRequestSpecGenerationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpecDocumentByRepository operation middleware
+func (sh *strictHandler) GetSpecDocumentByRepository(w http.ResponseWriter, r *http.Request, owner string, repo string, params GetSpecDocumentByRepositoryParams) {
+	var request GetSpecDocumentByRepositoryRequestObject
+
+	request.Owner = owner
+	request.Repo = repo
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpecDocumentByRepository(ctx, request.(GetSpecDocumentByRepositoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpecDocumentByRepository")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpecDocumentByRepositoryResponseObject); ok {
+		if err := validResponse.VisitGetSpecDocumentByRepositoryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetVersionHistoryByRepository operation middleware
+func (sh *strictHandler) GetVersionHistoryByRepository(w http.ResponseWriter, r *http.Request, owner string, repo string, params GetVersionHistoryByRepositoryParams) {
+	var request GetVersionHistoryByRepositoryRequestObject
+
+	request.Owner = owner
+	request.Repo = repo
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetVersionHistoryByRepository(ctx, request.(GetVersionHistoryByRepositoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetVersionHistoryByRepository")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetVersionHistoryByRepositoryResponseObject); ok {
+		if err := validResponse.VisitGetVersionHistoryByRepositoryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

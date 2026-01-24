@@ -250,15 +250,19 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 	getGenerationStatusUC := specviewusecase.NewGetGenerationStatusUseCase(specViewRepo)
 	getVersionsUC := specviewusecase.NewGetVersionsUseCase(specViewRepo)
 	getCacheAvailabilityUC := specviewusecase.NewGetCacheAvailabilityUseCase(specViewRepo)
+	getSpecByRepositoryUC := specviewusecase.NewGetSpecByRepositoryUseCase(specViewRepo)
+	getVersionHistoryByRepoUC := specviewusecase.NewGetVersionHistoryByRepositoryUseCase(specViewRepo)
 
 	specViewHandler, err := specviewhandler.NewHandler(&specviewhandler.HandlerConfig{
-		GetCacheAvailability: getCacheAvailabilityUC,
-		GetGenerationStatus:  getGenerationStatusUC,
-		GetSpecDocument:      getSpecDocumentUC,
-		GetVersions:          getVersionsUC,
-		Logger:               log,
-		RequestGeneration:    requestGenerationUC,
-		TierLookup:           tierLookup,
+		GetCacheAvailability:    getCacheAvailabilityUC,
+		GetGenerationStatus:     getGenerationStatusUC,
+		GetSpecByRepository:     getSpecByRepositoryUC,
+		GetSpecDocument:         getSpecDocumentUC,
+		GetVersionHistoryByRepo: getVersionHistoryByRepoUC,
+		GetVersions:             getVersionsUC,
+		Logger:                  log,
+		RequestGeneration:       requestGenerationUC,
+		TierLookup:              tierLookup,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("create spec-view handler: %w", err)

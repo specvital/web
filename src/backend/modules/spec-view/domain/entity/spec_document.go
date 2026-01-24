@@ -1,6 +1,26 @@
 package entity
 
-import "time"
+import (
+	"regexp"
+	"time"
+)
+
+// DefaultLanguage is the default language for spec generation
+const DefaultLanguage = "English"
+
+// MaxRepositoryNameLength is the maximum length for GitHub owner/repo names
+const MaxRepositoryNameLength = 100
+
+// repositoryNamePattern validates GitHub owner/repo names (alphanumeric, hyphen, underscore, dot)
+var repositoryNamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
+
+// IsValidRepositoryName checks if the given name is a valid GitHub owner or repo name
+func IsValidRepositoryName(name string) bool {
+	if len(name) == 0 || len(name) > MaxRepositoryNameLength {
+		return false
+	}
+	return repositoryNamePattern.MatchString(name)
+}
 
 // SupportedLanguages defines all valid languages for spec generation (synced with OpenAPI SpecLanguage enum)
 var SupportedLanguages = map[string]bool{
@@ -91,4 +111,30 @@ type BehaviorSourceInfo struct {
 	Framework  string
 	LineNumber int
 	Status     string
+}
+
+// RepoSpecDocument extends SpecDocument with repository context (commit SHA)
+// Used for repository-based queries that provide cross-analysis version access
+type RepoSpecDocument struct {
+	AnalysisID         string
+	AvailableLanguages []AvailableLanguageInfo
+	CommitSHA          string
+	CreatedAt          time.Time
+	Domains            []SpecDomain
+	ExecutiveSummary   *string
+	ID                 string
+	Language           string
+	ModelID            string
+	Version            int
+}
+
+// RepoVersionInfo extends VersionInfo with commit SHA for repository-based queries
+type RepoVersionInfo struct {
+	AnalysisID string
+	CommitSHA  string
+	CreatedAt  time.Time
+	ID         string
+	Language   string
+	ModelID    string
+	Version    int
 }

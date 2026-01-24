@@ -658,6 +658,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/spec-view/repository/{owner}/{repo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Repository owner (username or organization)
+                 * @example facebook
+                 */
+                owner: string;
+                /**
+                 * @description Repository name
+                 * @example react
+                 */
+                repo: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Get latest spec document for a repository
+         * @description Retrieves the latest AI-generated specification document for a repository.
+         *     This endpoint provides cross-analysis access - returns spec from any analysis of this repository.
+         *     Useful for accessing spec history across multiple analyses/commits.
+         *
+         */
+        get: operations["getSpecDocumentByRepository"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/spec-view/repository/{owner}/{repo}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Repository owner (username or organization)
+                 * @example facebook
+                 */
+                owner: string;
+                /**
+                 * @description Repository name
+                 * @example react
+                 */
+                repo: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Get version history for a repository across all analyses
+         * @description Returns all spec versions for a repository across all analyses.
+         *     Each version includes the commit SHA at generation time.
+         *     Ordered by creation date descending (most recent first).
+         *
+         */
+        get: operations["getVersionHistoryByRepository"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user/subscription": {
         parameters: {
             query?: never;
@@ -1498,6 +1566,105 @@ export interface components {
              * @example 3
              */
             latestVersion: number;
+        };
+        /** @description Response for repository-based spec document query */
+        RepoSpecDocumentResponse: components["schemas"]["RepoSpecDocumentCompleted"] | components["schemas"]["RepoSpecDocumentEmpty"];
+        RepoSpecDocumentCompleted: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "completed";
+            data: components["schemas"]["RepoSpecDocument"];
+        };
+        RepoSpecDocumentEmpty: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "empty";
+            /**
+             * @description Message explaining why no spec document exists
+             * @example No spec document found for this repository
+             */
+            message?: string;
+        };
+        /** @description Spec document with repository context (includes commit SHA) */
+        RepoSpecDocument: {
+            /**
+             * Format: uuid
+             * @description Spec document ID
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Analysis ID this document belongs to
+             */
+            analysisId: string;
+            language: components["schemas"]["SpecLanguage"];
+            /**
+             * @description Version number within same language
+             * @example 1
+             */
+            version: number;
+            /** @description AI-generated executive summary */
+            executiveSummary?: string;
+            /**
+             * @description AI model ID used for generation
+             * @example gemini-2.0-flash
+             */
+            modelId?: string;
+            /**
+             * Format: date-time
+             * @description When this document was created
+             */
+            createdAt: string;
+            /**
+             * @description Git commit SHA at the time of analysis
+             * @example a1b2c3d4e5f6
+             */
+            commitSha: string;
+            behaviorCacheStats?: components["schemas"]["BehaviorCacheStats"];
+            /** @description Available languages for this repository */
+            availableLanguages?: components["schemas"]["AvailableLanguageInfo"][];
+            /** @description Specification domains (top-level hierarchy) */
+            domains: components["schemas"]["SpecDomain"][];
+        };
+        RepoVersionHistoryResponse: {
+            /** @description List of versions across all analyses, ordered by creation date descending */
+            data: components["schemas"]["RepoVersionInfo"][];
+            language: components["schemas"]["SpecLanguage"];
+        };
+        /** @description Version info with commit SHA for repository-based queries */
+        RepoVersionInfo: {
+            /**
+             * Format: uuid
+             * @description Spec document ID
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Analysis ID this version belongs to
+             */
+            analysisId: string;
+            /** @description Version number */
+            version: number;
+            language?: components["schemas"]["SpecLanguage"];
+            /**
+             * @description AI model ID used for this version
+             * @example gemini-2.0-flash
+             */
+            modelId?: string;
+            /**
+             * Format: date-time
+             * @description When this version was created
+             */
+            createdAt: string;
+            /**
+             * @description Git commit SHA at the time of analysis
+             * @example a1b2c3d4e5f6
+             */
+            commitSha: string;
         };
         SpecDomain: {
             /**
@@ -2673,6 +2840,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpecGenerationStatusResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getSpecDocumentByRepository: {
+        parameters: {
+            query?: {
+                /** @description Filter by language. If not specified, returns the most recent document. */
+                language?: components["schemas"]["SpecLanguage"];
+                /**
+                 * @description Specific version number to retrieve. If not specified, returns the latest version.
+                 * @example 1
+                 */
+                version?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Repository owner (username or organization)
+                 * @example facebook
+                 */
+                owner: string;
+                /**
+                 * @description Repository name
+                 * @example react
+                 */
+                repo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Spec document retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepoSpecDocumentResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getVersionHistoryByRepository: {
+        parameters: {
+            query: {
+                /** @description Language to get version history for */
+                language: components["schemas"]["SpecLanguage"];
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Repository owner (username or organization)
+                 * @example facebook
+                 */
+                owner: string;
+                /**
+                 * @description Repository name
+                 * @example react
+                 */
+                repo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Version history retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepoVersionHistoryResponse"];
                 };
             };
             400: components["responses"]["BadRequest"];

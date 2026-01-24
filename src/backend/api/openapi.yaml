@@ -916,6 +916,119 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  # Repository-based Spec View APIs (cross-analysis version access)
+  /api/spec-view/repository/{owner}/{repo}:
+    parameters:
+      - name: owner
+        in: path
+        required: true
+        description: Repository owner (username or organization)
+        schema:
+          type: string
+        example: facebook
+      - name: repo
+        in: path
+        required: true
+        description: Repository name
+        schema:
+          type: string
+        example: react
+    get:
+      operationId: getSpecDocumentByRepository
+      summary: Get latest spec document for a repository
+      description: |
+        Retrieves the latest AI-generated specification document for a repository.
+        This endpoint provides cross-analysis access - returns spec from any analysis of this repository.
+        Useful for accessing spec history across multiple analyses/commits.
+      tags:
+        - Spec View
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: language
+          in: query
+          required: false
+          description: Filter by language. If not specified, returns the most recent document.
+          schema:
+            $ref: "#/components/schemas/SpecLanguage"
+        - name: version
+          in: query
+          required: false
+          description: Specific version number to retrieve. If not specified, returns the latest version.
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        "200":
+          description: Spec document retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepoSpecDocumentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/spec-view/repository/{owner}/{repo}/versions:
+    parameters:
+      - name: owner
+        in: path
+        required: true
+        description: Repository owner (username or organization)
+        schema:
+          type: string
+        example: facebook
+      - name: repo
+        in: path
+        required: true
+        description: Repository name
+        schema:
+          type: string
+        example: react
+    get:
+      operationId: getVersionHistoryByRepository
+      summary: Get version history for a repository across all analyses
+      description: |
+        Returns all spec versions for a repository across all analyses.
+        Each version includes the commit SHA at generation time.
+        Ordered by creation date descending (most recent first).
+      tags:
+        - Spec View
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: language
+          in: query
+          required: true
+          description: Language to get version history for
+          schema:
+            $ref: "#/components/schemas/SpecLanguage"
+      responses:
+        "200":
+          description: Version history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepoVersionHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   # User Subscription APIs
   /api/user/subscription:
     get:
@@ -2253,6 +2366,150 @@ components:
           minimum: 1
           description: The latest version number for this language
           example: 3
+
+    # Repository-based Spec View Response Schemas
+    RepoSpecDocumentResponse:
+      type: object
+      description: Response for repository-based spec document query
+      oneOf:
+        - $ref: "#/components/schemas/RepoSpecDocumentCompleted"
+        - $ref: "#/components/schemas/RepoSpecDocumentEmpty"
+      discriminator:
+        propertyName: status
+        mapping:
+          completed: "#/components/schemas/RepoSpecDocumentCompleted"
+          empty: "#/components/schemas/RepoSpecDocumentEmpty"
+
+    RepoSpecDocumentCompleted:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          type: string
+          enum: [completed]
+        data:
+          $ref: "#/components/schemas/RepoSpecDocument"
+
+    RepoSpecDocumentEmpty:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [empty]
+        message:
+          type: string
+          description: Message explaining why no spec document exists
+          example: "No spec document found for this repository"
+
+    RepoSpecDocument:
+      type: object
+      description: Spec document with repository context (includes commit SHA)
+      required:
+        - id
+        - analysisId
+        - language
+        - version
+        - createdAt
+        - commitSha
+        - domains
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Spec document ID
+        analysisId:
+          type: string
+          format: uuid
+          description: Analysis ID this document belongs to
+        language:
+          $ref: "#/components/schemas/SpecLanguage"
+        version:
+          type: integer
+          minimum: 1
+          description: Version number within same language
+          example: 1
+        executiveSummary:
+          type: string
+          description: AI-generated executive summary
+        modelId:
+          type: string
+          description: AI model ID used for generation
+          example: "gemini-2.0-flash"
+        createdAt:
+          type: string
+          format: date-time
+          description: When this document was created
+        commitSha:
+          type: string
+          description: Git commit SHA at the time of analysis
+          example: "a1b2c3d4e5f6"
+        behaviorCacheStats:
+          $ref: "#/components/schemas/BehaviorCacheStats"
+        availableLanguages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailableLanguageInfo"
+          description: Available languages for this repository
+        domains:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpecDomain"
+          description: Specification domains (top-level hierarchy)
+
+    RepoVersionHistoryResponse:
+      type: object
+      required:
+        - data
+        - language
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RepoVersionInfo"
+          description: List of versions across all analyses, ordered by creation date descending
+        language:
+          $ref: "#/components/schemas/SpecLanguage"
+
+    RepoVersionInfo:
+      type: object
+      description: Version info with commit SHA for repository-based queries
+      required:
+        - id
+        - analysisId
+        - version
+        - createdAt
+        - commitSha
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Spec document ID
+        analysisId:
+          type: string
+          format: uuid
+          description: Analysis ID this version belongs to
+        version:
+          type: integer
+          minimum: 1
+          description: Version number
+        language:
+          $ref: "#/components/schemas/SpecLanguage"
+        modelId:
+          type: string
+          description: AI model ID used for this version
+          example: "gemini-2.0-flash"
+        createdAt:
+          type: string
+          format: date-time
+          description: When this version was created
+        commitSha:
+          type: string
+          description: Git commit SHA at the time of analysis
+          example: "a1b2c3d4e5f6"
 
     SpecDomain:
       type: object

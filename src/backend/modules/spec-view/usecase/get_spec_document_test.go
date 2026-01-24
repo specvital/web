@@ -95,6 +95,22 @@ func (m *mockRepository) GetLanguagesWithPreviousSpec(_ context.Context, _ strin
 	return nil, nil
 }
 
+func (m *mockRepository) CheckCodebaseExists(_ context.Context, _, _ string) (bool, error) {
+	return false, nil
+}
+func (m *mockRepository) GetSpecDocumentByRepository(_ context.Context, _, _, _, _ string) (*entity.RepoSpecDocument, error) {
+	return nil, nil
+}
+func (m *mockRepository) GetSpecDocumentByRepositoryAndVersion(_ context.Context, _, _, _, _ string, _ int) (*entity.RepoSpecDocument, error) {
+	return nil, nil
+}
+func (m *mockRepository) GetVersionHistoryByRepository(_ context.Context, _, _, _, _ string) ([]entity.RepoVersionInfo, error) {
+	return nil, nil
+}
+func (m *mockRepository) GetAvailableLanguagesByRepository(_ context.Context, _, _, _ string) ([]entity.AvailableLanguageInfo, error) {
+	return nil, nil
+}
+
 func TestGetSpecDocumentUseCase_Execute(t *testing.T) {
 	t.Run("returns ErrUnauthorized when userID is empty", func(t *testing.T) {
 		uc := NewGetSpecDocumentUseCase(&mockRepository{})

@@ -19,24 +19,28 @@ import (
 )
 
 type Handler struct {
-	getCacheAvailability *usecase.GetCacheAvailabilityUseCase
-	getGenerationStatus  *usecase.GetGenerationStatusUseCase
-	getSpecDocument      *usecase.GetSpecDocumentUseCase
-	getVersions          *usecase.GetVersionsUseCase
-	logger               *logger.Logger
-	requestGeneration    *usecase.RequestGenerationUseCase
-	tierLookup           port.TierLookup
+	getCacheAvailability    *usecase.GetCacheAvailabilityUseCase
+	getGenerationStatus     *usecase.GetGenerationStatusUseCase
+	getSpecByRepository     *usecase.GetSpecByRepositoryUseCase
+	getSpecDocument         *usecase.GetSpecDocumentUseCase
+	getVersionHistoryByRepo *usecase.GetVersionHistoryByRepositoryUseCase
+	getVersions             *usecase.GetVersionsUseCase
+	logger                  *logger.Logger
+	requestGeneration       *usecase.RequestGenerationUseCase
+	tierLookup              port.TierLookup
 }
 
 var _ api.SpecViewHandlers = (*Handler)(nil)
 
 type HandlerConfig struct {
-	GetCacheAvailability *usecase.GetCacheAvailabilityUseCase
-	GetGenerationStatus  *usecase.GetGenerationStatusUseCase
-	GetSpecDocument      *usecase.GetSpecDocumentUseCase
-	GetVersions          *usecase.GetVersionsUseCase
-	Logger               *logger.Logger
-	RequestGeneration    *usecase.RequestGenerationUseCase
+	GetCacheAvailability    *usecase.GetCacheAvailabilityUseCase
+	GetGenerationStatus     *usecase.GetGenerationStatusUseCase
+	GetSpecByRepository     *usecase.GetSpecByRepositoryUseCase
+	GetSpecDocument         *usecase.GetSpecDocumentUseCase
+	GetVersionHistoryByRepo *usecase.GetVersionHistoryByRepositoryUseCase
+	GetVersions             *usecase.GetVersionsUseCase
+	Logger                  *logger.Logger
+	RequestGeneration       *usecase.RequestGenerationUseCase
 	// TierLookup is optional. If nil, all requests use default queue.
 	TierLookup port.TierLookup
 }
@@ -57,18 +61,26 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	if cfg.GetCacheAvailability == nil {
 		return nil, errors.New("GetCacheAvailability usecase is required")
 	}
+	if cfg.GetSpecByRepository == nil {
+		return nil, errors.New("GetSpecByRepository usecase is required")
+	}
+	if cfg.GetVersionHistoryByRepo == nil {
+		return nil, errors.New("GetVersionHistoryByRepo usecase is required")
+	}
 	if cfg.Logger == nil {
 		return nil, errors.New("Logger is required")
 	}
 
 	return &Handler{
-		getCacheAvailability: cfg.GetCacheAvailability,
-		getGenerationStatus:  cfg.GetGenerationStatus,
-		getSpecDocument:      cfg.GetSpecDocument,
-		getVersions:          cfg.GetVersions,
-		logger:               cfg.Logger,
-		requestGeneration:    cfg.RequestGeneration,
-		tierLookup:           cfg.TierLookup,
+		getCacheAvailability:    cfg.GetCacheAvailability,
+		getGenerationStatus:     cfg.GetGenerationStatus,
+		getSpecByRepository:     cfg.GetSpecByRepository,
+		getSpecDocument:         cfg.GetSpecDocument,
+		getVersionHistoryByRepo: cfg.GetVersionHistoryByRepo,
+		getVersions:             cfg.GetVersions,
+		logger:                  cfg.Logger,
+		requestGeneration:       cfg.RequestGeneration,
+		tierLookup:              cfg.TierLookup,
 	}, nil
 }
 
@@ -391,4 +403,116 @@ func (h *Handler) lookupUserTier(ctx context.Context, userID string) subscriptio
 		return ""
 	}
 	return subscription.PlanTier(tierStr)
+}
+
+func (h *Handler) GetSpecDocumentByRepository(ctx context.Context, request api.GetSpecDocumentByRepositoryRequestObject) (api.GetSpecDocumentByRepositoryResponseObject, error) {
+	userID := middleware.GetUserID(ctx)
+
+	language := ""
+	if request.Params.Language != nil {
+		language = string(*request.Params.Language)
+	}
+
+	version := 0
+	if request.Params.Version != nil {
+		version = *request.Params.Version
+	}
+
+	result, err := h.getSpecByRepository.Execute(ctx, usecase.GetSpecByRepositoryInput{
+		Language: language,
+		Name:     request.Repo,
+		Owner:    request.Owner,
+		UserID:   userID,
+		Version:  version,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrUnauthorized):
+			return api.GetSpecDocumentByRepository401ApplicationProblemPlusJSONResponse{
+				UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("authentication required"),
+			}, nil
+		case errors.Is(err, domain.ErrForbidden):
+			return api.GetSpecDocumentByRepository403ApplicationProblemPlusJSONResponse{
+				ForbiddenApplicationProblemPlusJSONResponse: api.NewForbidden("access denied to this resource"),
+			}, nil
+		case errors.Is(err, domain.ErrDocumentNotFound), errors.Is(err, domain.ErrCodebaseNotFound):
+			return api.GetSpecDocumentByRepository404ApplicationProblemPlusJSONResponse{
+				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("spec document not found"),
+			}, nil
+		case errors.Is(err, domain.ErrInvalidRepository):
+			return api.GetSpecDocumentByRepository400ApplicationProblemPlusJSONResponse{
+				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid repository"),
+			}, nil
+		case errors.Is(err, domain.ErrInvalidLanguage):
+			return api.GetSpecDocumentByRepository400ApplicationProblemPlusJSONResponse{
+				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid language"),
+			}, nil
+		}
+
+		h.logger.Error(ctx, "failed to get spec document by repository", "error", err)
+		return api.GetSpecDocumentByRepository500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to get spec document"),
+		}, nil
+	}
+
+	resp, err := mapper.ToRepoSpecDocumentResponse(result.Document)
+	if err != nil {
+		h.logger.Error(ctx, "failed to marshal repo spec document", "error", err)
+		return api.GetSpecDocumentByRepository500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to process response"),
+		}, nil
+	}
+
+	return api.GetSpecDocumentByRepository200JSONResponse(resp), nil
+}
+
+func (h *Handler) GetVersionHistoryByRepository(ctx context.Context, request api.GetVersionHistoryByRepositoryRequestObject) (api.GetVersionHistoryByRepositoryResponseObject, error) {
+	userID := middleware.GetUserID(ctx)
+	language := string(request.Params.Language)
+
+	result, err := h.getVersionHistoryByRepo.Execute(ctx, usecase.GetVersionHistoryByRepositoryInput{
+		Language: language,
+		Name:     request.Repo,
+		Owner:    request.Owner,
+		UserID:   userID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrUnauthorized):
+			return api.GetVersionHistoryByRepository401ApplicationProblemPlusJSONResponse{
+				UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("authentication required"),
+			}, nil
+		case errors.Is(err, domain.ErrForbidden):
+			return api.GetVersionHistoryByRepository403ApplicationProblemPlusJSONResponse{
+				ForbiddenApplicationProblemPlusJSONResponse: api.NewForbidden("access denied to this resource"),
+			}, nil
+		case errors.Is(err, domain.ErrCodebaseNotFound):
+			return api.GetVersionHistoryByRepository404ApplicationProblemPlusJSONResponse{
+				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("repository not found"),
+			}, nil
+		case errors.Is(err, domain.ErrInvalidRepository):
+			return api.GetVersionHistoryByRepository400ApplicationProblemPlusJSONResponse{
+				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid repository"),
+			}, nil
+		case errors.Is(err, domain.ErrInvalidLanguage):
+			return api.GetVersionHistoryByRepository400ApplicationProblemPlusJSONResponse{
+				BadRequestApplicationProblemPlusJSONResponse: api.NewBadRequest("invalid language"),
+			}, nil
+		}
+
+		h.logger.Error(ctx, "failed to get version history by repository", "error", err)
+		return api.GetVersionHistoryByRepository500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to get version history"),
+		}, nil
+	}
+
+	resp, err := mapper.ToRepoVersionHistoryResponse(result.Language, result.Versions)
+	if err != nil {
+		h.logger.Error(ctx, "failed to marshal version history response", "error", err)
+		return api.GetVersionHistoryByRepository500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to process response"),
+		}, nil
+	}
+
+	return api.GetVersionHistoryByRepository200JSONResponse(resp), nil
 }

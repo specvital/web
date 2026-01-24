@@ -44,3 +44,15 @@ func (m *MockHandler) GetSpecCacheAvailability(_ context.Context, _ api.GetSpecC
 		Languages: map[string]bool{},
 	}, nil
 }
+
+func (m *MockHandler) GetSpecDocumentByRepository(_ context.Context, _ api.GetSpecDocumentByRepositoryRequestObject) (api.GetSpecDocumentByRepositoryResponseObject, error) {
+	return api.GetSpecDocumentByRepository404ApplicationProblemPlusJSONResponse{
+		NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("not found"),
+	}, nil
+}
+
+func (m *MockHandler) GetVersionHistoryByRepository(_ context.Context, _ api.GetVersionHistoryByRepositoryRequestObject) (api.GetVersionHistoryByRepositoryResponseObject, error) {
+	return api.GetVersionHistoryByRepository404ApplicationProblemPlusJSONResponse{
+		NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("not found"),
+	}, nil
+}

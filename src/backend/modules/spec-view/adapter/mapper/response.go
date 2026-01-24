@@ -243,3 +243,82 @@ type VersionHistoryInput struct {
 	LatestVersion int
 	Versions      []entity.VersionInfo
 }
+
+// ToRepoSpecDocumentResponse converts RepoSpecDocument to API response
+func ToRepoSpecDocumentResponse(doc *entity.RepoSpecDocument) (api.RepoSpecDocumentResponse, error) {
+	analysisUID, err := uuid.Parse(doc.AnalysisID)
+	if err != nil {
+		return api.RepoSpecDocumentResponse{}, fmt.Errorf("invalid analysis ID %q: %w", doc.AnalysisID, err)
+	}
+	docUID, err := uuid.Parse(doc.ID)
+	if err != nil {
+		return api.RepoSpecDocumentResponse{}, fmt.Errorf("invalid document ID %q: %w", doc.ID, err)
+	}
+
+	domains, err := toAPIDomains(doc.Domains)
+	if err != nil {
+		return api.RepoSpecDocumentResponse{}, err
+	}
+
+	var availableLanguages *[]api.AvailableLanguageInfo
+	if len(doc.AvailableLanguages) > 0 {
+		langs := toAPIAvailableLanguages(doc.AvailableLanguages)
+		availableLanguages = &langs
+	}
+
+	repoDoc := api.RepoSpecDocument{
+		AnalysisID:         analysisUID,
+		AvailableLanguages: availableLanguages,
+		CommitSHA:          doc.CommitSHA,
+		CreatedAt:          doc.CreatedAt,
+		Domains:            domains,
+		ExecutiveSummary:   doc.ExecutiveSummary,
+		ID:                 docUID,
+		Language:           api.SpecLanguage(doc.Language),
+		ModelID:            &doc.ModelID,
+		Version:            doc.Version,
+	}
+
+	resp := api.RepoSpecDocumentResponse{}
+	if err := resp.FromRepoSpecDocumentCompleted(api.RepoSpecDocumentCompleted{
+		Data:   repoDoc,
+		Status: "completed",
+	}); err != nil {
+		return api.RepoSpecDocumentResponse{}, fmt.Errorf("failed to create response: %w", err)
+	}
+
+	return resp, nil
+}
+
+// ToRepoVersionHistoryResponse converts version history to API response
+func ToRepoVersionHistoryResponse(language string, versions []entity.RepoVersionInfo) (api.RepoVersionHistoryResponse, error) {
+	data := make([]api.RepoVersionInfo, len(versions))
+	for i, v := range versions {
+		analysisUID, err := uuid.Parse(v.AnalysisID)
+		if err != nil {
+			return api.RepoVersionHistoryResponse{}, fmt.Errorf("invalid analysis ID %q: %w", v.AnalysisID, err)
+		}
+		docUID, err := uuid.Parse(v.ID)
+		if err != nil {
+			return api.RepoVersionHistoryResponse{}, fmt.Errorf("invalid document ID %q: %w", v.ID, err)
+		}
+
+		lang := api.SpecLanguage(v.Language)
+		data[i] = api.RepoVersionInfo{
+			AnalysisID: analysisUID,
+			CommitSHA:  v.CommitSHA,
+			CreatedAt:  v.CreatedAt,
+			ID:         docUID,
+			Language:   &lang,
+			Version:    v.Version,
+		}
+		if v.ModelID != "" {
+			data[i].ModelID = &v.ModelID
+		}
+	}
+
+	return api.RepoVersionHistoryResponse{
+		Data:     data,
+		Language: api.SpecLanguage(language),
+	}, nil
+}

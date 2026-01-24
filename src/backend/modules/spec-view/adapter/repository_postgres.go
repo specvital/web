@@ -196,7 +196,115 @@ func (r *PostgresRepository) GetSpecDocumentByUser(ctx context.Context, userID s
 }
 
 func (r *PostgresRepository) buildSpecDocument(ctx context.Context, docRow db.GetSpecDocumentByAnalysisIDRow) (*entity.SpecDocument, error) {
-	domains, err := r.queries.GetSpecDomainsByDocumentID(ctx, docRow.ID)
+	domains, err := r.buildDomainHierarchy(ctx, docRow.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	doc := &entity.SpecDocument{
+		AnalysisID: uuidToString(docRow.AnalysisID),
+		CreatedAt:  docRow.CreatedAt.Time,
+		Domains:    domains,
+		ID:         uuidToString(docRow.ID),
+		Language:   docRow.Language,
+		ModelID:    docRow.ModelID,
+		Version:    int(docRow.Version),
+	}
+	if docRow.ExecutiveSummary.Valid {
+		doc.ExecutiveSummary = &docRow.ExecutiveSummary.String
+	}
+
+	return doc, nil
+}
+
+func (r *PostgresRepository) GetGenerationStatus(ctx context.Context, userID string, analysisID string) (*entity.SpecGenerationStatus, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return nil, err
+	}
+	if _, err := uuid.Parse(analysisID); err != nil {
+		return nil, err
+	}
+
+	row, err := r.queries.GetSpecGenerationStatus(ctx, db.GetSpecGenerationStatusParams{
+		UserID:     []byte(userID),
+		AnalysisID: []byte(analysisID),
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	status := &entity.SpecGenerationStatus{
+		AnalysisID: analysisID,
+		Status:     mapRiverJobState(string(row.State)),
+	}
+
+	if row.CreatedAt.Valid {
+		status.StartedAt = &row.CreatedAt.Time
+	}
+	if row.FinalizedAt.Valid {
+		status.CompletedAt = &row.FinalizedAt.Time
+	}
+
+	return status, nil
+}
+
+func (r *PostgresRepository) GetGenerationStatusByLanguage(ctx context.Context, userID string, analysisID string, language string) (*entity.SpecGenerationStatus, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return nil, err
+	}
+	if _, err := uuid.Parse(analysisID); err != nil {
+		return nil, err
+	}
+
+	row, err := r.queries.GetSpecGenerationStatusByLanguage(ctx, db.GetSpecGenerationStatusByLanguageParams{
+		UserID:     []byte(userID),
+		AnalysisID: []byte(analysisID),
+		Language:   []byte(language),
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	status := &entity.SpecGenerationStatus{
+		AnalysisID: analysisID,
+		Status:     mapRiverJobState(string(row.State)),
+	}
+
+	if row.CreatedAt.Valid {
+		status.StartedAt = &row.CreatedAt.Time
+	}
+	if row.FinalizedAt.Valid {
+		status.CompletedAt = &row.FinalizedAt.Time
+	}
+
+	return status, nil
+}
+
+func parseUUID(s string) (pgtype.UUID, error) {
+	parsed, err := uuid.Parse(s)
+	if err != nil {
+		return pgtype.UUID{}, err
+	}
+	return pgtype.UUID{Bytes: parsed, Valid: true}, nil
+}
+
+func uuidToString(u pgtype.UUID) string {
+	if !u.Valid {
+		return ""
+	}
+	return uuid.UUID(u.Bytes).String()
+}
+
+// buildDomainHierarchy fetches and builds the complete domain hierarchy for a spec document.
+// This is the common logic shared by buildSpecDocument and buildRepoSpecDocument.
+func (r *PostgresRepository) buildDomainHierarchy(ctx context.Context, documentID pgtype.UUID) ([]entity.SpecDomain, error) {
+	domains, err := r.queries.GetSpecDomainsByDocumentID(ctx, documentID)
 	if err != nil {
 		return nil, err
 	}
@@ -296,104 +404,7 @@ func (r *PostgresRepository) buildSpecDocument(ctx context.Context, docRow db.Ge
 		}
 	}
 
-	doc := &entity.SpecDocument{
-		AnalysisID: uuidToString(docRow.AnalysisID),
-		CreatedAt:  docRow.CreatedAt.Time,
-		Domains:    entityDomains,
-		ID:         uuidToString(docRow.ID),
-		Language:   docRow.Language,
-		ModelID:    docRow.ModelID,
-		Version:    int(docRow.Version),
-	}
-	if docRow.ExecutiveSummary.Valid {
-		doc.ExecutiveSummary = &docRow.ExecutiveSummary.String
-	}
-
-	return doc, nil
-}
-
-func (r *PostgresRepository) GetGenerationStatus(ctx context.Context, userID string, analysisID string) (*entity.SpecGenerationStatus, error) {
-	if _, err := uuid.Parse(userID); err != nil {
-		return nil, err
-	}
-	if _, err := uuid.Parse(analysisID); err != nil {
-		return nil, err
-	}
-
-	row, err := r.queries.GetSpecGenerationStatus(ctx, db.GetSpecGenerationStatusParams{
-		UserID:     []byte(userID),
-		AnalysisID: []byte(analysisID),
-	})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	status := &entity.SpecGenerationStatus{
-		AnalysisID: analysisID,
-		Status:     mapRiverJobState(string(row.State)),
-	}
-
-	if row.CreatedAt.Valid {
-		status.StartedAt = &row.CreatedAt.Time
-	}
-	if row.FinalizedAt.Valid {
-		status.CompletedAt = &row.FinalizedAt.Time
-	}
-
-	return status, nil
-}
-
-func (r *PostgresRepository) GetGenerationStatusByLanguage(ctx context.Context, userID string, analysisID string, language string) (*entity.SpecGenerationStatus, error) {
-	if _, err := uuid.Parse(userID); err != nil {
-		return nil, err
-	}
-	if _, err := uuid.Parse(analysisID); err != nil {
-		return nil, err
-	}
-
-	row, err := r.queries.GetSpecGenerationStatusByLanguage(ctx, db.GetSpecGenerationStatusByLanguageParams{
-		UserID:     []byte(userID),
-		AnalysisID: []byte(analysisID),
-		Language:   []byte(language),
-	})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	status := &entity.SpecGenerationStatus{
-		AnalysisID: analysisID,
-		Status:     mapRiverJobState(string(row.State)),
-	}
-
-	if row.CreatedAt.Valid {
-		status.StartedAt = &row.CreatedAt.Time
-	}
-	if row.FinalizedAt.Valid {
-		status.CompletedAt = &row.FinalizedAt.Time
-	}
-
-	return status, nil
-}
-
-func parseUUID(s string) (pgtype.UUID, error) {
-	parsed, err := uuid.Parse(s)
-	if err != nil {
-		return pgtype.UUID{}, err
-	}
-	return pgtype.UUID{Bytes: parsed, Valid: true}, nil
-}
-
-func uuidToString(u pgtype.UUID) string {
-	if !u.Valid {
-		return ""
-	}
-	return uuid.UUID(u.Bytes).String()
+	return entityDomains, nil
 }
 
 func (r *PostgresRepository) GetSpecDocumentByVersion(ctx context.Context, analysisID string, language string, version int) (*entity.SpecDocument, error) {
@@ -562,4 +573,148 @@ func mapRiverJobState(state string) entity.GenerationStatus {
 	default:
 		return entity.StatusNotFound
 	}
+}
+
+// Repository-based queries (cross-analysis access)
+
+func (r *PostgresRepository) CheckCodebaseExists(ctx context.Context, owner, name string) (bool, error) {
+	return r.queries.CheckCodebaseExists(ctx, db.CheckCodebaseExistsParams{
+		Owner: owner,
+		Name:  name,
+	})
+}
+
+func (r *PostgresRepository) GetSpecDocumentByRepository(ctx context.Context, userID, owner, name, language string) (*entity.RepoSpecDocument, error) {
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := r.queries.GetSpecDocumentByRepository(ctx, db.GetSpecDocumentByRepositoryParams{
+		Owner:    owner,
+		Repo:     name,
+		UserID:   uid,
+		Language: language,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return r.buildRepoSpecDocument(ctx, row)
+}
+
+func (r *PostgresRepository) GetSpecDocumentByRepositoryAndVersion(ctx context.Context, userID, owner, name, language string, version int) (*entity.RepoSpecDocument, error) {
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := r.queries.GetSpecDocumentByRepositoryAndVersion(ctx, db.GetSpecDocumentByRepositoryAndVersionParams{
+		Owner:    owner,
+		Repo:     name,
+		UserID:   uid,
+		Language: language,
+		Version:  int32(version),
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return r.buildRepoSpecDocument(ctx, db.GetSpecDocumentByRepositoryRow{
+		ID:               row.ID,
+		AnalysisID:       row.AnalysisID,
+		UserID:           row.UserID,
+		Language:         row.Language,
+		Version:          row.Version,
+		ExecutiveSummary: row.ExecutiveSummary,
+		ModelID:          row.ModelID,
+		CreatedAt:        row.CreatedAt,
+		CommitSha:        row.CommitSha,
+	})
+}
+
+func (r *PostgresRepository) buildRepoSpecDocument(ctx context.Context, row db.GetSpecDocumentByRepositoryRow) (*entity.RepoSpecDocument, error) {
+	domains, err := r.buildDomainHierarchy(ctx, row.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	doc := &entity.RepoSpecDocument{
+		AnalysisID: uuidToString(row.AnalysisID),
+		CommitSHA:  row.CommitSha,
+		CreatedAt:  row.CreatedAt.Time,
+		Domains:    domains,
+		ID:         uuidToString(row.ID),
+		Language:   row.Language,
+		ModelID:    row.ModelID,
+		Version:    int(row.Version),
+	}
+	if row.ExecutiveSummary.Valid {
+		doc.ExecutiveSummary = &row.ExecutiveSummary.String
+	}
+
+	return doc, nil
+}
+
+func (r *PostgresRepository) GetVersionHistoryByRepository(ctx context.Context, userID, owner, name, language string) ([]entity.RepoVersionInfo, error) {
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.queries.GetVersionHistoryByRepository(ctx, db.GetVersionHistoryByRepositoryParams{
+		Owner:    owner,
+		Repo:     name,
+		UserID:   uid,
+		Language: language,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]entity.RepoVersionInfo, len(rows))
+	for i, row := range rows {
+		result[i] = entity.RepoVersionInfo{
+			AnalysisID: uuidToString(row.AnalysisID),
+			CommitSHA:  row.CommitSha,
+			CreatedAt:  row.CreatedAt.Time,
+			ID:         uuidToString(row.ID),
+			Language:   row.Language,
+			ModelID:    row.ModelID,
+			Version:    int(row.Version),
+		}
+	}
+	return result, nil
+}
+
+func (r *PostgresRepository) GetAvailableLanguagesByRepository(ctx context.Context, userID, owner, name string) ([]entity.AvailableLanguageInfo, error) {
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.queries.GetAvailableLanguagesByRepository(ctx, db.GetAvailableLanguagesByRepositoryParams{
+		Owner:  owner,
+		Repo:   name,
+		UserID: uid,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]entity.AvailableLanguageInfo, len(rows))
+	for i, row := range rows {
+		result[i] = entity.AvailableLanguageInfo{
+			CreatedAt:     row.LatestCreatedAt.Time,
+			Language:      row.Language,
+			LatestVersion: int(row.LatestVersion),
+		}
+	}
+	return result, nil
 }

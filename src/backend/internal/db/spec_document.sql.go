@@ -24,6 +24,25 @@ func (q *Queries) CheckAnalysisExists(ctx context.Context, id pgtype.UUID) (bool
 	return exists, err
 }
 
+const checkCodebaseExists = `-- name: CheckCodebaseExists :one
+SELECT EXISTS(
+    SELECT 1 FROM codebases WHERE owner = $1 AND name = $2
+) AS exists
+`
+
+type CheckCodebaseExistsParams struct {
+	Owner string `json:"owner"`
+	Name  string `json:"name"`
+}
+
+// Checks if codebase exists by owner/name
+func (q *Queries) CheckCodebaseExists(ctx context.Context, arg CheckCodebaseExistsParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkCodebaseExists, arg.Owner, arg.Name)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const checkSpecDocumentExistsByLanguage = `-- name: CheckSpecDocumentExistsByLanguage :one
 SELECT EXISTS(
     SELECT 1 FROM spec_documents WHERE analysis_id = $1 AND language = $2
@@ -126,6 +145,53 @@ func (q *Queries) GetAvailableLanguagesByAnalysisID(ctx context.Context, analysi
 	for rows.Next() {
 		var i GetAvailableLanguagesByAnalysisIDRow
 		if err := rows.Scan(&i.Language, &i.LatestVersion, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAvailableLanguagesByRepository = `-- name: GetAvailableLanguagesByRepository :many
+SELECT
+    sd.language,
+    MAX(sd.version)::int AS latest_version,
+    MAX(sd.created_at)::timestamptz AS latest_created_at
+FROM spec_documents sd
+JOIN analyses a ON a.id = sd.analysis_id
+JOIN codebases c ON c.id = a.codebase_id
+WHERE c.owner = $1 AND c.name = $2
+  AND sd.user_id = $3
+GROUP BY sd.language
+ORDER BY sd.language
+`
+
+type GetAvailableLanguagesByRepositoryParams struct {
+	Owner  string      `json:"owner"`
+	Repo   string      `json:"repo"`
+	UserID pgtype.UUID `json:"user_id"`
+}
+
+type GetAvailableLanguagesByRepositoryRow struct {
+	Language        string             `json:"language"`
+	LatestVersion   int32              `json:"latest_version"`
+	LatestCreatedAt pgtype.Timestamptz `json:"latest_created_at"`
+}
+
+// Returns all available languages for a repository with their latest version info
+func (q *Queries) GetAvailableLanguagesByRepository(ctx context.Context, arg GetAvailableLanguagesByRepositoryParams) ([]GetAvailableLanguagesByRepositoryRow, error) {
+	rows, err := q.db.Query(ctx, getAvailableLanguagesByRepository, arg.Owner, arg.Repo, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAvailableLanguagesByRepositoryRow
+	for rows.Next() {
+		var i GetAvailableLanguagesByRepositoryRow
+		if err := rows.Scan(&i.Language, &i.LatestVersion, &i.LatestCreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -408,6 +474,134 @@ func (q *Queries) GetSpecDocumentByAnalysisIDAndLanguage(ctx context.Context, ar
 		&i.ExecutiveSummary,
 		&i.ModelID,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getSpecDocumentByRepository = `-- name: GetSpecDocumentByRepository :one
+SELECT
+    sd.id,
+    sd.analysis_id,
+    sd.user_id,
+    sd.language,
+    sd.version,
+    sd.executive_summary,
+    sd.model_id,
+    sd.created_at,
+    a.commit_sha
+FROM spec_documents sd
+JOIN analyses a ON a.id = sd.analysis_id
+JOIN codebases c ON c.id = a.codebase_id
+WHERE c.owner = $1 AND c.name = $2
+  AND sd.user_id = $3
+  AND sd.language = $4
+ORDER BY sd.created_at DESC, sd.version DESC
+LIMIT 1
+`
+
+type GetSpecDocumentByRepositoryParams struct {
+	Owner    string      `json:"owner"`
+	Repo     string      `json:"repo"`
+	UserID   pgtype.UUID `json:"user_id"`
+	Language string      `json:"language"`
+}
+
+type GetSpecDocumentByRepositoryRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	AnalysisID       pgtype.UUID        `json:"analysis_id"`
+	UserID           pgtype.UUID        `json:"user_id"`
+	Language         string             `json:"language"`
+	Version          int32              `json:"version"`
+	ExecutiveSummary pgtype.Text        `json:"executive_summary"`
+	ModelID          string             `json:"model_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	CommitSha        string             `json:"commit_sha"`
+}
+
+// Returns latest spec document for a repository (owner/repo) via JOIN
+// For repository-centric API that provides cross-analysis version access
+func (q *Queries) GetSpecDocumentByRepository(ctx context.Context, arg GetSpecDocumentByRepositoryParams) (GetSpecDocumentByRepositoryRow, error) {
+	row := q.db.QueryRow(ctx, getSpecDocumentByRepository,
+		arg.Owner,
+		arg.Repo,
+		arg.UserID,
+		arg.Language,
+	)
+	var i GetSpecDocumentByRepositoryRow
+	err := row.Scan(
+		&i.ID,
+		&i.AnalysisID,
+		&i.UserID,
+		&i.Language,
+		&i.Version,
+		&i.ExecutiveSummary,
+		&i.ModelID,
+		&i.CreatedAt,
+		&i.CommitSha,
+	)
+	return i, err
+}
+
+const getSpecDocumentByRepositoryAndVersion = `-- name: GetSpecDocumentByRepositoryAndVersion :one
+SELECT
+    sd.id,
+    sd.analysis_id,
+    sd.user_id,
+    sd.language,
+    sd.version,
+    sd.executive_summary,
+    sd.model_id,
+    sd.created_at,
+    a.commit_sha
+FROM spec_documents sd
+JOIN analyses a ON a.id = sd.analysis_id
+JOIN codebases c ON c.id = a.codebase_id
+WHERE c.owner = $1 AND c.name = $2
+  AND sd.user_id = $3
+  AND sd.language = $4
+  AND sd.version = $5
+`
+
+type GetSpecDocumentByRepositoryAndVersionParams struct {
+	Owner    string      `json:"owner"`
+	Repo     string      `json:"repo"`
+	UserID   pgtype.UUID `json:"user_id"`
+	Language string      `json:"language"`
+	Version  int32       `json:"version"`
+}
+
+type GetSpecDocumentByRepositoryAndVersionRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	AnalysisID       pgtype.UUID        `json:"analysis_id"`
+	UserID           pgtype.UUID        `json:"user_id"`
+	Language         string             `json:"language"`
+	Version          int32              `json:"version"`
+	ExecutiveSummary pgtype.Text        `json:"executive_summary"`
+	ModelID          string             `json:"model_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	CommitSha        string             `json:"commit_sha"`
+}
+
+// Returns specific version of spec document for a repository
+func (q *Queries) GetSpecDocumentByRepositoryAndVersion(ctx context.Context, arg GetSpecDocumentByRepositoryAndVersionParams) (GetSpecDocumentByRepositoryAndVersionRow, error) {
+	row := q.db.QueryRow(ctx, getSpecDocumentByRepositoryAndVersion,
+		arg.Owner,
+		arg.Repo,
+		arg.UserID,
+		arg.Language,
+		arg.Version,
+	)
+	var i GetSpecDocumentByRepositoryAndVersionRow
+	err := row.Scan(
+		&i.ID,
+		&i.AnalysisID,
+		&i.UserID,
+		&i.Language,
+		&i.Version,
+		&i.ExecutiveSummary,
+		&i.ModelID,
+		&i.CreatedAt,
+		&i.CommitSha,
 	)
 	return i, err
 }
@@ -783,6 +977,78 @@ func (q *Queries) GetSpecGenerationStatusByLanguage(ctx context.Context, arg Get
 		&i.Errors,
 	)
 	return i, err
+}
+
+const getVersionHistoryByRepository = `-- name: GetVersionHistoryByRepository :many
+SELECT
+    sd.id,
+    sd.analysis_id,
+    sd.version,
+    sd.language,
+    sd.model_id,
+    sd.created_at,
+    a.commit_sha
+FROM spec_documents sd
+JOIN analyses a ON a.id = sd.analysis_id
+JOIN codebases c ON c.id = a.codebase_id
+WHERE c.owner = $1 AND c.name = $2
+  AND sd.user_id = $3
+  AND sd.language = $4
+ORDER BY sd.created_at DESC
+LIMIT 100
+`
+
+type GetVersionHistoryByRepositoryParams struct {
+	Owner    string      `json:"owner"`
+	Repo     string      `json:"repo"`
+	UserID   pgtype.UUID `json:"user_id"`
+	Language string      `json:"language"`
+}
+
+type GetVersionHistoryByRepositoryRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	AnalysisID pgtype.UUID        `json:"analysis_id"`
+	Version    int32              `json:"version"`
+	Language   string             `json:"language"`
+	ModelID    string             `json:"model_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	CommitSha  string             `json:"commit_sha"`
+}
+
+// Returns spec versions for a repository (across analyses) with commit SHA
+// Ordered by creation date descending to show most recent first
+// Limited to 100 versions to prevent unbounded result sets
+func (q *Queries) GetVersionHistoryByRepository(ctx context.Context, arg GetVersionHistoryByRepositoryParams) ([]GetVersionHistoryByRepositoryRow, error) {
+	rows, err := q.db.Query(ctx, getVersionHistoryByRepository,
+		arg.Owner,
+		arg.Repo,
+		arg.UserID,
+		arg.Language,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetVersionHistoryByRepositoryRow
+	for rows.Next() {
+		var i GetVersionHistoryByRepositoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AnalysisID,
+			&i.Version,
+			&i.Language,
+			&i.ModelID,
+			&i.CreatedAt,
+			&i.CommitSha,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getVersionsByLanguage = `-- name: GetVersionsByLanguage :many

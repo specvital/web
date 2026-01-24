@@ -79,6 +79,22 @@ func (m *mockSpecViewRepository) GetLanguagesWithPreviousSpec(_ context.Context,
 	return nil, nil
 }
 
+func (m *mockSpecViewRepository) CheckCodebaseExists(_ context.Context, _, _ string) (bool, error) {
+	return false, nil
+}
+func (m *mockSpecViewRepository) GetSpecDocumentByRepository(_ context.Context, _, _, _, _ string) (*entity.RepoSpecDocument, error) {
+	return nil, nil
+}
+func (m *mockSpecViewRepository) GetSpecDocumentByRepositoryAndVersion(_ context.Context, _, _, _, _ string, _ int) (*entity.RepoSpecDocument, error) {
+	return nil, nil
+}
+func (m *mockSpecViewRepository) GetVersionHistoryByRepository(_ context.Context, _, _, _, _ string) ([]entity.RepoVersionInfo, error) {
+	return nil, nil
+}
+func (m *mockSpecViewRepository) GetAvailableLanguagesByRepository(_ context.Context, _, _, _ string) ([]entity.AvailableLanguageInfo, error) {
+	return nil, nil
+}
+
 type mockQueueService struct {
 	enqueueErr error
 }

@@ -42,6 +42,21 @@ type SpecViewRepository interface {
 	GetVersionsByLanguage(ctx context.Context, analysisID string, language string) ([]entity.VersionInfo, error)
 	// GetVersionsByUser returns all versions for documents owned by the user for the given analysis and language.
 	GetVersionsByUser(ctx context.Context, userID string, analysisID string, language string) ([]entity.VersionInfo, error)
+
+	// Repository-based queries (cross-analysis access)
+
+	// CheckCodebaseExists checks if a codebase exists by owner/name.
+	CheckCodebaseExists(ctx context.Context, owner, name string) (bool, error)
+	// GetSpecDocumentByRepository retrieves the latest spec document for a repository.
+	// Provides cross-analysis access - returns spec from any analysis of this repository.
+	GetSpecDocumentByRepository(ctx context.Context, userID, owner, name, language string) (*entity.RepoSpecDocument, error)
+	// GetSpecDocumentByRepositoryAndVersion retrieves a specific version of spec document for a repository.
+	GetSpecDocumentByRepositoryAndVersion(ctx context.Context, userID, owner, name, language string, version int) (*entity.RepoSpecDocument, error)
+	// GetVersionHistoryByRepository returns all spec versions for a repository across all analyses.
+	// Each version includes the commit SHA at generation time.
+	GetVersionHistoryByRepository(ctx context.Context, userID, owner, name, language string) ([]entity.RepoVersionInfo, error)
+	// GetAvailableLanguagesByRepository returns all available languages for a repository.
+	GetAvailableLanguagesByRepository(ctx context.Context, userID, owner, name string) ([]entity.AvailableLanguageInfo, error)
 }
 
 type TierLookup interface {
