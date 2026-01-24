@@ -29,11 +29,20 @@ import { cn } from "@/lib/utils";
 import { CacheStatsIndicator } from "./cache-stats-indicator";
 import { StatusLegend } from "./status-legend";
 import { SPEC_LANGUAGES } from "../constants/spec-languages";
-import type { BehaviorCacheStats, SpecDocument, SpecLanguage, VersionInfo } from "../types";
+import type {
+  BehaviorCacheStats,
+  RepoVersionInfo,
+  SpecDocument,
+  SpecLanguage,
+  VersionInfo,
+} from "../types";
 import { calculateDocumentStats } from "../utils/stats";
+
+type VersionInfoWithCommit = VersionInfo | RepoVersionInfo;
 
 type ExecutiveSummaryProps = {
   behaviorCacheStats?: BehaviorCacheStats;
+  commitSha?: string;
   document: SpecDocument;
   isGeneratingOtherLanguage?: boolean;
   isLoadingVersions?: boolean;
@@ -43,7 +52,7 @@ type ExecutiveSummaryProps = {
   onLanguageSwitch?: (language: SpecLanguage) => void;
   onRegenerate?: () => void;
   onVersionSwitch?: (version: number) => void;
-  versions?: VersionInfo[];
+  versions?: VersionInfoWithCommit[];
 };
 
 const formatShortDate = (dateString: string): string => {
@@ -53,8 +62,11 @@ const formatShortDate = (dateString: string): string => {
   });
 };
 
+const formatCommitSha = (sha: string): string => (sha.length < 7 ? sha : sha.slice(0, 7));
+
 export const ExecutiveSummary = ({
   behaviorCacheStats,
+  commitSha,
   document,
   isGeneratingOtherLanguage = false,
   isLoadingVersions = false,
@@ -217,6 +229,11 @@ export const ExecutiveSummary = ({
                       >
                         <History className="h-3 w-3" />
                         {formatShortDate(document.createdAt)}
+                        {commitSha && (
+                          <code className="text-[10px] text-muted-foreground/70 font-mono">
+                            {formatCommitSha(commitSha)}
+                          </code>
+                        )}
                         {isLatestVersion && (
                           <span className="text-muted-foreground">
                             ({t("executiveSummary.latestLabel")})
@@ -236,6 +253,8 @@ export const ExecutiveSummary = ({
                   {versions.map((versionInfo) => {
                     const isCurrentVersion = versionInfo.version === currentVersion;
                     const isLatest = versionInfo.version === latestVersion;
+                    const versionCommitSha =
+                      "commitSha" in versionInfo ? versionInfo.commitSha : undefined;
                     return (
                       <DropdownMenuItem
                         className={cn(
@@ -252,6 +271,11 @@ export const ExecutiveSummary = ({
                             <span className="w-3.5" />
                           )}
                           <span>{formatShortDate(versionInfo.createdAt)}</span>
+                          {versionCommitSha && (
+                            <code className="text-[10px] text-muted-foreground/70 font-mono">
+                              {formatCommitSha(versionCommitSha)}
+                            </code>
+                          )}
                           {isLatest && (
                             <span className="text-muted-foreground">
                               ({t("executiveSummary.latestLabel")})

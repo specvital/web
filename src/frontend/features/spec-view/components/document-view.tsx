@@ -8,10 +8,17 @@ import { TocSidebar } from "./toc-sidebar";
 import { VirtualizedDocumentView } from "./virtualized-document-view";
 import { DocumentNavigationProvider } from "../contexts";
 import { useDocumentFilter } from "../hooks/use-document-filter";
-import type { BehaviorCacheStats, SpecDocument, SpecLanguage, VersionInfo } from "../types";
+import type {
+  BehaviorCacheStats,
+  RepoVersionInfo,
+  SpecDocument,
+  SpecLanguage,
+  VersionInfo,
+} from "../types";
 
 type DocumentViewProps = {
   behaviorCacheStats?: BehaviorCacheStats;
+  commitSha?: string;
   document: SpecDocument;
   isGeneratingOtherLanguage?: boolean;
   isLoadingVersions?: boolean;
@@ -21,11 +28,12 @@ type DocumentViewProps = {
   onLanguageSwitch?: (language: SpecLanguage) => void;
   onRegenerate?: () => void;
   onVersionSwitch?: (version: number) => void;
-  versions?: VersionInfo[];
+  versions?: (VersionInfo | RepoVersionInfo)[];
 };
 
 export const DocumentView = ({
   behaviorCacheStats,
+  commitSha,
   document,
   isGeneratingOtherLanguage,
   isLoadingVersions,
@@ -51,6 +59,7 @@ export const DocumentView = ({
         <div className="flex-1 space-y-6 min-w-0">
           <ExecutiveSummary
             behaviorCacheStats={behaviorCacheStats}
+            commitSha={commitSha}
             document={document}
             isGeneratingOtherLanguage={isGeneratingOtherLanguage}
             isLoadingVersions={isLoadingVersions}

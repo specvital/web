@@ -27,6 +27,14 @@ export type VersionInfo = components["schemas"]["VersionInfo"];
 export type VersionHistoryResponse = components["schemas"]["VersionHistoryResponse"];
 export type CacheAvailabilityResponse = components["schemas"]["CacheAvailabilityResponse"];
 
+// Repository-based response types (cross-analysis version access)
+export type RepoSpecDocumentResponse = components["schemas"]["RepoSpecDocumentResponse"];
+export type RepoSpecDocumentCompleted = components["schemas"]["RepoSpecDocumentCompleted"];
+export type RepoSpecDocumentEmpty = components["schemas"]["RepoSpecDocumentEmpty"];
+export type RepoSpecDocument = components["schemas"]["RepoSpecDocument"];
+export type RepoVersionHistoryResponse = components["schemas"]["RepoVersionHistoryResponse"];
+export type RepoVersionInfo = components["schemas"]["RepoVersionInfo"];
+
 // Generation types
 export type SpecGenerationStatus = components["schemas"]["SpecGenerationStatus"];
 export type SpecGenerationStatusEnum = components["schemas"]["SpecGenerationStatusEnum"];
@@ -42,3 +50,12 @@ export const isDocumentCompleted = (
 export const isDocumentGenerating = (
   response: SpecDocumentResponse
 ): response is SpecDocumentGenerating => response.status === "generating";
+
+// Type guards for repository-based responses
+export const isRepoDocumentCompleted = (
+  response: RepoSpecDocumentResponse
+): response is RepoSpecDocumentCompleted => response.status === "completed";
+
+export const isRepoDocumentEmpty = (
+  response: RepoSpecDocumentResponse
+): response is RepoSpecDocumentEmpty => response.status === "empty";

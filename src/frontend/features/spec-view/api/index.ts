@@ -1,6 +1,8 @@
 export {
   fetchCacheAvailability,
   fetchGenerationStatus,
+  fetchRepoSpecDocument,
+  fetchRepoVersionHistory,
   fetchSpecDocument,
   fetchVersionHistory,
   ForbiddenError,

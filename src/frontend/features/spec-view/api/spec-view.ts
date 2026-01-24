@@ -2,6 +2,8 @@ import { apiFetch } from "@/lib/api/client";
 
 import type {
   CacheAvailabilityResponse,
+  RepoSpecDocumentResponse,
+  RepoVersionHistoryResponse,
   RequestSpecGenerationRequest,
   RequestSpecGenerationResponse,
   SpecDocumentResponse,
@@ -190,6 +192,72 @@ export const fetchCacheAvailability = async (
 
     if (response.status === 401) {
       throw new UnauthorizedError(errorBody.detail || "Authentication required");
+    }
+
+    throw new Error(errorBody.detail || response.statusText);
+  }
+
+  return response.json();
+};
+
+// Repository-based API functions (cross-analysis version access)
+
+type FetchRepoSpecDocumentOptions = {
+  language?: SpecLanguage;
+  version?: number;
+};
+
+export const fetchRepoSpecDocument = async (
+  owner: string,
+  repo: string,
+  options?: FetchRepoSpecDocumentOptions
+): Promise<RepoSpecDocumentResponse> => {
+  const params = new URLSearchParams();
+  if (options?.language) {
+    params.set("language", options.language);
+  }
+  if (options?.version !== undefined) {
+    params.set("version", String(options.version));
+  }
+  const queryString = params.toString();
+  const url = queryString
+    ? `/api/spec-view/repository/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}?${queryString}`
+    : `/api/spec-view/repository/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+
+  const response = await apiFetch(url);
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      throw new UnauthorizedError(errorBody.detail || "Authentication required");
+    }
+    if (response.status === 403) {
+      throw new ForbiddenError(errorBody.detail || "Access denied");
+    }
+
+    throw new Error(errorBody.detail || response.statusText);
+  }
+
+  return response.json();
+};
+
+export const fetchRepoVersionHistory = async (
+  owner: string,
+  repo: string,
+  language: SpecLanguage
+): Promise<RepoVersionHistoryResponse> => {
+  const url = `/api/spec-view/repository/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/versions?language=${encodeURIComponent(language)}`;
+  const response = await apiFetch(url);
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      throw new UnauthorizedError(errorBody.detail || "Authentication required");
+    }
+    if (response.status === 403) {
+      throw new ForbiddenError(errorBody.detail || "Access denied");
     }
 
     throw new Error(errorBody.detail || response.statusText);

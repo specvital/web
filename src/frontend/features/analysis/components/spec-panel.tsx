@@ -17,8 +17,8 @@ import {
   useDocumentFilter,
   useGenerationProgress,
   useQuotaConfirmDialog,
+  useRepoVersionHistory,
   useSpecView,
-  useVersionHistory,
 } from "@/features/spec-view";
 import type { GenerationState, SpecLanguage } from "@/features/spec-view";
 import { addTask, getTask, removeTask, updateTask } from "@/lib/background-tasks";
@@ -81,9 +81,10 @@ export const SpecPanel = ({
     version: selectedVersion,
   });
 
-  // Version history - only fetch when we have a document with a language
-  const { data: versionHistory, isLoading: isLoadingVersions } = useVersionHistory(
-    analysisId,
+  // Version history - use repository-based API for cross-analysis version access
+  const { data: repoVersionHistory, isLoading: isLoadingVersions } = useRepoVersionHistory(
+    owner,
+    repo,
     specDocument?.language,
     {
       enabled: Boolean(specDocument?.language),
@@ -325,19 +326,32 @@ export const SpecPanel = ({
       if (hasFilter && matchCount === 0) {
         return <FilterEmptyState filterInfo={filterInfo} onReset={resetFilters} />;
       }
+      // Calculate latest version from repository-based version history
+      const latestVersion =
+        repoVersionHistory?.data && repoVersionHistory.data.length > 0
+          ? Math.max(...repoVersionHistory.data.map((v) => v.version))
+          : undefined;
+
+      // Find commit SHA for current version
+      const currentVersionInfo = repoVersionHistory?.data?.find(
+        (v) => v.version === specDocument.version
+      );
+      const commitSha = currentVersionInfo?.commitSha;
+
       return (
         <DocumentView
           behaviorCacheStats={behaviorCacheStats}
+          commitSha={commitSha}
           document={specDocument}
           isGeneratingOtherLanguage={isGeneratingOtherLanguage}
           isLoadingVersions={isLoadingVersions}
           isRegenerating={isGenerating && !isGeneratingOtherLanguage}
-          latestVersion={versionHistory?.latestVersion}
+          latestVersion={latestVersion}
           onGenerateNewLanguage={handleGenerateNewLanguage}
           onLanguageSwitch={handleExistingLanguageSwitch}
           onRegenerate={handleRegenerate}
           onVersionSwitch={handleVersionSwitch}
-          versions={versionHistory?.data}
+          versions={repoVersionHistory?.data}
         />
       );
     }
