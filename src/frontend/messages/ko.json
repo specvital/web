@@ -278,6 +278,10 @@
       "switchVersionTooltip": "이전 버전 보기",
       "latestLabel": "최신"
     },
+    "versionBanner": {
+      "viewingOldVersion": "버전 {current}을(를) 보고 있습니다. 최신 버전은 {latest}입니다.",
+      "viewLatest": "최신 보기"
+    },
     "stats": {
       "domains": "도메인 {count}개",
       "features": "기능 {count}개",

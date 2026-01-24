@@ -9,6 +9,7 @@ export { FeatureGroup } from "./feature-group";
 export { GenerationProgressModal } from "./generation-progress-modal";
 export { GenerationStatus } from "./generation-status";
 export { HighlightedText } from "./highlighted-text";
+export { OldVersionBanner } from "./old-version-banner";
 export { QuotaConfirmDialog } from "./quota-confirm-dialog";
 export { QuotaIndicator } from "./quota-indicator";
 export { SpecAccessError } from "./spec-access-error";

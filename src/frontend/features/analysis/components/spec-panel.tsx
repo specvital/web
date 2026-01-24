@@ -282,6 +282,13 @@ export const SpecPanel = ({
   };
 
   /**
+   * Switch to the latest version (triggered from old version banner).
+   */
+  const handleViewLatest = () => {
+    setSelectedVersion(undefined);
+  };
+
+  /**
    * Generate a new language (costs quota, requires auth).
    */
   const handleGenerateNewLanguage = (language: SpecLanguage) => {
@@ -351,6 +358,7 @@ export const SpecPanel = ({
           onLanguageSwitch={handleExistingLanguageSwitch}
           onRegenerate={handleRegenerate}
           onVersionSwitch={handleVersionSwitch}
+          onViewLatest={handleViewLatest}
           versions={repoVersionHistory?.data}
         />
       );

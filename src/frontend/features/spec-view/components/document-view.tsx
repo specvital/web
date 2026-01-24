@@ -3,6 +3,7 @@
 import { FilterEmptyState } from "@/components/feedback";
 
 import { ExecutiveSummary } from "./executive-summary";
+import { OldVersionBanner } from "./old-version-banner";
 import { ReadingProgressBar } from "./reading-progress-bar";
 import { TocSidebar } from "./toc-sidebar";
 import { VirtualizedDocumentView } from "./virtualized-document-view";
@@ -28,6 +29,7 @@ type DocumentViewProps = {
   onLanguageSwitch?: (language: SpecLanguage) => void;
   onRegenerate?: () => void;
   onVersionSwitch?: (version: number) => void;
+  onViewLatest?: () => void;
   versions?: (VersionInfo | RepoVersionInfo)[];
 };
 
@@ -43,16 +45,27 @@ export const DocumentView = ({
   onLanguageSwitch,
   onRegenerate,
   onVersionSwitch,
+  onViewLatest,
   versions,
 }: DocumentViewProps) => {
   const { clearFilters, filteredDocument, filterInfo, hasFilter, matchCount } =
     useDocumentFilter(document);
 
   const showEmptyState = hasFilter && matchCount === 0;
+  const currentVersion = document.version;
+  const isViewingOldVersion =
+    latestVersion !== undefined && currentVersion !== undefined && currentVersion < latestVersion;
 
   return (
     <DocumentNavigationProvider document={document}>
       <ReadingProgressBar />
+      {isViewingOldVersion && onViewLatest && (
+        <OldVersionBanner
+          currentVersion={currentVersion!}
+          latestVersion={latestVersion!}
+          onViewLatest={onViewLatest}
+        />
+      )}
       <div className="flex flex-col lg:flex-row lg:gap-6">
         <TocSidebar document={document} filteredDocument={filteredDocument} hasFilter={hasFilter} />
 

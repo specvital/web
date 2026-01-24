@@ -278,6 +278,10 @@
       "switchVersionTooltip": "View previous versions",
       "latestLabel": "latest"
     },
+    "versionBanner": {
+      "viewingOldVersion": "You are viewing version {current}. The latest version is {latest}.",
+      "viewLatest": "View Latest"
+    },
     "stats": {
       "domains": "{count, plural, =1 {1 domain} other {# domains}}",
       "features": "{count, plural, =1 {1 feature} other {# features}}",
