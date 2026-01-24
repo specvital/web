@@ -1,3 +1,9 @@
+export {
+  copySpecToClipboard,
+  downloadSpecMarkdown,
+  exportSpecToMarkdown,
+  generateSpecFilename,
+} from "./export-spec-markdown";
 export { findHighlightRanges } from "./highlight";
 export type { HighlightRange } from "./highlight";
 export { formatQuotaNumber, getQuotaLevel, isQuotaExceeded } from "./quota";
