@@ -279,6 +279,8 @@
       "latestLabel": "latest"
     },
     "versionBanner": {
+      "outdatedCommit": "This spec was generated from a previous commit. Regenerate to update.",
+      "regenerate": "Regenerate",
       "viewingOldVersion": "You are viewing version {current}. The latest version is {latest}.",
       "viewLatest": "View Latest"
     },

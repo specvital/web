@@ -279,6 +279,8 @@
       "latestLabel": "최신"
     },
     "versionBanner": {
+      "outdatedCommit": "이 스펙은 이전 커밋 기준으로 생성되었습니다. 재생성하여 업데이트하세요.",
+      "regenerate": "재생성",
       "viewingOldVersion": "버전 {current}을(를) 보고 있습니다. 최신 버전은 {latest}입니다.",
       "viewLatest": "최신 보기"
     },

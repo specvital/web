@@ -74,6 +74,7 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
             />
           ) : (
             <SpecPanel
+              analysisCommitSha={result.commitSha}
               analysisId={result.id}
               availableFrameworks={availableFrameworks}
               owner={result.owner}

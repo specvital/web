@@ -28,6 +28,7 @@ import { SpecToolbar } from "./spec-toolbar";
 import { useFilterState } from "../hooks/use-filter-state";
 
 type SpecPanelProps = {
+  analysisCommitSha: string;
   analysisId: string;
   availableFrameworks: string[];
   owner: string;
@@ -36,6 +37,7 @@ type SpecPanelProps = {
 };
 
 export const SpecPanel = ({
+  analysisCommitSha,
   analysisId,
   availableFrameworks,
   owner,
@@ -353,6 +355,7 @@ export const SpecPanel = ({
 
       return (
         <DocumentView
+          analysisCommitSha={analysisCommitSha}
           behaviorCacheStats={behaviorCacheStats}
           commitSha={commitSha}
           document={specDocument}
@@ -360,6 +363,7 @@ export const SpecPanel = ({
           isLoadingVersions={isLoadingVersions}
           isRegenerating={isGenerating && !isGeneratingOtherLanguage}
           latestVersion={latestVersion}
+          onGenerateForCurrentCommit={handleGenerate}
           onGenerateNewLanguage={handleGenerateNewLanguage}
           onLanguageSwitch={handleExistingLanguageSwitch}
           onRegenerate={handleRegenerate}

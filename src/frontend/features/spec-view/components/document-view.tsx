@@ -18,6 +18,7 @@ import type {
 } from "../types";
 
 type DocumentViewProps = {
+  analysisCommitSha?: string;
   behaviorCacheStats?: BehaviorCacheStats;
   commitSha?: string;
   document: SpecDocument;
@@ -25,6 +26,7 @@ type DocumentViewProps = {
   isLoadingVersions?: boolean;
   isRegenerating?: boolean;
   latestVersion?: number;
+  onGenerateForCurrentCommit?: () => void;
   onGenerateNewLanguage?: (language: SpecLanguage) => void;
   onLanguageSwitch?: (language: SpecLanguage) => void;
   onRegenerate?: () => void;
@@ -34,6 +36,7 @@ type DocumentViewProps = {
 };
 
 export const DocumentView = ({
+  analysisCommitSha,
   behaviorCacheStats,
   commitSha,
   document,
@@ -41,6 +44,7 @@ export const DocumentView = ({
   isLoadingVersions,
   isRegenerating,
   latestVersion,
+  onGenerateForCurrentCommit,
   onGenerateNewLanguage,
   onLanguageSwitch,
   onRegenerate,
@@ -55,11 +59,17 @@ export const DocumentView = ({
   const currentVersion = document.version;
   const isViewingOldVersion =
     latestVersion !== undefined && currentVersion !== undefined && currentVersion < latestVersion;
+  // Check if spec was generated from a different commit than current analysis
+  const isOutdatedCommit =
+    analysisCommitSha !== undefined && commitSha !== undefined && analysisCommitSha !== commitSha;
 
   return (
     <DocumentNavigationProvider document={document}>
       <ReadingProgressBar />
-      {isViewingOldVersion && onViewLatest && (
+      {isOutdatedCommit && onGenerateForCurrentCommit && (
+        <OldVersionBanner onViewLatest={onGenerateForCurrentCommit} outdatedCommit />
+      )}
+      {!isOutdatedCommit && isViewingOldVersion && onViewLatest && (
         <OldVersionBanner
           currentVersion={currentVersion!}
           latestVersion={latestVersion!}
@@ -80,7 +90,7 @@ export const DocumentView = ({
             latestVersion={latestVersion}
             onGenerateNewLanguage={onGenerateNewLanguage}
             onLanguageSwitch={onLanguageSwitch}
-            onRegenerate={onRegenerate}
+            onRegenerate={isOutdatedCommit ? onGenerateForCurrentCommit : onRegenerate}
             onVersionSwitch={onVersionSwitch}
             versions={versions}
           />
