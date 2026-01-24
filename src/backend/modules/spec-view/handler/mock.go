@@ -38,3 +38,9 @@ func (m *MockHandler) GetSpecVersions(_ context.Context, _ api.GetSpecVersionsRe
 		NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("not found"),
 	}, nil
 }
+
+func (m *MockHandler) GetSpecCacheAvailability(_ context.Context, _ api.GetSpecCacheAvailabilityRequestObject) (api.GetSpecCacheAvailabilityResponseObject, error) {
+	return api.GetSpecCacheAvailability200JSONResponse{
+		Languages: map[string]bool{},
+	}, nil
+}

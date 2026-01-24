@@ -240,7 +240,8 @@ export const SpecPanel = ({
       analysisId,
       estimatedCost: totalTests,
       locale,
-      onConfirm: (selectedLanguage) => startGeneration(selectedLanguage, false),
+      onConfirm: (selectedLanguage, forceRegenerate) =>
+        startGeneration(selectedLanguage, forceRegenerate ?? false),
       usage: usageData ?? null,
     });
   };

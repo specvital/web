@@ -576,6 +576,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/spec-view/{analysisId}/cache-availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Analysis ID (UUID) to check cache availability for
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                analysisId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Get cache availability for all languages
+         * @description Returns cache availability information for each supported language.
+         *     Used to determine if behavior cache reuse is possible when generating a new spec.
+         *     A previous spec exists when the same codebase has been analyzed before in that language.
+         *
+         */
+        get: operations["getSpecCacheAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/spec-view/generate": {
         parameters: {
             query?: never;
@@ -1415,6 +1444,19 @@ export interface components {
              */
             hitRate: number;
         };
+        CacheAvailabilityResponse: {
+            /**
+             * @description Map of language to cache availability (hasPreviousSpec)
+             * @example {
+             *       "Korean": true,
+             *       "English": false,
+             *       "Japanese": true
+             *     }
+             */
+            languages: {
+                [key: string]: boolean;
+            };
+        };
         AvailableLanguageInfo: {
             language: components["schemas"]["SpecLanguage"];
             /**
@@ -1427,6 +1469,8 @@ export interface components {
              * @description When this language was last generated
              */
             createdAt: string;
+            /** @description Whether a previous spec exists for the same codebase in this language (enables behavior cache usage) */
+            hasPreviousSpec: boolean;
         };
         VersionInfo: {
             /**
@@ -2529,6 +2573,35 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getSpecCacheAvailability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Analysis ID (UUID) to check cache availability for
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                analysisId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cache availability retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CacheAvailabilityResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
         };

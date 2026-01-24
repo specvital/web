@@ -53,6 +53,7 @@ type GitHubAppHandlers interface {
 }
 
 type SpecViewHandlers interface {
+	GetSpecCacheAvailability(ctx context.Context, request GetSpecCacheAvailabilityRequestObject) (GetSpecCacheAvailabilityResponseObject, error)
 	GetSpecDocument(ctx context.Context, request GetSpecDocumentRequestObject) (GetSpecDocumentResponseObject, error)
 	GetSpecGenerationStatus(ctx context.Context, request GetSpecGenerationStatusRequestObject) (GetSpecGenerationStatusResponseObject, error)
 	GetSpecVersions(ctx context.Context, request GetSpecVersionsRequestObject) (GetSpecVersionsResponseObject, error)
@@ -261,6 +262,15 @@ func (h *APIHandlers) GetSpecVersions(ctx context.Context, request GetSpecVersio
 		}, nil
 	}
 	return h.specView.GetSpecVersions(ctx, request)
+}
+
+func (h *APIHandlers) GetSpecCacheAvailability(ctx context.Context, request GetSpecCacheAvailabilityRequestObject) (GetSpecCacheAvailabilityResponseObject, error) {
+	if h.specView == nil {
+		return GetSpecCacheAvailability500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: NewInternalError("Spec View feature not configured"),
+		}, nil
+	}
+	return h.specView.GetSpecCacheAvailability(ctx, request)
 }
 
 func (h *APIHandlers) CheckQuota(ctx context.Context, request CheckQuotaRequestObject) (CheckQuotaResponseObject, error) {

@@ -82,6 +82,21 @@ func (uc *GetSpecDocumentUseCase) Execute(ctx context.Context, input GetSpecDocu
 		if err != nil {
 			return nil, err
 		}
+		// Get all languages with previous spec in single batch query
+		langsWithCache, err := uc.repo.GetLanguagesWithPreviousSpec(ctx, input.UserID, input.AnalysisID)
+		if err != nil {
+			return nil, err
+		}
+		// Build lookup set for O(1) access
+		cacheSet := make(map[string]struct{}, len(langsWithCache))
+		for _, lang := range langsWithCache {
+			cacheSet[lang] = struct{}{}
+		}
+		// Enrich each language with hasPreviousSpec info for cache selection UI
+		for i := range availableLanguages {
+			_, hasPrev := cacheSet[availableLanguages[i].Language]
+			availableLanguages[i].HasPreviousSpec = hasPrev
+		}
 		doc.AvailableLanguages = availableLanguages
 		return &GetSpecDocumentOutput{Document: doc}, nil
 	}

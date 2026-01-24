@@ -9,6 +9,13 @@ import (
 type SpecViewRepository interface {
 	CheckAnalysisExists(ctx context.Context, analysisID string) (bool, error)
 	CheckSpecDocumentExistsByLanguage(ctx context.Context, analysisID string, language string) (bool, error)
+	// HasPreviousSpecByLanguage checks if user has a spec document for the same codebase
+	// but different analysis. Used to determine if behavior cache might exist.
+	// Deprecated: Use GetLanguagesWithPreviousSpec for batch queries to avoid N+1.
+	HasPreviousSpecByLanguage(ctx context.Context, userID, analysisID, language string) (bool, error)
+	// GetLanguagesWithPreviousSpec returns all languages where user has a spec document
+	// for the same codebase but different analysis. Batch version to avoid N+1 queries.
+	GetLanguagesWithPreviousSpec(ctx context.Context, userID, analysisID string) ([]string, error)
 	// GetAvailableLanguages returns all available languages for an analysis with their latest version info.
 	// Deprecated: Use GetAvailableLanguagesByUser for access-controlled access.
 	GetAvailableLanguages(ctx context.Context, analysisID string) ([]entity.AvailableLanguageInfo, error)

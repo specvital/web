@@ -73,6 +73,14 @@ func (m *mockStatusRepository) GetVersionsByUser(_ context.Context, _ string, _ 
 	return nil, nil
 }
 
+func (m *mockStatusRepository) HasPreviousSpecByLanguage(_ context.Context, _ string, _ string, _ string) (bool, error) {
+	return false, nil
+}
+
+func (m *mockStatusRepository) GetLanguagesWithPreviousSpec(_ context.Context, _ string, _ string) ([]string, error) {
+	return nil, nil
+}
+
 func TestGetGenerationStatusUseCase_Execute(t *testing.T) {
 	t.Run("returns unauthorized error when userID is empty", func(t *testing.T) {
 		uc := NewGetGenerationStatusUseCase(&mockStatusRepository{})

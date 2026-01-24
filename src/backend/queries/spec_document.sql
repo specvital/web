@@ -242,3 +242,25 @@ FROM spec_documents sd
 WHERE sd.analysis_id = ANY(@analysis_ids::uuid[])
   AND sd.user_id = @user_id
 GROUP BY sd.analysis_id, sd.user_id;
+
+-- name: HasPreviousSpecByLanguage :one
+-- Checks if user has generated a spec document for the same codebase but different analysis
+-- Used to determine if behavior cache might exist for the selected language
+SELECT EXISTS(
+    SELECT 1 FROM spec_documents sd
+    JOIN analyses a ON a.id = sd.analysis_id
+    WHERE a.codebase_id = (SELECT a2.codebase_id FROM analyses a2 WHERE a2.id = @current_analysis_id)
+      AND sd.user_id = @user_id
+      AND sd.language = @language
+      AND sd.analysis_id != @current_analysis_id
+) AS has_previous_spec;
+
+-- name: GetLanguagesWithPreviousSpec :many
+-- Returns all languages where user has a spec document for the same codebase but different analysis
+-- Batch version of HasPreviousSpecByLanguage to avoid N+1 queries
+SELECT DISTINCT sd.language
+FROM spec_documents sd
+JOIN analyses a ON a.id = sd.analysis_id
+WHERE a.codebase_id = (SELECT a2.codebase_id FROM analyses a2 WHERE a2.id = @current_analysis_id)
+  AND sd.user_id = @user_id
+  AND sd.analysis_id != @current_analysis_id;

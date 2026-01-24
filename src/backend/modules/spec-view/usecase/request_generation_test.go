@@ -71,6 +71,14 @@ func (m *mockSpecViewRepository) GetVersionsByUser(_ context.Context, _ string, 
 	return nil, nil
 }
 
+func (m *mockSpecViewRepository) HasPreviousSpecByLanguage(_ context.Context, _ string, _ string, _ string) (bool, error) {
+	return false, nil
+}
+
+func (m *mockSpecViewRepository) GetLanguagesWithPreviousSpec(_ context.Context, _ string, _ string) ([]string, error) {
+	return nil, nil
+}
+
 type mockQueueService struct {
 	enqueueErr error
 }

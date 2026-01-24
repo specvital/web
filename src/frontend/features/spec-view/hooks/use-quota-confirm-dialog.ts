@@ -10,6 +10,7 @@ import type { SpecLanguage } from "../types";
 type QuotaConfirmDialogStore = {
   analysisId: string | null;
   estimatedCost: number | null;
+  forceRegenerate: boolean;
   isOpen: boolean;
   isRegenerate: boolean;
   listeners: Set<() => void>;
@@ -21,6 +22,7 @@ type QuotaConfirmDialogStore = {
 const store: QuotaConfirmDialogStore = {
   analysisId: null,
   estimatedCost: null,
+  forceRegenerate: false,
   isOpen: false,
   isRegenerate: false,
   listeners: new Set(),
@@ -53,6 +55,8 @@ const getSelectedLanguageSnapshot = () => store.selectedLanguage;
 const getAnalysisIdSnapshot = () => store.analysisId;
 
 const getIsRegenerateSnapshot = () => store.isRegenerate;
+
+const getForceRegenerateSnapshot = () => store.forceRegenerate;
 
 /**
  * Get the stored language preference for a specific analysis
@@ -145,6 +149,7 @@ const open = ({
 
     store.isOpen = true;
     store.isRegenerate = isRegenerate;
+    store.forceRegenerate = isRegenerate; // Regenerate always forces, new generation defaults to cache
     store.usage = usage;
     store.onConfirm = onConfirm;
     store.estimatedCost = estimatedCost ?? null;
@@ -158,6 +163,7 @@ const close = () => {
   if (store.isOpen) {
     store.isOpen = false;
     store.isRegenerate = false;
+    store.forceRegenerate = false;
     store.usage = null;
     store.onConfirm = null;
     store.estimatedCost = null;
@@ -178,11 +184,20 @@ const setSelectedLanguage = (language: SpecLanguage) => {
   }
 };
 
-const confirm = () => {
-  if (store.onConfirm) {
-    store.onConfirm(store.selectedLanguage, store.isRegenerate);
+const setForceRegenerate = (value: boolean) => {
+  if (store.forceRegenerate !== value) {
+    store.forceRegenerate = value;
+    notifyListeners();
   }
+};
+
+const confirm = () => {
+  // Capture values before close() resets them
+  const callback = store.onConfirm;
+  const language = store.selectedLanguage;
+  const forceRegen = store.forceRegenerate;
   close();
+  callback?.(language, forceRegen);
 };
 
 export const useQuotaConfirmDialog = () => {
@@ -197,6 +212,7 @@ export const useQuotaConfirmDialog = () => {
   );
   const analysisId = useSyncExternalStore(subscribe, getAnalysisIdSnapshot, () => null);
   const isRegenerate = useSyncExternalStore(subscribe, getIsRegenerateSnapshot, () => false);
+  const forceRegenerate = useSyncExternalStore(subscribe, getForceRegenerateSnapshot, () => false);
 
   const onOpenChange = (open: boolean) => {
     if (!open) {
@@ -209,12 +225,14 @@ export const useQuotaConfirmDialog = () => {
     close,
     confirm,
     estimatedCost,
+    forceRegenerate,
     isOpen,
     isRegenerate,
     onConfirm,
     onOpenChange,
     open,
     selectedLanguage,
+    setForceRegenerate,
     setSelectedLanguage,
     specLanguages: SPEC_LANGUAGES,
     usage,

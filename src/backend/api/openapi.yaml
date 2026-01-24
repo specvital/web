@@ -789,6 +789,41 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /api/spec-view/{analysisId}/cache-availability:
+    parameters:
+      - name: analysisId
+        in: path
+        required: true
+        description: Analysis ID (UUID) to check cache availability for
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+    get:
+      operationId: getSpecCacheAvailability
+      summary: Get cache availability for all languages
+      description: |
+        Returns cache availability information for each supported language.
+        Used to determine if behavior cache reuse is possible when generating a new spec.
+        A previous spec exists when the same codebase has been analyzed before in that language.
+      tags:
+        - Spec View
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Cache availability retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheAvailabilityResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /api/spec-view/generate:
     post:
       operationId: requestSpecGeneration
@@ -2141,12 +2176,28 @@ components:
           description: Cache hit rate (0.0 to 1.0)
           example: 0.95
 
+    CacheAvailabilityResponse:
+      type: object
+      required:
+        - languages
+      properties:
+        languages:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: Map of language to cache availability (hasPreviousSpec)
+          example:
+            Korean: true
+            English: false
+            Japanese: true
+
     AvailableLanguageInfo:
       type: object
       required:
         - language
         - latestVersion
         - createdAt
+        - hasPreviousSpec
       properties:
         language:
           $ref: "#/components/schemas/SpecLanguage"
@@ -2159,6 +2210,9 @@ components:
           type: string
           format: date-time
           description: When this language was last generated
+        hasPreviousSpec:
+          type: boolean
+          description: Whether a previous spec exists for the same codebase in this language (enables behavior cache usage)
 
     VersionInfo:
       type: object

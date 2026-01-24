@@ -1,4 +1,5 @@
 export {
+  fetchCacheAvailability,
   fetchGenerationStatus,
   fetchSpecDocument,
   fetchVersionHistory,

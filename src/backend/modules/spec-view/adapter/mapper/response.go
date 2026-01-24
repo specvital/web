@@ -50,9 +50,10 @@ func toAPIAvailableLanguages(langs []entity.AvailableLanguageInfo) []api.Availab
 	result := make([]api.AvailableLanguageInfo, len(langs))
 	for i, l := range langs {
 		result[i] = api.AvailableLanguageInfo{
-			CreatedAt:     l.CreatedAt,
-			Language:      api.SpecLanguage(l.Language),
-			LatestVersion: l.LatestVersion,
+			CreatedAt:       l.CreatedAt,
+			HasPreviousSpec: l.HasPreviousSpec,
+			Language:        api.SpecLanguage(l.Language),
+			LatestVersion:   l.LatestVersion,
 		}
 	}
 	return result

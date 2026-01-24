@@ -48,9 +48,10 @@ type SpecDocument struct {
 }
 
 type AvailableLanguageInfo struct {
-	CreatedAt     time.Time
-	Language      string
-	LatestVersion int
+	CreatedAt       time.Time
+	HasPreviousSpec bool
+	Language        string
+	LatestVersion   int
 }
 
 type VersionInfo struct {

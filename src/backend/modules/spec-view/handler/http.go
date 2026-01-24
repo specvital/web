@@ -19,22 +19,24 @@ import (
 )
 
 type Handler struct {
-	getGenerationStatus *usecase.GetGenerationStatusUseCase
-	getSpecDocument     *usecase.GetSpecDocumentUseCase
-	getVersions         *usecase.GetVersionsUseCase
-	logger              *logger.Logger
-	requestGeneration   *usecase.RequestGenerationUseCase
-	tierLookup          port.TierLookup
+	getCacheAvailability *usecase.GetCacheAvailabilityUseCase
+	getGenerationStatus  *usecase.GetGenerationStatusUseCase
+	getSpecDocument      *usecase.GetSpecDocumentUseCase
+	getVersions          *usecase.GetVersionsUseCase
+	logger               *logger.Logger
+	requestGeneration    *usecase.RequestGenerationUseCase
+	tierLookup           port.TierLookup
 }
 
 var _ api.SpecViewHandlers = (*Handler)(nil)
 
 type HandlerConfig struct {
-	GetGenerationStatus *usecase.GetGenerationStatusUseCase
-	GetSpecDocument     *usecase.GetSpecDocumentUseCase
-	GetVersions         *usecase.GetVersionsUseCase
-	Logger              *logger.Logger
-	RequestGeneration   *usecase.RequestGenerationUseCase
+	GetCacheAvailability *usecase.GetCacheAvailabilityUseCase
+	GetGenerationStatus  *usecase.GetGenerationStatusUseCase
+	GetSpecDocument      *usecase.GetSpecDocumentUseCase
+	GetVersions          *usecase.GetVersionsUseCase
+	Logger               *logger.Logger
+	RequestGeneration    *usecase.RequestGenerationUseCase
 	// TierLookup is optional. If nil, all requests use default queue.
 	TierLookup port.TierLookup
 }
@@ -52,17 +54,21 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	if cfg.GetVersions == nil {
 		return nil, errors.New("GetVersions usecase is required")
 	}
+	if cfg.GetCacheAvailability == nil {
+		return nil, errors.New("GetCacheAvailability usecase is required")
+	}
 	if cfg.Logger == nil {
 		return nil, errors.New("Logger is required")
 	}
 
 	return &Handler{
-		getGenerationStatus: cfg.GetGenerationStatus,
-		getSpecDocument:     cfg.GetSpecDocument,
-		getVersions:         cfg.GetVersions,
-		logger:              cfg.Logger,
-		requestGeneration:   cfg.RequestGeneration,
-		tierLookup:          cfg.TierLookup,
+		getCacheAvailability: cfg.GetCacheAvailability,
+		getGenerationStatus:  cfg.GetGenerationStatus,
+		getSpecDocument:      cfg.GetSpecDocument,
+		getVersions:          cfg.GetVersions,
+		logger:               cfg.Logger,
+		requestGeneration:    cfg.RequestGeneration,
+		tierLookup:           cfg.TierLookup,
 	}, nil
 }
 
@@ -342,6 +348,37 @@ func (r specDocument200Response) VisitGetSpecDocumentResponse(w http.ResponseWri
 
 func ptr(s string) *string {
 	return &s
+}
+
+func (h *Handler) GetSpecCacheAvailability(ctx context.Context, request api.GetSpecCacheAvailabilityRequestObject) (api.GetSpecCacheAvailabilityResponseObject, error) {
+	userID := middleware.GetUserID(ctx)
+	analysisID := request.AnalysisID.String()
+
+	result, err := h.getCacheAvailability.Execute(ctx, usecase.GetCacheAvailabilityInput{
+		AnalysisID: analysisID,
+		UserID:     userID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrUnauthorized):
+			return api.GetSpecCacheAvailability401ApplicationProblemPlusJSONResponse{
+				UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("authentication required"),
+			}, nil
+		case errors.Is(err, domain.ErrInvalidAnalysisID), errors.Is(err, domain.ErrAnalysisNotFound):
+			return api.GetSpecCacheAvailability404ApplicationProblemPlusJSONResponse{
+				NotFoundApplicationProblemPlusJSONResponse: api.NewNotFound("analysis not found"),
+			}, nil
+		}
+
+		h.logger.Error(ctx, "failed to get cache availability", "error", err)
+		return api.GetSpecCacheAvailability500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to get cache availability"),
+		}, nil
+	}
+
+	return api.GetSpecCacheAvailability200JSONResponse{
+		Languages: result.Languages,
+	}, nil
 }
 
 func (h *Handler) lookupUserTier(ctx context.Context, userID string) subscription.PlanTier {

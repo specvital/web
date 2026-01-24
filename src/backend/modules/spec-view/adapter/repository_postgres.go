@@ -516,6 +516,39 @@ func (r *PostgresRepository) GetVersionsByUser(ctx context.Context, userID strin
 	return result, nil
 }
 
+func (r *PostgresRepository) HasPreviousSpecByLanguage(ctx context.Context, userID, analysisID, language string) (bool, error) {
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return false, err
+	}
+	aid, err := parseUUID(analysisID)
+	if err != nil {
+		return false, err
+	}
+
+	return r.queries.HasPreviousSpecByLanguage(ctx, db.HasPreviousSpecByLanguageParams{
+		CurrentAnalysisID: aid,
+		UserID:            uid,
+		Language:          language,
+	})
+}
+
+func (r *PostgresRepository) GetLanguagesWithPreviousSpec(ctx context.Context, userID, analysisID string) ([]string, error) {
+	uid, err := parseUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+	aid, err := parseUUID(analysisID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.queries.GetLanguagesWithPreviousSpec(ctx, db.GetLanguagesWithPreviousSpecParams{
+		CurrentAnalysisID: aid,
+		UserID:            uid,
+	})
+}
+
 func mapRiverJobState(state string) entity.GenerationStatus {
 	switch state {
 	case "available", "pending", "scheduled", "retryable":

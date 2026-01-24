@@ -401,6 +401,15 @@
         "description": "An error occurred while generating the specification document."
       }
     },
+    "generate": {
+      "analysisMode": "Analysis Mode",
+      "withCache": "Use cache",
+      "withCacheBenefit": "Reuses previous analysis to save quota",
+      "fresh": "Fresh analysis",
+      "freshWarning": "Quota will be consumed for all tests",
+      "recommended": "Recommended",
+      "cacheCheckFailed": "Could not check cache availability. Fresh analysis will be used."
+    },
     "cacheStats": {
       "summary": "{cached} of {total} tests from cache ({rate}%)",
       "allFromCache": "All tests loaded from cache",

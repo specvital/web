@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 
 import type {
+  CacheAvailabilityResponse,
   RequestSpecGenerationRequest,
   RequestSpecGenerationResponse,
   SpecDocumentResponse,
@@ -170,6 +171,25 @@ export const fetchVersionHistory = async (
     }
     if (response.status === 403) {
       throw new ForbiddenError(errorBody.detail || "Access denied");
+    }
+
+    throw new Error(errorBody.detail || response.statusText);
+  }
+
+  return response.json();
+};
+
+export const fetchCacheAvailability = async (
+  analysisId: string
+): Promise<CacheAvailabilityResponse> => {
+  const url = `/api/spec-view/${analysisId}/cache-availability`;
+  const response = await apiFetch(url);
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      throw new UnauthorizedError(errorBody.detail || "Authentication required");
     }
 
     throw new Error(errorBody.detail || response.statusText);

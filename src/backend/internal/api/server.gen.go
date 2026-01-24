@@ -237,6 +237,9 @@ type AvailableLanguageInfo struct {
 	// CreatedAt When this language was last generated
 	CreatedAt time.Time `json:"createdAt"`
 
+	// HasPreviousSpec Whether a previous spec exists for the same codebase in this language (enables behavior cache usage)
+	HasPreviousSpec bool `json:"hasPreviousSpec"`
+
 	// Language Target language for spec document generation (24 languages supported)
 	Language SpecLanguage `json:"language"`
 
@@ -272,6 +275,12 @@ type BookmarkResponse struct {
 type BookmarkedRepositoriesResponse struct {
 	// Data Bookmarked repositories
 	Data []RepositoryCard `json:"data"`
+}
+
+// CacheAvailabilityResponse defines model for CacheAvailabilityResponse.
+type CacheAvailabilityResponse struct {
+	// Languages Map of language to cache availability (hasPreviousSpec)
+	Languages map[string]bool `json:"languages"`
 }
 
 // CheckQuotaRequest defines model for CheckQuotaRequest.
@@ -1549,6 +1558,9 @@ type ServerInterface interface {
 	// Get specification document for analysis
 	// (GET /api/spec-view/{analysisId})
 	GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecDocumentParams)
+	// Get cache availability for all languages
+	// (GET /api/spec-view/{analysisId}/cache-availability)
+	GetSpecCacheAvailability(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID)
 	// Get version history for a specific language
 	// (GET /api/spec-view/{analysisId}/versions)
 	GetSpecVersions(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecVersionsParams)
@@ -1699,6 +1711,12 @@ func (_ Unimplemented) GetSpecGenerationStatus(w http.ResponseWriter, r *http.Re
 // Get specification document for analysis
 // (GET /api/spec-view/{analysisId})
 func (_ Unimplemented) GetSpecDocument(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID, params GetSpecDocumentParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get cache availability for all languages
+// (GET /api/spec-view/{analysisId}/cache-availability)
+func (_ Unimplemented) GetSpecCacheAvailability(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2367,6 +2385,37 @@ func (siw *ServerInterfaceWrapper) GetSpecDocument(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetSpecCacheAvailability operation middleware
+func (siw *ServerInterfaceWrapper) GetSpecCacheAvailability(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "analysisId" -------------
+	var analysisID openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "analysisId", chi.URLParam(r, "analysisId"), &analysisID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "analysisId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpecCacheAvailability(w, r, analysisID)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetSpecVersions operation middleware
 func (siw *ServerInterfaceWrapper) GetSpecVersions(w http.ResponseWriter, r *http.Request) {
 
@@ -2969,6 +3018,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/spec-view/{analysisId}", wrapper.GetSpecDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/spec-view/{analysisId}/cache-availability", wrapper.GetSpecCacheAvailability)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/spec-view/{analysisId}/versions", wrapper.GetSpecVersions)
@@ -3961,6 +4013,56 @@ func (response GetSpecDocument500ApplicationProblemPlusJSONResponse) VisitGetSpe
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetSpecCacheAvailabilityRequestObject struct {
+	AnalysisID openapi_types.UUID `json:"analysisId"`
+}
+
+type GetSpecCacheAvailabilityResponseObject interface {
+	VisitGetSpecCacheAvailabilityResponse(w http.ResponseWriter) error
+}
+
+type GetSpecCacheAvailability200JSONResponse CacheAvailabilityResponse
+
+func (response GetSpecCacheAvailability200JSONResponse) VisitGetSpecCacheAvailabilityResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecCacheAvailability401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecCacheAvailability401ApplicationProblemPlusJSONResponse) VisitGetSpecCacheAvailabilityResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecCacheAvailability404ApplicationProblemPlusJSONResponse struct {
+	NotFoundApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecCacheAvailability404ApplicationProblemPlusJSONResponse) VisitGetSpecCacheAvailabilityResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecCacheAvailability500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpecCacheAvailability500ApplicationProblemPlusJSONResponse) VisitGetSpecCacheAvailabilityResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type GetSpecVersionsRequestObject struct {
 	AnalysisID openapi_types.UUID `json:"analysisId"`
 	Params     GetSpecVersionsParams
@@ -4685,6 +4787,9 @@ type StrictServerInterface interface {
 	// Get specification document for analysis
 	// (GET /api/spec-view/{analysisId})
 	GetSpecDocument(ctx context.Context, request GetSpecDocumentRequestObject) (GetSpecDocumentResponseObject, error)
+	// Get cache availability for all languages
+	// (GET /api/spec-view/{analysisId}/cache-availability)
+	GetSpecCacheAvailability(ctx context.Context, request GetSpecCacheAvailabilityRequestObject) (GetSpecCacheAvailabilityResponseObject, error)
 	// Get version history for a specific language
 	// (GET /api/spec-view/{analysisId}/versions)
 	GetSpecVersions(ctx context.Context, request GetSpecVersionsRequestObject) (GetSpecVersionsResponseObject, error)
@@ -5222,6 +5327,32 @@ func (sh *strictHandler) GetSpecDocument(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetSpecDocumentResponseObject); ok {
 		if err := validResponse.VisitGetSpecDocumentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpecCacheAvailability operation middleware
+func (sh *strictHandler) GetSpecCacheAvailability(w http.ResponseWriter, r *http.Request, analysisID openapi_types.UUID) {
+	var request GetSpecCacheAvailabilityRequestObject
+
+	request.AnalysisID = analysisID
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpecCacheAvailability(ctx, request.(GetSpecCacheAvailabilityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpecCacheAvailability")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpecCacheAvailabilityResponseObject); ok {
+		if err := validResponse.VisitGetSpecCacheAvailabilityResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

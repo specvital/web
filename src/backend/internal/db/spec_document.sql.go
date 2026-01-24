@@ -186,6 +186,42 @@ func (q *Queries) GetAvailableLanguagesByUserAndAnalysis(ctx context.Context, ar
 	return items, nil
 }
 
+const getLanguagesWithPreviousSpec = `-- name: GetLanguagesWithPreviousSpec :many
+SELECT DISTINCT sd.language
+FROM spec_documents sd
+JOIN analyses a ON a.id = sd.analysis_id
+WHERE a.codebase_id = (SELECT a2.codebase_id FROM analyses a2 WHERE a2.id = $1)
+  AND sd.user_id = $2
+  AND sd.analysis_id != $1
+`
+
+type GetLanguagesWithPreviousSpecParams struct {
+	CurrentAnalysisID pgtype.UUID `json:"current_analysis_id"`
+	UserID            pgtype.UUID `json:"user_id"`
+}
+
+// Returns all languages where user has a spec document for the same codebase but different analysis
+// Batch version of HasPreviousSpecByLanguage to avoid N+1 queries
+func (q *Queries) GetLanguagesWithPreviousSpec(ctx context.Context, arg GetLanguagesWithPreviousSpecParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, getLanguagesWithPreviousSpec, arg.CurrentAnalysisID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var language string
+		if err := rows.Scan(&language); err != nil {
+			return nil, err
+		}
+		items = append(items, language)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSpecBehaviorSourceInfo = `-- name: GetSpecBehaviorSourceInfo :many
 SELECT
     b.id AS behavior_id,
@@ -832,4 +868,30 @@ func (q *Queries) GetVersionsByUserAndLanguage(ctx context.Context, arg GetVersi
 		return nil, err
 	}
 	return items, nil
+}
+
+const hasPreviousSpecByLanguage = `-- name: HasPreviousSpecByLanguage :one
+SELECT EXISTS(
+    SELECT 1 FROM spec_documents sd
+    JOIN analyses a ON a.id = sd.analysis_id
+    WHERE a.codebase_id = (SELECT a2.codebase_id FROM analyses a2 WHERE a2.id = $1)
+      AND sd.user_id = $2
+      AND sd.language = $3
+      AND sd.analysis_id != $1
+) AS has_previous_spec
+`
+
+type HasPreviousSpecByLanguageParams struct {
+	CurrentAnalysisID pgtype.UUID `json:"current_analysis_id"`
+	UserID            pgtype.UUID `json:"user_id"`
+	Language          string      `json:"language"`
+}
+
+// Checks if user has generated a spec document for the same codebase but different analysis
+// Used to determine if behavior cache might exist for the selected language
+func (q *Queries) HasPreviousSpecByLanguage(ctx context.Context, arg HasPreviousSpecByLanguageParams) (bool, error) {
+	row := q.db.QueryRow(ctx, hasPreviousSpecByLanguage, arg.CurrentAnalysisID, arg.UserID, arg.Language)
+	var has_previous_spec bool
+	err := row.Scan(&has_previous_spec)
+	return has_previous_spec, err
 }

@@ -1,6 +1,15 @@
 "use client";
 
-import { AlertTriangle, Gauge, Globe, Infinity as InfinityIcon, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  AlertTriangle,
+  Gauge,
+  Globe,
+  Infinity as InfinityIcon,
+  RefreshCw,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -23,6 +33,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
+import { fetchCacheAvailability } from "../api";
 import { useQuotaConfirmDialog } from "../hooks/use-quota-confirm-dialog";
 import type { SpecLanguage } from "../types";
 import { formatQuotaNumber, getQuotaLevel, isQuotaExceeded, type QuotaLevel } from "../utils/quota";
@@ -65,18 +76,34 @@ const getIcon = (level: QuotaLevel, isUnlimited: boolean) => {
 
 export const QuotaConfirmDialog = () => {
   const t = useTranslations("specView.quotaConfirm");
+  const tGenerate = useTranslations("specView.generate");
   const {
+    analysisId,
     close,
     confirm,
     estimatedCost,
+    forceRegenerate,
     isOpen,
     isRegenerate,
     onOpenChange,
     selectedLanguage,
+    setForceRegenerate,
     setSelectedLanguage,
     specLanguages,
     usage,
   } = useQuotaConfirmDialog();
+
+  // Fetch cache availability when dialog is open
+  const { data: cacheAvailability, isError: isCacheAvailabilityError } = useQuery({
+    enabled: isOpen && !!analysisId,
+    queryFn: () => fetchCacheAvailability(analysisId!),
+    queryKey: ["cache-availability", analysisId],
+    staleTime: 60000, // 1 minute
+  });
+
+  // Check if previous spec exists for selected language (defaults to false on error)
+  const hasPreviousSpec =
+    !isCacheAvailabilityError && (cacheAvailability?.languages?.[selectedLanguage] ?? false);
 
   const specview = usage?.specview;
   const percentage = specview?.percentage ?? null;
@@ -136,6 +163,69 @@ export const QuotaConfirmDialog = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Cache availability check error warning */}
+          {isCacheAvailabilityError && !isRegenerate && (
+            <p className="text-xs text-muted-foreground">{tGenerate("cacheCheckFailed")}</p>
+          )}
+
+          {/* Analysis Mode Selection - only show when cache is available */}
+          {hasPreviousSpec && !isRegenerate && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Zap className="h-4 w-4 text-muted-foreground" />
+                {tGenerate("analysisMode")}
+              </Label>
+              <RadioGroup
+                className="grid grid-cols-1 gap-2"
+                onValueChange={(value) => setForceRegenerate(value === "fresh")}
+                value={forceRegenerate ? "fresh" : "cache"}
+              >
+                <label
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors",
+                    !forceRegenerate
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-muted-foreground/50"
+                  )}
+                  htmlFor="cache-mode"
+                >
+                  <RadioGroupItem className="mt-0.5" id="cache-mode" value="cache" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{tGenerate("withCache")}</span>
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        {tGenerate("recommended")}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {tGenerate("withCacheBenefit")}
+                    </p>
+                  </div>
+                </label>
+                <label
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors",
+                    forceRegenerate
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-muted-foreground/50"
+                  )}
+                  htmlFor="fresh-mode"
+                >
+                  <RadioGroupItem className="mt-0.5" id="fresh-mode" value="fresh" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-sm font-medium">{tGenerate("fresh")}</span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {tGenerate("freshWarning")}
+                    </p>
+                  </div>
+                </label>
+              </RadioGroup>
+            </div>
+          )}
         </div>
 
         {specview && (
