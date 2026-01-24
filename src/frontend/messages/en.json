@@ -278,6 +278,14 @@
       "switchVersionTooltip": "View previous versions",
       "latestLabel": "latest"
     },
+    "export": {
+      "ariaLabel": "Export specification document",
+      "button": "Export",
+      "copyMarkdown": "Copy Markdown",
+      "downloadMarkdown": "Download Markdown",
+      "success": "Done!",
+      "tooltip": "Export document as Markdown"
+    },
     "versionBanner": {
       "outdatedCommit": "This spec was generated from a previous commit. Regenerate to update.",
       "regenerate": "Regenerate",

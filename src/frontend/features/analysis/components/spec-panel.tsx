@@ -369,6 +369,8 @@ export const SpecPanel = ({
           onRegenerate={handleRegenerate}
           onVersionSwitch={handleVersionSwitch}
           onViewLatest={handleViewLatest}
+          owner={owner}
+          repo={repo}
           versions={repoVersionHistory?.data}
         />
       );

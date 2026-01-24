@@ -27,6 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 
 import { CacheStatsIndicator } from "./cache-stats-indicator";
+import { SpecExportButton } from "./spec-export-button";
 import { StatusLegend } from "./status-legend";
 import { SPEC_LANGUAGES } from "../constants/spec-languages";
 import type {
@@ -52,6 +53,8 @@ type ExecutiveSummaryProps = {
   onLanguageSwitch?: (language: SpecLanguage) => void;
   onRegenerate?: () => void;
   onVersionSwitch?: (version: number) => void;
+  owner?: string;
+  repo?: string;
   versions?: VersionInfoWithCommit[];
 };
 
@@ -76,6 +79,8 @@ export const ExecutiveSummary = ({
   onLanguageSwitch,
   onRegenerate,
   onVersionSwitch,
+  owner,
+  repo,
   versions = [],
 }: ExecutiveSummaryProps) => {
   const t = useTranslations("specView");
@@ -305,6 +310,14 @@ export const ExecutiveSummary = ({
                 </TooltipTrigger>
                 <TooltipContent>{t("executiveSummary.dateTooltip")}</TooltipContent>
               </Tooltip>
+            )}
+            {owner && repo && (
+              <SpecExportButton
+                disabled={isDisabled}
+                document={document}
+                owner={owner}
+                repo={repo}
+              />
             )}
             {onRegenerate && (
               <Tooltip>

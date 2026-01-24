@@ -13,5 +13,6 @@ export { OldVersionBanner } from "./old-version-banner";
 export { QuotaConfirmDialog } from "./quota-confirm-dialog";
 export { QuotaIndicator } from "./quota-indicator";
 export { SpecAccessError } from "./spec-access-error";
+export { SpecExportButton } from "./spec-export-button";
 export { TocSidebar } from "./toc-sidebar";
 export { VirtualizedBehaviorList, VIRTUALIZATION_THRESHOLD } from "./virtualized-behavior-list";

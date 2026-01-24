@@ -35,7 +35,7 @@ const getCommitSha = (document: ExportableDocument): string | undefined =>
 const formatBehavior = (behavior: SpecBehavior, options: SpecExportOptions): string => {
   const lines: string[] = [];
   const sourceInfo = behavior.sourceInfo;
-  const statusIcon = sourceInfo ? STATUS_ICONS[sourceInfo.status] : "";
+  const statusIcon = sourceInfo ? (STATUS_ICONS[sourceInfo.status] ?? "") : "";
   const isSkipped = sourceInfo?.status === "skipped";
 
   const description = isSkipped

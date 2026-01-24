@@ -32,6 +32,8 @@ type DocumentViewProps = {
   onRegenerate?: () => void;
   onVersionSwitch?: (version: number) => void;
   onViewLatest?: () => void;
+  owner?: string;
+  repo?: string;
   versions?: (VersionInfo | RepoVersionInfo)[];
 };
 
@@ -50,6 +52,8 @@ export const DocumentView = ({
   onRegenerate,
   onVersionSwitch,
   onViewLatest,
+  owner,
+  repo,
   versions,
 }: DocumentViewProps) => {
   const { clearFilters, filteredDocument, filterInfo, hasFilter, matchCount } =
@@ -92,6 +96,8 @@ export const DocumentView = ({
             onLanguageSwitch={onLanguageSwitch}
             onRegenerate={isOutdatedCommit ? onGenerateForCurrentCommit : onRegenerate}
             onVersionSwitch={onVersionSwitch}
+            owner={owner}
+            repo={repo}
             versions={versions}
           />
 

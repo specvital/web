@@ -278,6 +278,14 @@
       "switchVersionTooltip": "이전 버전 보기",
       "latestLabel": "최신"
     },
+    "export": {
+      "ariaLabel": "스펙 문서 내보내기",
+      "button": "내보내기",
+      "copyMarkdown": "마크다운 복사",
+      "downloadMarkdown": "마크다운 다운로드",
+      "success": "완료!",
+      "tooltip": "마크다운 형식으로 문서 내보내기"
+    },
     "versionBanner": {
       "outdatedCommit": "이 스펙은 이전 커밋 기준으로 생성되었습니다. 재생성하여 업데이트하세요.",
       "regenerate": "재생성",
