@@ -33,7 +33,7 @@ const buttonVariants = cva(
         "mobile-nav":
           "text-muted-foreground hover:text-foreground hover:bg-accent/60 active:bg-accent active:scale-[0.95] motion-reduce:active:scale-100 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-primary/50",
         outline:
-          "border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-secondary/50 shadow-xs hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
       },
     },
