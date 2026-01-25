@@ -1,7 +1,7 @@
 "use client";
 
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
-import { useDeferredValue } from "react";
+import { useDeferredValue, useTransition } from "react";
 
 import type { TestStatus } from "@/lib/api";
 
@@ -76,9 +76,16 @@ const matchesBehavior = (
 };
 
 export const useDocumentFilter = (document: SpecDocument | null) => {
-  const [query, setQuery] = useQueryState("q", queryParser);
-  const [rawStatuses, setRawStatuses] = useQueryState("statuses", arrayParser);
-  const [frameworks, setFrameworks] = useQueryState("frameworks", arrayParser);
+  const [isPending, startTransition] = useTransition();
+  const [query, setQuery] = useQueryState("q", queryParser.withOptions({ startTransition }));
+  const [rawStatuses, setRawStatuses] = useQueryState(
+    "statuses",
+    arrayParser.withOptions({ startTransition })
+  );
+  const [frameworks, setFrameworks] = useQueryState(
+    "frameworks",
+    arrayParser.withOptions({ startTransition })
+  );
 
   // Defer expensive filtering to keep UI responsive during input
   const deferredQuery = useDeferredValue(query);
@@ -175,6 +182,7 @@ export const useDocumentFilter = (document: SpecDocument | null) => {
     filteredDocument,
     filterInfo,
     hasFilter,
+    isPending,
     matchCount: filteredDocument?.matchCount ?? 0,
     query,
   } as const;

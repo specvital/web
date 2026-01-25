@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { FilterEmptyState } from "@/components/feedback";
+import { FilterEmptyState, LoadingFallback } from "@/components/feedback";
 import { useUsage } from "@/features/account";
 import { useAuth, useSpecLoginDialog } from "@/features/auth";
 import {
@@ -378,6 +378,11 @@ export const SpecPanel = ({
 
     if (effectiveState === "pending" || effectiveState === "running") {
       return <GenerationStatus onRetry={() => requestGenerate()} status={effectiveState} />;
+    }
+
+    // Show loading while fetching spec document
+    if (isFetching) {
+      return <LoadingFallback className="py-16" fullScreen={false} />;
     }
 
     const specviewQuota = usageData?.specview

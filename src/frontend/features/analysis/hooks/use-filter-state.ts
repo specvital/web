@@ -1,6 +1,7 @@
 "use client";
 
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
+import { useTransition } from "react";
 
 import type { TestStatus } from "@/lib/api";
 
@@ -10,9 +11,16 @@ const queryParser = parseAsString.withDefault("");
 const arrayParser = parseAsArrayOf(parseAsString, ",").withDefault([]);
 
 export const useFilterState = () => {
-  const [frameworks, setFrameworks] = useQueryState("frameworks", arrayParser);
-  const [query, setQuery] = useQueryState("q", queryParser);
-  const [rawStatuses, setRawStatuses] = useQueryState("statuses", arrayParser);
+  const [isPending, startTransition] = useTransition();
+  const [frameworks, setFrameworks] = useQueryState(
+    "frameworks",
+    arrayParser.withOptions({ startTransition })
+  );
+  const [query, setQuery] = useQueryState("q", queryParser.withOptions({ startTransition }));
+  const [rawStatuses, setRawStatuses] = useQueryState(
+    "statuses",
+    arrayParser.withOptions({ startTransition })
+  );
 
   const statuses = rawStatuses.filter((s): s is TestStatus =>
     VALID_STATUSES.includes(s as TestStatus)
@@ -24,6 +32,7 @@ export const useFilterState = () => {
 
   return {
     frameworks,
+    isPending,
     query,
     setFrameworks,
     setQuery,

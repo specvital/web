@@ -1,14 +1,15 @@
 "use client";
 
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
 
 import { DEFAULT_PRIMARY_TAB, PRIMARY_TABS } from "../types/primary-tab";
 
 const primaryTabParser = parseAsStringLiteral(PRIMARY_TABS).withDefault(DEFAULT_PRIMARY_TAB);
 
 export const usePrimaryTab = () => {
-  const [tab, setTab] = useQueryState("tab", primaryTabParser);
+  const [isPending, startTransition] = useTransition();
+  const [tab, setTab] = useQueryState("tab", primaryTabParser.withOptions({ startTransition }));
   const [viewParam, setViewParam] = useQueryState("view");
 
   // URL backward compatibility: migrate ?view=document to ?tab=spec
@@ -19,5 +20,5 @@ export const usePrimaryTab = () => {
     }
   }, [viewParam, setTab, setViewParam]);
 
-  return { setTab, tab } as const;
+  return { isPending, setTab, tab } as const;
 };
