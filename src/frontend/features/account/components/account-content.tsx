@@ -1,38 +1,28 @@
 "use client";
 
-import { useEffect } from "react";
-
-import { useAuth } from "@/features/auth";
-import { useRouter } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/routes";
+import { RequireAuth } from "@/features/auth";
 
 import { useSubscription, useUsage } from "../hooks";
 import { PlanSection } from "./plan-section";
 import { UsageSection } from "./usage-section";
 
 export const AccountContent = () => {
-  const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  return (
+    <RequireAuth>
+      <AccountContentInner />
+    </RequireAuth>
+  );
+};
 
-  const shouldFetch = !authLoading && isAuthenticated;
+const AccountContentInner = () => {
   const {
     data: subscription,
     error: subscriptionError,
     isLoading: subscriptionLoading,
-  } = useSubscription(shouldFetch);
-  const { data: usage, error: usageError, isLoading: usageLoading } = useUsage(shouldFetch);
+  } = useSubscription(true);
+  const { data: usage, error: usageError, isLoading: usageLoading } = useUsage(true);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push(ROUTES.HOME);
-    }
-  }, [authLoading, isAuthenticated, router]);
-
-  if (!authLoading && !isAuthenticated) {
-    return null;
-  }
-
-  const isLoading = authLoading || subscriptionLoading || usageLoading;
+  const isLoading = subscriptionLoading || usageLoading;
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
