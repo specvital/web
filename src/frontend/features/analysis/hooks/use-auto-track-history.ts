@@ -1,15 +1,16 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import { useAuth } from "@/features/auth";
-import { invalidationEvents, useInvalidationTrigger } from "@/lib/query";
+import { paginatedRepositoriesKeys } from "@/features/dashboard";
 
 import { addToHistory } from "../api";
 
 export const useAutoTrackHistory = (owner: string, repo: string, isReady: boolean): void => {
+  const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const triggerInvalidation = useInvalidationTrigger();
   const hasTracked = useRef(false);
 
   useEffect(() => {
@@ -25,10 +26,10 @@ export const useAutoTrackHistory = (owner: string, repo: string, isReady: boolea
 
     addToHistory(owner, repo)
       .then(() => {
-        triggerInvalidation(invalidationEvents.HISTORY_CHANGED);
+        queryClient.invalidateQueries({ queryKey: paginatedRepositoriesKeys.all });
       })
       .catch(() => {
         // Silent fail - history tracking is not critical
       });
-  }, [isAuthLoading, isAuthenticated, isReady, owner, repo, triggerInvalidation]);
+  }, [isAuthLoading, isAuthenticated, isReady, owner, repo, queryClient]);
 };

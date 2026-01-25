@@ -1,11 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
+import { paginatedRepositoriesKeys } from "@/features/dashboard";
 import type { AnalysisResponse, AnalysisResult } from "@/lib/api/types";
 import { addTask, getTask, removeTask, updateTask } from "@/lib/background-tasks";
-import { invalidationEvents, useInvalidationTrigger } from "@/lib/query";
 
 import { fetchAnalysis } from "../api";
 
@@ -38,10 +38,10 @@ type UseAnalysisReturn = {
 };
 
 export const useAnalysis = (owner: string, repo: string): UseAnalysisReturn => {
+  const queryClient = useQueryClient();
   const intervalRef = useRef(INITIAL_INTERVAL_MS);
   const startTimeRef = useRef(Date.now());
   const hasTriggeredInvalidation = useRef(false);
-  const triggerInvalidation = useInvalidationTrigger();
 
   useEffect(() => {
     intervalRef.current = INITIAL_INTERVAL_MS;
@@ -98,9 +98,9 @@ export const useAnalysis = (owner: string, repo: string): UseAnalysisReturn => {
   useEffect(() => {
     if (response?.status === "completed" && !hasTriggeredInvalidation.current) {
       hasTriggeredInvalidation.current = true;
-      triggerInvalidation(invalidationEvents.ANALYSIS_COMPLETED);
+      queryClient.invalidateQueries({ queryKey: paginatedRepositoriesKeys.all });
     }
-  }, [response?.status, triggerInvalidation]);
+  }, [response?.status, queryClient]);
 
   // Sync with global TaskStore for background progress tracking
   const taskId = `analysis-${owner}-${repo}`;

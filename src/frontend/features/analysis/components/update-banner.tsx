@@ -8,8 +8,8 @@ import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { paginatedRepositoriesKeys } from "@/features/dashboard";
 import { addTask, removeTask } from "@/lib/background-tasks";
-import { invalidationEvents, useInvalidationTrigger } from "@/lib/query";
 
 import { fetchAnalysisStatus, triggerReanalyze } from "../api";
 import { analysisKeys } from "../hooks/use-analysis";
@@ -30,7 +30,6 @@ const isTerminalStatus = (status: string): boolean => status === "completed" || 
 export const UpdateBanner = ({ owner, repo }: UpdateBannerProps) => {
   const t = useTranslations("analyze.updateBanner");
   const queryClient = useQueryClient();
-  const triggerInvalidation = useInvalidationTrigger();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
 
@@ -74,11 +73,11 @@ export const UpdateBanner = ({ owner, repo }: UpdateBannerProps) => {
     // Invalidate queries to refresh UI
     queryClient.invalidateQueries({ queryKey: analysisKeys.detail(owner, repo) });
     queryClient.invalidateQueries({ queryKey: updateStatusKeys.detail(owner, repo) });
-    triggerInvalidation(invalidationEvents.ANALYSIS_COMPLETED);
+    queryClient.invalidateQueries({ queryKey: paginatedRepositoriesKeys.all });
 
     setIsPolling(false);
     setIsDismissed(true);
-  }, [isPolling, pollingQuery.data, owner, repo, queryClient, triggerInvalidation, t]);
+  }, [isPolling, pollingQuery.data, owner, repo, queryClient, t]);
 
   // Cleanup task on component unmount during polling
   useEffect(() => {
