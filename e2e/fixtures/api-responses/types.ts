@@ -119,3 +119,18 @@ export interface BookmarkResponse {
 export interface ReanalyzeResponse {
   status: "queued" | "analyzing";
 }
+
+// Analysis Status Response (for polling)
+export interface AnalysisStatusResponse {
+  owner: string;
+  repo: string;
+  status: "queued" | "analyzing" | "completed" | "failed";
+  commitSha?: string;
+  analysisId?: string;
+}
+
+// Update Status Response (for update banner)
+export interface UpdateStatusResponse {
+  status: "up-to-date" | "new-commits" | "unknown";
+  parserOutdated: boolean;
+}

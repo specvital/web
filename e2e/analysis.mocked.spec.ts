@@ -1333,3 +1333,88 @@ test.describe("Analysis Page - Version History Dropdown (Mocked API)", () => {
     await expect(latestOption).toHaveClass(/bg-muted|font-medium/);
   });
 });
+
+test.describe("Analysis Page - Update Banner Polling (Mocked API)", () => {
+  test("should show analyzing state in banner when Update Now clicked", async ({
+    page,
+  }) => {
+    let reanalyzeCallCount = 0;
+
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+      updateStatus: {
+        status: "new-commits",
+        parserOutdated: false,
+      },
+      onReanalyze: () => {
+        reanalyzeCallCount++;
+        return { status: "queued" as const };
+      },
+      onAnalysisStatus: (_owner, _repo, callCount) => ({
+        owner: "test-owner",
+        repo: "test-repo",
+        status: callCount < 3 ? "analyzing" : "completed",
+      }),
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for update banner to appear
+    const updateBanner = page.locator('[class*="bg-amber"]');
+    await expect(updateBanner.first()).toBeVisible({ timeout: 10000 });
+
+    // Click Update Now button
+    const updateNowButton = page.getByRole("button", { name: /update now/i });
+    await expect(updateNowButton).toBeVisible();
+    await updateNowButton.click();
+
+    // Verify reanalyze was triggered
+    await page.waitForTimeout(500);
+    expect(reanalyzeCallCount).toBe(1);
+
+    // Verify banner shows analyzing state (loading spinner should be visible)
+    const loadingSpinner = updateBanner.locator('svg[class*="animate-spin"]');
+    await expect(loadingSpinner).toBeVisible({ timeout: 5000 });
+  });
+
+  test("should dismiss banner after analysis completion", async ({ page }) => {
+    let statusCallCount = 0;
+
+    await setupMockHandlers(page, {
+      analysis: mockAnalysisCompleted,
+      specDocument: mockSpecDocumentNotFound,
+      usage: mockUsageNormal,
+      updateStatus: {
+        status: "new-commits",
+        parserOutdated: false,
+      },
+      onReanalyze: () => ({ status: "queued" as const }),
+      onAnalysisStatus: () => {
+        statusCallCount++;
+        // Return completed after 2 polls
+        return {
+          owner: "test-owner",
+          repo: "test-repo",
+          status: statusCallCount >= 2 ? "completed" : "analyzing",
+        };
+      },
+    });
+
+    await page.goto("/en/analyze/test-owner/test-repo");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for update banner
+    const updateBanner = page.locator('[class*="bg-amber"]');
+    await expect(updateBanner.first()).toBeVisible({ timeout: 10000 });
+
+    // Click Update Now
+    const updateNowButton = page.getByRole("button", { name: /update now/i });
+    await updateNowButton.click();
+
+    // Wait for polling to complete and banner to dismiss
+    await expect(updateBanner).not.toBeVisible({ timeout: 10000 });
+  });
+});

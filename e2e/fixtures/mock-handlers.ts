@@ -17,6 +17,8 @@ import type {
   BookmarkResponse,
   ReanalyzeResponse,
   AnalysisCompletedResponse,
+  AnalysisStatusResponse,
+  UpdateStatusResponse,
   SpecDocumentResponse,
   RequestSpecGenerationResponse,
   VersionHistoryResponse,
@@ -50,6 +52,10 @@ export interface MockHandlersOptions {
   onBookmark?: (owner: string, repo: string, method: string) => BookmarkResponse;
   onReanalyze?: (owner: string, repo: string) => ReanalyzeResponse;
   onSpecGeneration?: (analysisId: string, language: string) => RequestSpecGenerationResponse;
+  // Analysis status for polling tests
+  onAnalysisStatus?: (owner: string, repo: string, callCount: number) => AnalysisStatusResponse;
+  // Update status for update banner tests
+  updateStatus?: UpdateStatusResponse;
 }
 
 type RouteHandler = (route: Route) => Promise<void>;
@@ -260,6 +266,20 @@ export async function setupMockHandlers(
     });
   }
 
+  // /api/repositories/{owner}/{repo}/update-status - Check for new commits
+  if (options.updateStatus) {
+    handlers.push({
+      pattern: /\/api\/repositories\/([^/]+)\/([^/]+)\/update-status/,
+      handler: async (route) => {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(options.updateStatus),
+        });
+      },
+    });
+  }
+
   // /api/analyze/{owner}/{repo}
   if (options.analysis) {
     handlers.push({
@@ -269,6 +289,31 @@ export async function setupMockHandlers(
           status: 200,
           contentType: "application/json",
           body: JSON.stringify(options.analysis),
+        });
+      },
+    });
+  }
+
+  // /api/analyze/{owner}/{repo}/status - Get analysis status (for polling)
+  if (options.onAnalysisStatus) {
+    const statusCallCounts = new Map<string, number>();
+    handlers.push({
+      pattern: /\/api\/analyze\/([^/]+)\/([^/]+)\/status$/,
+      handler: async (route) => {
+        const url = new URL(route.request().url());
+        const match = url.pathname.match(/\/api\/analyze\/([^/]+)\/([^/]+)\/status$/);
+        const owner = match?.[1] ?? "";
+        const repo = match?.[2] ?? "";
+        const key = `${owner}/${repo}`;
+
+        const callCount = (statusCallCounts.get(key) ?? 0) + 1;
+        statusCallCounts.set(key, callCount);
+
+        const response = options.onAnalysisStatus!(owner, repo, callCount);
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(response),
         });
       },
     });

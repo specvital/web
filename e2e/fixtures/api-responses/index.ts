@@ -9,3 +9,6 @@ export * from "./github-orgs";
 export * from "./subscription";
 export * from "./stats";
 export * from "./analysis";
+
+// Re-export types needed for mock handlers
+export type { AnalysisStatusResponse, UpdateStatusResponse } from "./types";

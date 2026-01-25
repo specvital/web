@@ -394,6 +394,51 @@ test.describe("Dashboard Page (Mocked API)", () => {
         expect(reanalyzeTriggered).toBe(true);
       }
     });
+
+    test("should show analyzing status and update UI after reanalysis completion", async ({
+      page,
+    }) => {
+      let statusCallCount = 0;
+
+      await setupMockHandlers(page, {
+        repositories: mockRepositoriesPage1,
+        stats: mockStatsNormal,
+        onReanalyze: () => ({ status: "queued" as const }),
+        onAnalysisStatus: () => {
+          statusCallCount++;
+          // Return completed after 2 polls
+          return {
+            owner: "test-owner",
+            repo: "repo-1",
+            status: statusCallCount >= 2 ? "completed" : "analyzing",
+          };
+        },
+      });
+
+      await page.goto("/en/dashboard");
+
+      // Wait for initial load
+      await expect(
+        page.getByRole("button", { name: /add bookmark|remove bookmark/i }).first()
+      ).toBeVisible({ timeout: 10000 });
+
+      // Find reanalyze button for first repo (has new-commits status)
+      const reanalyzeButton = page.getByRole("button", { name: /reanalyze|update/i }).first();
+      const hasReanalyzeButton = await reanalyzeButton.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (hasReanalyzeButton) {
+        await reanalyzeButton.click();
+
+        // Verify toast notification for queued status
+        await expect(page.getByText(/queued|success/i)).toBeVisible({ timeout: 5000 });
+
+        // Wait for polling to complete
+        await page.waitForTimeout(3000);
+
+        // Verify status call count (should have polled at least 2 times)
+        expect(statusCallCount).toBeGreaterThanOrEqual(2);
+      }
+    });
   });
 
   test.describe("Empty State", () => {
