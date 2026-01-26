@@ -20,7 +20,12 @@ export const useStaticActions = () => {
   const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
 
   const executeAction = (action: StaticAction) => {
-    close();
+    const keepOpen =
+      action.id === "action-toggle-theme-light" || action.id === "action-toggle-theme-dark";
+
+    if (!keepOpen) {
+      close();
+    }
 
     switch (action.id) {
       case "nav-dashboard":
