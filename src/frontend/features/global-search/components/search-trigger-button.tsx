@@ -27,7 +27,7 @@ export const SearchTriggerButton = () => {
       {/* Desktop: Text button with shortcut hint */}
       <Button
         aria-keyshortcuts={isMac() ? "Meta+K" : "Control+K"}
-        className="hidden h-9 w-64 justify-between gap-2 px-3 text-sm text-muted-foreground md:inline-flex"
+        className="hidden h-8 w-64 justify-between gap-2 px-3 text-sm text-muted-foreground md:inline-flex"
         onClick={open}
         variant="outline"
       >
