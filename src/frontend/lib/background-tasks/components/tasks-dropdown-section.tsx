@@ -39,7 +39,7 @@ const TaskItem = ({ task }: TaskItemProps) => {
 
   if (pageUrl) {
     return (
-      <DropdownMenuItem asChild className="cursor-pointer">
+      <DropdownMenuItem asChild>
         <Link href={pageUrl}>{content}</Link>
       </DropdownMenuItem>
     );
@@ -77,7 +77,7 @@ export const TasksDropdownSection = ({ className }: TasksDropdownSectionProps) =
         <TaskItem key={task.id} task={task} />
       ))}
       {remainingCount > 0 && (
-        <DropdownMenuItem asChild className="cursor-pointer">
+        <DropdownMenuItem asChild>
           <Link href="/dashboard?section=tasks">
             <span className="text-xs text-muted-foreground">
               {t("viewAll", { count: remainingCount })}
