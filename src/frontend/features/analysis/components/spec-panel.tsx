@@ -141,14 +141,13 @@ export const SpecPanel = ({
   const accessError = repoAccessError ?? genAccessError;
 
   // Version history - use repository-based API for cross-analysis version access
-  const { data: repoVersionHistory, isLoading: isLoadingVersions } = useRepoVersionHistory(
-    owner,
-    repo,
-    specDocument?.language,
-    {
-      enabled: Boolean(specDocument?.language),
-    }
-  );
+  const {
+    data: repoVersionHistory,
+    isFetching: isFetchingVersions,
+    isLoading: isLoadingVersions,
+  } = useRepoVersionHistory(owner, repo, specDocument?.language, {
+    enabled: Boolean(specDocument?.language),
+  });
 
   // Document filter
   const { matchCount } = useDocumentFilter(specDocument);
@@ -345,9 +344,12 @@ export const SpecPanel = ({
       if (hasFilter && matchCount === 0) {
         return <FilterEmptyState filterInfo={filterInfo} onReset={resetFilters} />;
       }
-      // Calculate latest version from repository-based version history
+      // Suppress latestVersion while either query is refetching to avoid
+      // a race condition where version history updates before the document,
+      // causing a transient isViewingOldVersion=true flash (banner flicker).
+      const isRefetchingEither = isFetching || isFetchingVersions;
       const latestVersion =
-        repoVersionHistory?.data && repoVersionHistory.data.length > 0
+        !isRefetchingEither && repoVersionHistory?.data && repoVersionHistory.data.length > 0
           ? Math.max(...repoVersionHistory.data.map((v) => v.version))
           : undefined;
 

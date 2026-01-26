@@ -13,6 +13,7 @@ type UseRepoVersionHistoryOptions = {
 type UseRepoVersionHistoryReturn = {
   data: RepoVersionHistoryResponse | undefined;
   error: Error | null;
+  isFetching: boolean;
   isLoading: boolean;
 };
 
@@ -33,6 +34,7 @@ export const useRepoVersionHistory = (
   return {
     data: query.data,
     error: query.error,
+    isFetching: query.isFetching,
     isLoading: query.isPending,
   };
 };
