@@ -230,7 +230,7 @@ export const ExecutiveSummary = ({
                       <Button
                         className="h-auto px-2.5 py-1 gap-1.5 text-xs font-normal"
                         disabled={isDisabled || isLoadingVersions}
-                        variant="secondary"
+                        variant="outline"
                       >
                         <History className="h-3 w-3" />
                         {formatShortDate(document.createdAt)}
@@ -298,7 +298,10 @@ export const ExecutiveSummary = ({
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge className="text-xs gap-1" variant="secondary">
+                  <Button
+                    className="h-auto px-2.5 py-1 gap-1.5 text-xs font-normal cursor-default"
+                    variant="outline"
+                  >
                     <History className="h-3 w-3" />
                     {formatShortDate(document.createdAt)}
                     {currentVersion !== undefined && (
@@ -306,7 +309,7 @@ export const ExecutiveSummary = ({
                         ({t("executiveSummary.latestLabel")})
                       </span>
                     )}
-                  </Badge>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t("executiveSummary.dateTooltip")}</TooltipContent>
               </Tooltip>
