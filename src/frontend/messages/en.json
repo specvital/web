@@ -797,11 +797,6 @@
         "description": "Learn about usage tracking, quotas, and billing cycles.",
         "slug": "usage-billing"
       },
-      "queueProcessing": {
-        "title": "Queue Processing",
-        "description": "How analysis queues work and priority tiers for different plans.",
-        "slug": "queue-processing"
-      },
       "specviewGeneration": {
         "title": "AI Spec Generation",
         "description": "How AI transforms your tests into structured specification documents.",
@@ -926,7 +921,7 @@
         },
         "limits": {
           "title": "Plan Limits",
-          "description": "Each plan has different monthly limits for analysis and AI spec generation.",
+          "description": "Each plan has different monthly limits for analysis and AI spec generation. Paid plans also benefit from a priority processing queue for faster analysis.",
           "viewPricing": "View Pricing Plans →"
         },
         "warnings": {
@@ -1026,102 +1021,6 @@
           "q1": {
             "question": "How often is the parser updated?",
             "answer": "The parser is updated regularly to support new framework versions and patterns. When an update affects your results, you'll see a banner suggesting reanalysis."
-          }
-        }
-      }
-    },
-    "queueProcessing": {
-      "meta": {
-        "title": "Queue Processing | SpecVital Docs",
-        "description": "Learn how analysis queues work and priority tiers for different plans."
-      },
-      "title": "Queue Processing",
-      "subtitle": "Understanding how analysis queues work and priority tiers for different plans.",
-      "sections": {
-        "overview": {
-          "title": "How Queue Processing Works",
-          "description": "When you submit a repository for analysis, it enters a processing queue. SpecVital uses a multi-queue architecture to ensure fair processing while providing faster service for premium plans.",
-          "keyPoint": {
-            "title": "Fair & Prioritized",
-            "description": "All jobs are processed fairly within their tier. Premium plans get dedicated queues with shorter wait times and higher concurrency."
-          }
-        },
-        "architecture": {
-          "title": "Multi-Queue Architecture",
-          "description": "SpecVital operates three separate queues to balance fairness and premium benefits.",
-          "standard": {
-            "title": "Standard Queue",
-            "description": "Shared queue for free tier users. Jobs are processed in order of submission.",
-            "plans": "Free"
-          },
-          "priority": {
-            "title": "Priority Queue",
-            "description": "Dedicated queue with faster processing and higher worker allocation.",
-            "plans": "Pro"
-          },
-          "dedicated": {
-            "title": "Dedicated Queue",
-            "description": "Highest priority with dedicated workers and minimal wait times.",
-            "plans": "Pro+ / Enterprise"
-          }
-        },
-        "tiers": {
-          "title": "Priority Tiers",
-          "description": "Each plan tier has different queue characteristics:",
-          "table": {
-            "plan": "Plan",
-            "queue": "Queue",
-            "typicalWait": "Typical Wait",
-            "concurrency": "Concurrency"
-          },
-          "priorities": {
-            "free": {
-              "plan": "Free",
-              "queue": "Standard",
-              "wait": "30s - 2min",
-              "concurrency": "1 job at a time"
-            },
-            "pro": {
-              "plan": "Pro",
-              "queue": "Priority",
-              "wait": "5s - 30s",
-              "concurrency": "3 concurrent jobs"
-            },
-            "proPlusEnterprise": {
-              "plan": "Pro+ / Enterprise",
-              "queue": "Dedicated",
-              "wait": "< 5s",
-              "concurrency": "Unlimited"
-            }
-          }
-        },
-        "status": {
-          "title": "Real-Time Status",
-          "description": "You can track your analysis status in the UI:",
-          "states": {
-            "queued": {
-              "label": "Queued",
-              "description": "Your job is waiting in the queue. Position and estimated time are displayed."
-            },
-            "processing": {
-              "label": "Processing",
-              "description": "A worker is actively analyzing your repository."
-            },
-            "complete": {
-              "label": "Complete",
-              "description": "Analysis finished. Results are cached and ready to view."
-            }
-          }
-        },
-        "faq": {
-          "title": "FAQ",
-          "q1": {
-            "question": "Why is my analysis taking longer than expected?",
-            "answer": "Wait times depend on current queue load and your repository size. Large repositories with thousands of test files take longer to process. During peak hours, standard queue may experience longer waits."
-          },
-          "q3": {
-            "question": "Do cached results skip the queue?",
-            "answer": "Yes! If your repository was previously analyzed at the same commit, results are served instantly from cache without entering any queue."
           }
         }
       }
