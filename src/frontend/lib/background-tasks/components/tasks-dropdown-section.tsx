@@ -35,7 +35,7 @@ const TaskItem = ({ task }: TaskItemProps) => {
   const Icon = TASK_TYPE_ICONS[task.type];
 
   const content = (
-    <div className="relative flex w-full flex-col gap-0.5">
+    <div className="flex w-full flex-col gap-0.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Icon className="size-3.5 shrink-0 text-muted-foreground" />
@@ -48,7 +48,7 @@ const TaskItem = ({ task }: TaskItemProps) => {
         <TaskStatusBadge startedAt={task.startedAt} status={task.status} />
       </div>
       {isActive && (
-        <div className="absolute bottom-0 left-0 right-0">
+        <div className="mt-1">
           <ShimmerBar aria-hidden="true" color="var(--primary)" duration={2} height="xs" />
         </div>
       )}

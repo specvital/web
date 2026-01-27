@@ -145,7 +145,7 @@ const MobileAuthAction = () => {
         <DropdownMenuTrigger asChild>
           <Button
             aria-label={t("account")}
-            className="relative flex-col gap-0.5"
+            className="flex-col gap-0.5"
             size="mobile-nav"
             variant="mobile-nav"
           >
