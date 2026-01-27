@@ -1,5 +1,6 @@
 "use client";
 
+import { RefreshOverlay } from "@/components/feedback";
 import type { RepositoryCard as RepositoryCardType } from "@/lib/api/types";
 
 import { RepositoryCard } from "./repository-card";
@@ -10,6 +11,7 @@ type RepositoryListVariant = "dashboard" | "explore";
 
 type RepositoryListProps = {
   isLoading?: boolean;
+  isRefetching?: boolean;
   onBookmarkToggle?: (owner: string, repo: string, isBookmarked: boolean) => void;
   onReanalyze?: (owner: string, repo: string) => void;
   repositories: RepositoryCardType[];
@@ -18,6 +20,7 @@ type RepositoryListProps = {
 
 export const RepositoryList = ({
   isLoading = false,
+  isRefetching = false,
   onBookmarkToggle,
   onReanalyze,
   repositories,
@@ -40,17 +43,19 @@ export const RepositoryList = ({
   }
 
   return (
-    <RepositoryGrid ariaLabel="Repository list">
-      {repositories.map((repo) => (
-        <li key={repo.id}>
-          <RepositoryCard
-            onBookmarkToggle={onBookmarkToggle}
-            onReanalyze={onReanalyze}
-            repo={repo}
-            variant={variant}
-          />
-        </li>
-      ))}
-    </RepositoryGrid>
+    <RefreshOverlay isRefreshing={isRefetching}>
+      <RepositoryGrid ariaLabel="Repository list">
+        {repositories.map((repo) => (
+          <li key={repo.id}>
+            <RepositoryCard
+              onBookmarkToggle={onBookmarkToggle}
+              onReanalyze={onReanalyze}
+              repo={repo}
+              variant={variant}
+            />
+          </li>
+        ))}
+      </RepositoryGrid>
+    </RefreshOverlay>
   );
 };

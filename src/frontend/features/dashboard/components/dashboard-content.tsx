@@ -41,6 +41,7 @@ export const DashboardContent = () => {
     fetchNextPage,
     hasNextPage,
     isError,
+    isFetching,
     isFetchingNextPage,
     isLoading,
     refetch,
@@ -91,6 +92,8 @@ export const DashboardContent = () => {
     refetch();
   };
 
+  const isRefetching = isFetching && !isLoading && !isFetchingNextPage;
+
   const hasNoRepositories = !isLoading && repositories.length === 0 && !isError;
   const hasNoFilterResults =
     bookmarkOnly && filteredRepositories.length === 0 && repositories.length > 0;
@@ -129,6 +132,7 @@ export const DashboardContent = () => {
       ) : (
         <>
           <RepositoryList
+            isRefetching={isRefetching}
             onBookmarkToggle={handleBookmarkToggle}
             onReanalyze={handleReanalyze}
             repositories={filteredRepositories}

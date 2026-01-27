@@ -146,6 +146,15 @@ pnpm dlx shadcn@latest add [component]
 
 Each route has `error.tsx` and `loading.tsx` for error handling and Suspense.
 
+### Loading Feedback for Server Fetching
+
+Every server fetching state MUST have visible loading feedback. Silent data replacement is prohibited.
+
+- **Background refetch** (cached data visible + `isFetching`): Wrap with `<RefreshOverlay isRefreshing={...}>` from `@/components/feedback`
+- **Mutations**: Use optimistic update (`onMutate` + `onError` rollback) for instant UI response
+- **Initial load** (`isLoading`): Use `<LoadingFallback>` or skeleton
+- Anti-flash: `RefreshOverlay` has built-in 150ms delay — sub-150ms fetches won't show overlay
+
 ### Styling
 
 - Tailwind CSS 4 + CSS Variables

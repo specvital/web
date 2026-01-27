@@ -22,6 +22,7 @@ type UsePaginatedRepositoriesReturn = {
   fetchNextPage: () => void;
   hasNextPage: boolean;
   isError: boolean;
+  isFetching: boolean;
   isFetchingNextPage: boolean;
   isLoading: boolean;
   refetch: () => void;
@@ -57,6 +58,7 @@ export const usePaginatedRepositories = (
     fetchNextPage: query.fetchNextPage,
     hasNextPage: query.hasNextPage,
     isError: query.isError,
+    isFetching: query.isFetching,
     isFetchingNextPage: query.isFetchingNextPage,
     isLoading: query.isPending,
     refetch: query.refetch,

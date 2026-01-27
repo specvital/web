@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterEmptyState } from "@/components/feedback";
+import { FilterEmptyState, RefreshOverlay } from "@/components/feedback";
 
 import { ExecutiveSummary } from "./executive-summary";
 import { OldVersionBanner } from "./old-version-banner";
@@ -24,6 +24,7 @@ type DocumentViewProps = {
   document: SpecDocument;
   isGeneratingOtherLanguage?: boolean;
   isLoadingVersions?: boolean;
+  isRefreshing?: boolean;
   isRegenerating?: boolean;
   latestVersion?: number;
   onGenerateForCurrentCommit?: () => void;
@@ -44,6 +45,7 @@ export const DocumentView = ({
   document,
   isGeneratingOtherLanguage,
   isLoadingVersions,
+  isRefreshing = false,
   isRegenerating,
   latestVersion,
   onGenerateForCurrentCommit,
@@ -80,34 +82,40 @@ export const DocumentView = ({
           onViewLatest={onViewLatest}
         />
       )}
-      <div className="flex flex-col lg:flex-row lg:gap-6">
-        <TocSidebar document={document} filteredDocument={filteredDocument} hasFilter={hasFilter} />
-
-        <div className="flex-1 space-y-6 min-w-0">
-          <ExecutiveSummary
-            behaviorCacheStats={behaviorCacheStats}
-            commitSha={commitSha}
+      <RefreshOverlay isRefreshing={isRefreshing}>
+        <div className="flex flex-col lg:flex-row lg:gap-6">
+          <TocSidebar
             document={document}
-            isGeneratingOtherLanguage={isGeneratingOtherLanguage}
-            isLoadingVersions={isLoadingVersions}
-            isRegenerating={isRegenerating}
-            latestVersion={latestVersion}
-            onGenerateNewLanguage={onGenerateNewLanguage}
-            onLanguageSwitch={onLanguageSwitch}
-            onRegenerate={isOutdatedCommit ? onGenerateForCurrentCommit : onRegenerate}
-            onVersionSwitch={onVersionSwitch}
-            owner={owner}
-            repo={repo}
-            versions={versions}
+            filteredDocument={filteredDocument}
+            hasFilter={hasFilter}
           />
 
-          {showEmptyState ? (
-            <FilterEmptyState filterInfo={filterInfo} onReset={clearFilters} />
-          ) : filteredDocument ? (
-            <VirtualizedDocumentView document={filteredDocument} hasFilter={hasFilter} />
-          ) : null}
+          <div className="flex-1 space-y-6 min-w-0">
+            <ExecutiveSummary
+              behaviorCacheStats={behaviorCacheStats}
+              commitSha={commitSha}
+              document={document}
+              isGeneratingOtherLanguage={isGeneratingOtherLanguage}
+              isLoadingVersions={isLoadingVersions}
+              isRegenerating={isRegenerating}
+              latestVersion={latestVersion}
+              onGenerateNewLanguage={onGenerateNewLanguage}
+              onLanguageSwitch={onLanguageSwitch}
+              onRegenerate={isOutdatedCommit ? onGenerateForCurrentCommit : onRegenerate}
+              onVersionSwitch={onVersionSwitch}
+              owner={owner}
+              repo={repo}
+              versions={versions}
+            />
+
+            {showEmptyState ? (
+              <FilterEmptyState filterInfo={filterInfo} onReset={clearFilters} />
+            ) : filteredDocument ? (
+              <VirtualizedDocumentView document={filteredDocument} hasFilter={hasFilter} />
+            ) : null}
+          </div>
         </div>
-      </div>
+      </RefreshOverlay>
     </DocumentNavigationProvider>
   );
 };

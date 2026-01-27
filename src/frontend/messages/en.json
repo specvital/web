@@ -2,6 +2,7 @@
   "common": {
     "appName": "SpecVital",
     "loading": "Loading...",
+    "refreshing": "Refreshing content...",
     "error": "Error",
     "tryAgain": "Try again",
     "goHome": "Go home"

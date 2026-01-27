@@ -363,6 +363,7 @@ export const SpecPanel = ({
           document={specDocument}
           isGeneratingOtherLanguage={isGeneratingOtherLanguage}
           isLoadingVersions={isLoadingVersions}
+          isRefreshing={isFetching && !isGenerating}
           isRegenerating={isGenerating && !isGeneratingOtherLanguage}
           latestVersion={latestVersion}
           onGenerateForCurrentCommit={handleGenerate}
