@@ -30,3 +30,6 @@ export const useActiveTaskCount = (): number =>
     });
     return count;
   });
+
+export const useTaskStartedAt = (taskId: string): string | null =>
+  useTaskStore((state) => state.tasks.get(taskId)?.startedAt ?? null);

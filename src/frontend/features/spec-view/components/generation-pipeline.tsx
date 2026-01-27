@@ -1,8 +1,9 @@
 "use client";
 
 import { Check, X } from "lucide-react";
-import { AnimatePresence, m } from "motion/react";
+import { m } from "motion/react";
 import { useTranslations } from "next-intl";
+import { Fragment } from "react";
 
 import { PulseRing } from "@/components/feedback/pulse-ring";
 import { ShimmerBar } from "@/components/feedback/shimmer-bar";
@@ -121,24 +122,19 @@ const PipelineNode = ({ isCurrent, step }: PipelineNodeProps) => {
   return (
     <li
       aria-current={isCurrent ? "step" : undefined}
-      className="flex flex-col items-center gap-2"
+      className="flex shrink-0 flex-col items-center gap-2"
       role="listitem"
     >
       {shouldReduceMotion || step.status !== "active" ? (
         nodeContent
       ) : (
-        <AnimatePresence initial={false} mode="wait">
-          <m.div
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            key={step.status}
-            layout
-            transition={{ duration: 0.3 }}
-          >
-            {nodeContent}
-          </m.div>
-        </AnimatePresence>
+        <m.div
+          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
+          {nodeContent}
+        </m.div>
       )}
       <span
         className={cn(
@@ -162,18 +158,18 @@ type PipelineConnectorProps = {
 
 const PipelineConnector = ({ isActive, isCompleted }: PipelineConnectorProps) => {
   if (isCompleted) {
-    return <div className="h-0.5 flex-1 rounded-full bg-primary" />;
+    return <div className="mx-3 h-0.5 flex-1 rounded-full bg-primary" />;
   }
 
   if (isActive) {
     return (
-      <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-muted">
+      <div className="mx-3 h-0.5 flex-1 overflow-hidden rounded-full bg-muted">
         <ShimmerBar color="var(--ai-primary)" duration={2} height="xs" />
       </div>
     );
   }
 
-  return <div className="h-0.5 flex-1 rounded-full bg-muted" />;
+  return <div className="mx-3 h-0.5 flex-1 rounded-full bg-muted" />;
 };
 
 export const GenerationPipeline = ({ className, status }: GenerationPipelineProps) => {
@@ -186,9 +182,9 @@ export const GenerationPipeline = ({ className, status }: GenerationPipelineProp
       className={cn("w-full", className)}
       role="list"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center">
         {steps.map((step, index) => (
-          <div className="flex flex-1 items-center" key={step.number}>
+          <Fragment key={step.number}>
             <PipelineNode isCurrent={step.status === "active"} step={step} />
             {index < steps.length - 1 && (
               <PipelineConnector
@@ -196,7 +192,7 @@ export const GenerationPipeline = ({ className, status }: GenerationPipelineProp
                 isCompleted={step.status === "completed"}
               />
             )}
-          </div>
+          </Fragment>
         ))}
       </div>
     </div>

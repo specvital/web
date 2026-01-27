@@ -30,7 +30,7 @@ import type {
   SpecLanguage,
 } from "@/features/spec-view";
 import { getSpecGenerationTaskId } from "@/features/spec-view/utils/task-ids";
-import { addTask, getTask, removeTask, updateTask } from "@/lib/background-tasks";
+import { addTask, getTask, removeTask, updateTask, useTaskStartedAt } from "@/lib/background-tasks";
 
 import { SpecToolbar } from "./spec-toolbar";
 import { useFilterState } from "../hooks/use-filter-state";
@@ -230,7 +230,7 @@ export const SpecPanel = ({
           owner,
           repo,
         },
-        startedAt: null,
+        startedAt: new Date().toISOString(),
         status: "queued",
         type: "spec-generation",
       });
@@ -382,7 +382,7 @@ export const SpecPanel = ({
 
     // Show generation status when actively generating without existing document
     if (displayStatus === "pending" || displayStatus === "running") {
-      return <GenerationStatus onRetry={() => void requestGenerate()} status={displayStatus} />;
+      return <GenerationStatus startedAt={taskStartedAt} status={displayStatus} />;
     }
 
     // Show loading while fetching spec document
@@ -401,11 +401,7 @@ export const SpecPanel = ({
     return <EmptyDocument isLoading={false} onGenerate={handleGenerate} quota={specviewQuota} />;
   };
 
-  // Get task startedAt from background task store
-  // Task may not exist if generation was triggered in a previous session
-  // or if background task store was cleared
-  const specGenerationTask = getTask(getSpecGenerationTaskId(analysisId));
-  const taskStartedAt = specGenerationTask?.startedAt ?? null;
+  const taskStartedAt = useTaskStartedAt(getSpecGenerationTaskId(analysisId));
 
   return (
     <div aria-labelledby="tab-spec" className="p-5 space-y-4" id="tabpanel-spec" role="tabpanel">

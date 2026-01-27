@@ -28,9 +28,9 @@ export const PulseRing = ({ className, size = "sm" }: PulseRingProps) => {
     >
       {!shouldReduceMotion && (
         <m.span
-          animate={{ opacity: [0.3, 0], scale: [1, 2] }}
-          className="absolute inset-0 rounded-full bg-current opacity-30"
-          transition={{ duration: 1.5, ease: "easeOut", repeat: Infinity }}
+          animate={{ opacity: [0, 0.4, 0], scale: [0.8, 1, 2] }}
+          className="absolute inset-0 rounded-full bg-current"
+          transition={{ duration: 2, ease: "easeOut", repeat: Infinity }}
         />
       )}
       <span className={cn("rounded-full bg-current", sizes.dot)} />

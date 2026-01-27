@@ -1,99 +1,96 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
-import { PulseRing, ShimmerBar } from "@/components/feedback";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { PulseRing, RotatingMessages, ShimmerBar } from "@/components/feedback";
+import type { ShimmerBarColor } from "@/components/feedback";
+import { useElapsedTime } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 import type { SpecGenerationStatusEnum } from "../types";
-import { isGenerationActive } from "../utils";
 
 type GenerationStatusProps = {
-  errorMessage?: string;
-  onRetry?: () => void;
+  startedAt: string | null;
   status: SpecGenerationStatusEnum;
 };
 
+type ActiveStatus = "pending" | "running";
+
 const STATUS_CONFIG: Record<
-  SpecGenerationStatusEnum,
+  ActiveStatus,
   {
-    description: string;
-    icon: typeof Loader2;
-    isAnimated: boolean;
-    title: string;
-    variant: "default" | "destructive";
+    color: string;
+    labelKey: string;
+    shimmerColor: ShimmerBarColor;
+    shimmerDuration: number;
   }
 > = {
-  completed: {
-    description: "The specification document has been successfully generated.",
-    icon: CheckCircle2,
-    isAnimated: false,
-    title: "Generation Complete",
-    variant: "default",
-  },
-  failed: {
-    description: "An error occurred while generating the specification document.",
-    icon: AlertCircle,
-    isAnimated: false,
-    title: "Generation Failed",
-    variant: "destructive",
-  },
-  not_found: {
-    description: "No specification document exists for this analysis.",
-    icon: AlertCircle,
-    isAnimated: false,
-    title: "Document Not Found",
-    variant: "default",
-  },
   pending: {
-    description: "Your request is queued and will start processing soon.",
-    icon: Clock,
-    isAnimated: false,
-    title: "Queued",
-    variant: "default",
+    color: "text-chart-2",
+    labelKey: "status.pending",
+    shimmerColor: "var(--chart-2)",
+    shimmerDuration: 3,
   },
   running: {
-    description: "AI is analyzing your test cases and generating the specification document.",
-    icon: Loader2,
-    isAnimated: true,
-    title: "Generating...",
-    variant: "default",
+    color: "text-[hsl(var(--ai-primary))]",
+    labelKey: "status.running",
+    shimmerColor: "var(--ai-primary)",
+    shimmerDuration: 2,
   },
 };
 
-export const GenerationStatus = ({ errorMessage, onRetry, status }: GenerationStatusProps) => {
-  const config = STATUS_CONFIG[status];
-  const Icon = config.icon;
-  const isActive = isGenerationActive(status);
+const MESSAGE_INTERVALS_SEC = [0, 5, 15, 30, 60];
+
+const calculateMessageIndex = (elapsedSeconds: number, maxIndex: number): number => {
+  for (let i = MESSAGE_INTERVALS_SEC.length - 1; i >= 0; i--) {
+    if (elapsedSeconds >= MESSAGE_INTERVALS_SEC[i]) {
+      return Math.min(i, maxIndex);
+    }
+  }
+  return 0;
+};
+
+export const GenerationStatus = ({ startedAt, status }: GenerationStatusProps) => {
+  const t = useTranslations("specView.generationProgress");
+  const elapsed = useElapsedTime(startedAt);
+
+  const activeStatus: ActiveStatus = status === "running" ? "running" : "pending";
+  const config = STATUS_CONFIG[activeStatus];
+
+  const messages =
+    activeStatus === "pending"
+      ? [t("pipeline.pending.0"), t("pipeline.pending.1"), t("pipeline.pending.2")]
+      : [
+          t("pipeline.running.0"),
+          t("pipeline.running.1"),
+          t("pipeline.running.2"),
+          t("pipeline.running.3"),
+        ];
+
+  const messageIndex = elapsed ? calculateMessageIndex(elapsed.seconds, messages.length - 1) : 0;
 
   return (
-    <Alert className="relative overflow-hidden" variant={config.variant}>
-      {isActive ? (
-        <PulseRing aria-hidden="true" size="xs" />
-      ) : (
-        <Icon className={cn("h-4 w-4", config.isAnimated && "animate-spin")} />
-      )}
-      <AlertTitle>{config.title}</AlertTitle>
-      <AlertDescription className="flex flex-col gap-3">
-        <span>{errorMessage || config.description}</span>
-        {status === "failed" && onRetry && (
-          <Button onClick={onRetry} size="sm" variant="outline">
-            Retry Generation
-          </Button>
-        )}
-      </AlertDescription>
-      {isActive && (
-        <div className="absolute bottom-0 left-0 right-0">
-          <ShimmerBar
-            aria-hidden="true"
-            color={status === "pending" ? "var(--chart-2)" : "var(--ai-primary)"}
-            duration={status === "pending" ? 3 : 2}
-            height="xs"
-          />
+    <div aria-live="polite" className="rounded-lg border bg-card p-6 space-y-4" role="status">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <PulseRing className={cn("shrink-0", config.color)} size="sm" />
+          <span className="font-medium text-foreground truncate">{t(config.labelKey)}</span>
         </div>
-      )}
-    </Alert>
+        {elapsed && (
+          <time
+            aria-label={elapsed.ariaLabel}
+            className="text-sm text-muted-foreground tabular-nums shrink-0"
+          >
+            {t("elapsed")}: {elapsed.formatted}
+          </time>
+        )}
+      </div>
+
+      <ShimmerBar color={config.shimmerColor} duration={config.shimmerDuration} height="xs" />
+
+      <div aria-atomic="true" aria-live="polite" className="min-h-[24px]" role="status">
+        <RotatingMessages currentIndex={messageIndex} messages={messages} />
+      </div>
+    </div>
   );
 };
