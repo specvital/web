@@ -425,6 +425,7 @@
       "viewDocument": "View Document",
       "retryButton": "Try Again",
       "tip": "You can close this dialog and continue browsing. We'll notify you when it's done.",
+      "elapsed": "Elapsed time",
       "status": {
         "pending": "Waiting",
         "pendingDescription": "Waiting in queue...",
@@ -438,6 +439,22 @@
       "failed": {
         "title": "Generation Failed",
         "description": "An error occurred while generating the specification document."
+      },
+      "pipeline": {
+        "step1": "Queued",
+        "step2": "Generating",
+        "step3": "Complete",
+        "pending": {
+          "0": "Waiting for available AI worker...",
+          "1": "Your request is in the queue",
+          "2": "Generation will start shortly"
+        },
+        "running": {
+          "0": "AI is analyzing test structure",
+          "1": "Classifying domains and features",
+          "2": "Writing behavior descriptions",
+          "3": "Almost done..."
+        }
       }
     },
     "generate": {

@@ -1,0 +1,204 @@
+"use client";
+
+import { Check, X } from "lucide-react";
+import { AnimatePresence, m } from "motion/react";
+import { useTranslations } from "next-intl";
+
+import { PulseRing } from "@/components/feedback/pulse-ring";
+import { ShimmerBar } from "@/components/feedback/shimmer-bar";
+import { useReducedMotion } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+
+import type { SpecGenerationStatusEnum } from "../types";
+
+type PipelineStep = {
+  label: string;
+  number: number;
+  status: "completed" | "active" | "failed" | "upcoming";
+};
+
+type GenerationPipelineProps = {
+  className?: string;
+  status: SpecGenerationStatusEnum | null;
+};
+
+const getSteps = (
+  status: SpecGenerationStatusEnum | null,
+  t: (key: string) => string
+): PipelineStep[] => {
+  if (!status) {
+    return [
+      { label: t("pipeline.step1"), number: 1, status: "upcoming" },
+      { label: t("pipeline.step2"), number: 2, status: "upcoming" },
+      { label: t("pipeline.step3"), number: 3, status: "upcoming" },
+    ];
+  }
+
+  if (status === "pending" || status === "not_found") {
+    return [
+      { label: t("pipeline.step1"), number: 1, status: "active" },
+      { label: t("pipeline.step2"), number: 2, status: "upcoming" },
+      { label: t("pipeline.step3"), number: 3, status: "upcoming" },
+    ];
+  }
+
+  if (status === "running") {
+    return [
+      { label: t("pipeline.step1"), number: 1, status: "completed" },
+      { label: t("pipeline.step2"), number: 2, status: "active" },
+      { label: t("pipeline.step3"), number: 3, status: "upcoming" },
+    ];
+  }
+
+  if (status === "completed") {
+    return [
+      { label: t("pipeline.step1"), number: 1, status: "completed" },
+      { label: t("pipeline.step2"), number: 2, status: "completed" },
+      { label: t("pipeline.step3"), number: 3, status: "completed" },
+    ];
+  }
+
+  if (status === "failed") {
+    return [
+      { label: t("pipeline.step1"), number: 1, status: "completed" },
+      { label: t("pipeline.step2"), number: 2, status: "failed" },
+      { label: t("pipeline.step3"), number: 3, status: "upcoming" },
+    ];
+  }
+
+  return [
+    { label: t("pipeline.step1"), number: 1, status: "upcoming" },
+    { label: t("pipeline.step2"), number: 2, status: "upcoming" },
+    { label: t("pipeline.step3"), number: 3, status: "upcoming" },
+  ];
+};
+
+type PipelineNodeProps = {
+  isCurrent: boolean;
+  step: PipelineStep;
+};
+
+const PipelineNode = ({ isCurrent, step }: PipelineNodeProps) => {
+  const shouldReduceMotion = useReducedMotion();
+
+  const nodeContent = (() => {
+    if (step.status === "completed") {
+      return (
+        <div className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <Check className="size-5" />
+        </div>
+      );
+    }
+
+    if (step.status === "failed") {
+      return (
+        <div className="flex size-10 items-center justify-center rounded-full border-2 border-destructive bg-destructive/10 text-destructive">
+          <X className="size-5" />
+        </div>
+      );
+    }
+
+    if (step.status === "active") {
+      return (
+        <div className="relative flex size-10 items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <PulseRing className="text-[hsl(var(--ai-primary))]" size="md" />
+          </div>
+          <div className="flex size-10 items-center justify-center rounded-full bg-[hsl(var(--ai-primary))] text-white">
+            <span className="text-sm font-semibold">{step.number}</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <span className="text-sm font-medium">{step.number}</span>
+      </div>
+    );
+  })();
+
+  return (
+    <li
+      aria-current={isCurrent ? "step" : undefined}
+      className="flex flex-col items-center gap-2"
+      role="listitem"
+    >
+      {shouldReduceMotion || step.status !== "active" ? (
+        nodeContent
+      ) : (
+        <AnimatePresence initial={false} mode="wait">
+          <m.div
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            key={step.status}
+            layout
+            transition={{ duration: 0.3 }}
+          >
+            {nodeContent}
+          </m.div>
+        </AnimatePresence>
+      )}
+      <span
+        className={cn(
+          "text-center text-xs font-medium",
+          step.status === "active" && "text-foreground",
+          step.status === "completed" && "text-muted-foreground",
+          step.status === "failed" && "text-destructive",
+          step.status === "upcoming" && "text-muted-foreground"
+        )}
+      >
+        {step.label}
+      </span>
+    </li>
+  );
+};
+
+type PipelineConnectorProps = {
+  isActive: boolean;
+  isCompleted: boolean;
+};
+
+const PipelineConnector = ({ isActive, isCompleted }: PipelineConnectorProps) => {
+  if (isCompleted) {
+    return <div className="h-0.5 flex-1 rounded-full bg-primary" />;
+  }
+
+  if (isActive) {
+    return (
+      <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-muted">
+        <ShimmerBar color="var(--ai-primary)" duration={2} height="xs" />
+      </div>
+    );
+  }
+
+  return <div className="h-0.5 flex-1 rounded-full bg-muted" />;
+};
+
+export const GenerationPipeline = ({ className, status }: GenerationPipelineProps) => {
+  const t = useTranslations("specView.generationProgress");
+  const steps = getSteps(status, t);
+
+  return (
+    <div
+      aria-label="Spec generation progress steps"
+      className={cn("w-full", className)}
+      role="list"
+    >
+      <div className="flex items-center gap-4">
+        {steps.map((step, index) => (
+          <div className="flex flex-1 items-center" key={step.number}>
+            <PipelineNode isCurrent={step.status === "active"} step={step} />
+            {index < steps.length - 1 && (
+              <PipelineConnector
+                isActive={step.status === "active"}
+                isCompleted={step.status === "completed"}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

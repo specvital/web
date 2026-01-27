@@ -3,10 +3,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
+import { getTask, updateTask } from "@/lib/background-tasks";
+
 import { fetchGenerationStatus, ForbiddenError, UnauthorizedError } from "../api";
 import type { SpecGenerationStatusEnum, SpecLanguage } from "../types";
 import { repoSpecViewKeys } from "./use-repo-spec-view";
 import { specViewKeys } from "./use-spec-view";
+import { getSpecGenerationTaskId } from "../utils/task-ids";
 
 const POLLING_INTERVAL_MS = 1000;
 const MAX_POLLING_DURATION_MS = 5 * 60 * 1000; // 5 minutes
@@ -48,6 +51,7 @@ export const useSpecGenerationStatus = (
   const queryClient = useQueryClient();
   const pollingStartTimeRef = useRef<number | null>(null);
   const previousStatusRef = useRef<SpecGenerationStatusEnum | null>(null);
+  const hasSetStartedAtRef = useRef(false);
 
   // Store callbacks in refs to avoid dependency issues
   const onCompletedRef = useRef(onCompleted);
@@ -63,6 +67,7 @@ export const useSpecGenerationStatus = (
     if (enabled) {
       pollingStartTimeRef.current = null;
       previousStatusRef.current = null;
+      hasSetStartedAtRef.current = false;
     }
   }, [analysisId, enabled, language]);
 
@@ -105,6 +110,24 @@ export const useSpecGenerationStatus = (
     if (!enabled || !status) return;
 
     const prevStatus = previousStatusRef.current;
+
+    // Set startedAt once when transitioning to pending or running
+    // Goal: Track when generation actually begins for accurate elapsed time display
+    if (
+      !hasSetStartedAtRef.current &&
+      ((status === "pending" && prevStatus !== "pending") ||
+        (status === "running" && prevStatus !== "running"))
+    ) {
+      const taskId = getSpecGenerationTaskId(analysisId);
+      const task = getTask(taskId);
+      if (task && !task.startedAt) {
+        updateTask(taskId, {
+          startedAt: new Date().toISOString(),
+          ...(status === "running" && { status: "processing" }),
+        });
+        hasSetStartedAtRef.current = true;
+      }
+    }
 
     // Detect completion transition
     if (status === "completed" && prevStatus !== "completed") {
