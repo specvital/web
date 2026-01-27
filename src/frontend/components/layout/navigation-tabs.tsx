@@ -15,8 +15,8 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", labelKey: "dashboard", requiresAuth: true },
   { href: "/explore", labelKey: "explore" },
-  { href: "/pricing", labelKey: "pricing" },
   { href: "/docs", labelKey: "docs" },
+  { href: "/pricing", labelKey: "pricing" },
 ];
 
 type NavigationTabsProps = {
