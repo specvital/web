@@ -123,8 +123,9 @@ const TocItem = ({
         aria-current={isDomainActive ? "location" : undefined}
         className={cn(
           "w-full max-w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors text-left overflow-hidden",
-          "hover:bg-muted/50",
-          isDomainActive && "bg-primary/10 text-primary font-medium"
+          isDomainActive
+            ? "bg-gradient-to-r from-foreground/[0.10] to-transparent font-medium text-foreground"
+            : "hover:bg-muted/50 text-muted-foreground"
         )}
         onClick={() => {
           onNavigate(domainId);
@@ -159,8 +160,9 @@ const TocItem = ({
                 aria-current={isActive ? "location" : undefined}
                 className={cn(
                   "w-full max-w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors text-left overflow-hidden",
-                  "hover:bg-muted/50",
-                  isActive && "bg-primary/10 text-primary font-medium"
+                  isActive
+                    ? "bg-gradient-to-r from-foreground/[0.10] to-transparent font-medium text-foreground"
+                    : "hover:bg-muted/50 text-muted-foreground"
                 )}
                 key={feature.id}
                 onClick={() => onNavigate(featureId)}

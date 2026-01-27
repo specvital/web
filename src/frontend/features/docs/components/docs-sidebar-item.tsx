@@ -19,8 +19,9 @@ export const DocsSidebarItem = ({ href, icon: Icon, title }: DocsSidebarItemProp
     <Link
       className={cn(
         "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-        "hover:bg-muted/50",
-        isActive && "bg-primary/10 font-medium text-primary"
+        isActive
+          ? "bg-gradient-to-r from-foreground/[0.10] to-transparent font-medium text-foreground"
+          : "hover:bg-muted/50 text-muted-foreground"
       )}
       href={href}
     >
