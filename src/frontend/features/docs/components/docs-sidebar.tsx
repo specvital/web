@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CreditCard, GitBranch, Layers, Menu, Zap } from "lucide-react";
+import { BookOpen, CreditCard, GitBranch, Layers, Lightbulb, Menu, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ const SIDEBAR_ITEMS = [
   { icon: GitBranch, key: "githubAccess" },
   { icon: Zap, key: "queueProcessing" },
   { icon: BookOpen, key: "specviewGeneration" },
+  { icon: Lightbulb, key: "writingGuide" },
 ] as const;
 
 type SidebarContentProps = {

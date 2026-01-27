@@ -251,7 +251,9 @@
   "navigation": {
     "ariaLabel": "메인 네비게이션",
     "dashboard": "대시보드",
-    "explore": "탐색"
+    "explore": "탐색",
+    "pricing": "요금제",
+    "docs": "문서"
   },
   "specView": {
     "toc": {
@@ -772,13 +774,6 @@
       }
     }
   },
-  "navigation": {
-    "ariaLabel": "메인 네비게이션",
-    "dashboard": "대시보드",
-    "explore": "탐색",
-    "pricing": "요금제",
-    "docs": "문서"
-  },
   "docs": {
     "landing": {
       "title": "문서",
@@ -816,6 +811,11 @@
         "title": "AI 스펙 생성",
         "description": "AI가 테스트를 구조화된 스펙 문서로 변환하는 방법을 알아보세요.",
         "slug": "specview-generation"
+      },
+      "writingGuide": {
+        "title": "테스트 작성 가이드",
+        "description": "최적의 분석 결과를 위한 테스트 작성법과 프로젝트 구성 방법을 알아보세요.",
+        "slug": "writing-guide"
       }
     },
     "usageBilling": {
@@ -1460,6 +1460,188 @@
           "q4": {
             "question": "얼마나 자주 스펙을 재생성해야 하나요?",
             "answer": "테스트 스위트에 중요한 변경 사항이 있을 때 재생성하세요. 활발한 프로젝트의 경우 각 스프린트 또는 주요 기능 완료 후 재생성하는 것을 권장합니다."
+          }
+        }
+      }
+    },
+    "writingGuide": {
+      "meta": {
+        "title": "테스트 작성 가이드 | SpecVital 문서",
+        "description": "최적의 분석 결과를 위한 테스트 작성법과 프로젝트 구성 방법을 알아보세요."
+      },
+      "title": "테스트 작성 가이드",
+      "subtitle": "정확한 분석과 고품질 스펙 문서를 위해 테스트를 구조화하세요.",
+      "sections": {
+        "pipeline": {
+          "title": "SpecVital 작동 방식",
+          "description": "SpecVital은 AST 기반 정적 분석으로 테스트 코드베이스를 이해합니다. 파이프라인 작동 방식을 알면 더 정확한 분석 결과를 얻을 수 있습니다.",
+          "steps": {
+            "detect": {
+              "title": "테스트 감지",
+              "description": "파일명 패턴과 디렉토리 규칙을 사용하여 저장소에서 테스트 파일을 스캔합니다."
+            },
+            "parse": {
+              "title": "AST 파싱",
+              "description": "tree-sitter로 테스트 파일을 정적 분석하여 테스트 구조, Suite 계층, 상태를 추출합니다."
+            },
+            "analyze": {
+              "title": "분석",
+              "description": "프레임워크 감지, 상태 분류, 구조적 인사이트를 포함한 종합적인 테스트 인벤토리를 생성합니다."
+            },
+            "specDocument": {
+              "title": "스펙 문서",
+              "description": "선택적으로, AI가 분석 결과를 도메인별로 조직화된 스펙 문서로 생성합니다."
+            }
+          },
+          "keyPoint": {
+            "title": "잘 구조화된 코드, 더 나은 결과",
+            "description": "잘 구조화된 테스트 코드는 더 정확한 분석 결과로 이어집니다. 스펙 문서 생성을 함께 사용하면 분석 품질이 문서 품질에 직접 영향을 미칩니다."
+          }
+        },
+        "testNaming": {
+          "title": "테스트 명명",
+          "description": "테스트명은 분석 품질에 가장 큰 영향을 미치는 단일 요소입니다. 서술적인 이름은 분석 결과와 스펙 문서 생성 모두를 향상시킵니다.",
+          "contextNote": {
+            "title": "도메인 컨텍스트가 결과를 향상시킵니다",
+            "description": "SpecVital은 테스트명과 함께 도메인 정보(Suite 경로, 파일 경로, import)를 활용합니다. 간략한 테스트명이라도 풍부한 도메인 컨텍스트가 있으면 합리적인 설명을 생성할 수 있습니다."
+          },
+          "table": {
+            "testName": "테스트명",
+            "context": "Suite 컨텍스트",
+            "result": "예상 생성 설명",
+            "confidence": "정확도"
+          },
+          "confidence": {
+            "high": "높음",
+            "medium": "보통",
+            "low": "낮음"
+          },
+          "tips": {
+            "pattern": {
+              "title": "should/when 패턴 사용",
+              "description": "'should [동작] when [조건]' 또는 '[동작] when [조건]' 형태의 이름이 가장 명확한 분석 결과를 생성합니다."
+            },
+            "specific": {
+              "title": "구체적으로 작성",
+              "description": "테스트명에 구체적인 조건, 기대값, 엣지 케이스를 포함하세요. 'works'나 'handles' 같은 일반적인 동사는 피하세요."
+            }
+          }
+        },
+        "testStructure": {
+          "title": "테스트 구조화",
+          "description": "Suite 계층은 SpecVital이 추출하는 핵심 구조 정보입니다. 테스트를 의미 있는 그룹으로 중첩하면 분석과 스펙 생성 모두에 풍부한 컨텍스트를 제공합니다.",
+          "bad": {
+            "title": "평면 구조",
+            "description": "Suite 계층 없이는 분석에서 그룹핑 컨텍스트가 부족합니다."
+          },
+          "good": {
+            "title": "중첩 구조",
+            "description": "중첩된 테스트 그룹이 분석을 위한 명확한 구조적 컨텍스트를 제공합니다."
+          },
+          "tip": {
+            "title": "Suite 경로 = 구조적 컨텍스트",
+            "description": "전체 Suite 경로(예: 'AuthService > Login')는 SpecVital이 테스트 간의 관계와 애플리케이션 아키텍처와의 연관성을 이해하는 데 필요한 컨텍스트를 제공합니다."
+          }
+        },
+        "fileOrganization": {
+          "title": "테스트 파일 구성",
+          "description": "파일 경로는 프로젝트 구조를 이해하는 강력한 신호입니다. 잘 정리된 테스트 파일은 분석과 스펙 문서 모두에서 정확한 그룹핑으로 이어집니다.",
+          "bad": {
+            "title": "피해야 할 방식",
+            "description": "모든 테스트를 하나의 디렉토리에 넣으면 경로 기반 구조 신호를 잃습니다."
+          },
+          "good": {
+            "title": "권장 방식",
+            "description": "도메인에 맞춘 디렉토리 구조가 강력한 구조적 신호를 제공합니다."
+          },
+          "tips": {
+            "naming": {
+              "title": "프레임워크 규칙 따르기",
+              "description": "프레임워크가 기대하는 표준 명명 패턴을 사용하세요: *.test.ts, *.spec.ts, *_test.go, *Test.java, test_*.py 등."
+            },
+            "colocation": {
+              "title": "소스와 함께 배치",
+              "description": "테스트를 소스 코드 근처에 두면 (예: 같은 디렉토리의 __tests__/) 명확한 경로 기반 구조 신호를 제공합니다."
+            },
+            "separation": {
+              "title": "도메인별 분리",
+              "description": "테스트 디렉토리를 테스트 유형(unit/, integration/)이 아닌 비즈니스 도메인(auth/, payment/, user/)별로 구성하세요."
+            }
+          }
+        },
+        "architecture": {
+          "title": "프로젝트 아키텍처",
+          "description": "테스트 내의 import 문과 함수 호출은 분석 시 도메인 힌트로 추출됩니다. 이 신호들은 SpecVital이 각 테스트가 애플리케이션의 어떤 부분을 다루는지 이해하는 데 도움을 줍니다.",
+          "signalStrength": {
+            "title": "분석 신호 강도",
+            "strongest": "Import 및 함수 호출 (가장 강함)",
+            "strong": "파일 경로 (강함)",
+            "moderate": "테스트명 (보통)",
+            "weak": "테스트 콘텐츠 패턴 (약함)"
+          },
+          "bad": {
+            "title": "약한 신호",
+            "description": "일반적인 유틸리티 import는 도메인 컨텍스트를 제공하지 않습니다."
+          },
+          "good": {
+            "title": "강한 신호",
+            "description": "도메인별 import가 비즈니스 영역을 명확하게 나타냅니다."
+          },
+          "tip": {
+            "title": "도메인별 Import가 가장 중요",
+            "description": "테스트가 도메인별 모듈(예: @/services/auth, @/api/payment)을 import하면 SpecVital이 애플리케이션의 어떤 부분을 테스트하는지 정확하게 파악합니다. 일반적인 유틸리티 import는 유용한 신호를 제공하지 않습니다."
+          }
+        },
+        "roadmap": {
+          "title": "출시 예정: AI 가이드 도구",
+          "description": "SpecVital의 분석 기능을 IDE에 직접 가져오는 MCP(Model Context Protocol) 통합을 개발하고 있습니다. 분석 결과를 기반으로 테스트 코드 개선을 도와줄 예정입니다.",
+          "comingSoon": "출시 예정",
+          "features": {
+            "naming": {
+              "title": "테스트명 개선",
+              "description": "알기 어려운 테스트명을 감지하고 더 나은 분석 결과를 위한 서술적인 대안을 제안합니다."
+            },
+            "structure": {
+              "title": "구조 리팩토링",
+              "description": "평면적인 테스트 파일을 잘 조직된 Suite 계층으로 변환하는 것을 제안합니다."
+            },
+            "preview": {
+              "title": "분석 미리보기",
+              "description": "변경 사항을 커밋하기 전에 테스트가 어떻게 분석되고 그룹핑될지 미리 확인합니다."
+            },
+            "architecture": {
+              "title": "아키텍처 진단",
+              "description": "프로젝트의 테스트 파일 구성과 import 패턴을 분석하여 개선 제안을 제공합니다."
+            }
+          }
+        },
+        "aiToolConfig": {
+          "title": "AI 도구 설정",
+          "description": "요즘 대부분의 테스트는 AI 코딩 도구로 작성됩니다. AI 도구에 SpecVital 맞춤 규칙을 추가하면 생성되는 테스트가 최적의 분석 결과를 만듭니다.",
+          "principles": {
+            "suiteHierarchy": {
+              "title": "Suite 계층 필수화",
+              "description": "AI가 항상 도메인과 기능을 명명하는 중첩된 Suite 그룹으로 테스트를 감싸도록 지시하세요. Suite 경로는 가장 강력한 구조적 신호입니다."
+            },
+            "behaviorNames": {
+              "title": "행동 서술형 이름 강제",
+              "description": "테스트명이 구현이 아닌 행동을 서술하도록 하세요. \"만료된 토큰 거부\" 같은 이름은 스펙 설명으로 직접 변환됩니다."
+            },
+            "domainPaths": {
+              "title": "도메인 반영 경로",
+              "description": "테스트 파일을 일반적인 디렉토리가 아닌 비즈니스 도메인을 반영하는 디렉토리(예: tests/auth/, tests/order/)에 배치하도록 지시하세요."
+            },
+            "domainImports": {
+              "title": "실제 모듈 Import",
+              "description": "테스트 대상인 실제 도메인 서비스와 모듈을 import하도록 요구하세요. Import 문은 도메인 분류를 위한 가장 강력한 신호입니다."
+            }
+          },
+          "viewTemplate": "추천 프롬프트 템플릿 보기",
+          "dialog": {
+            "title": "추천 프롬프트 템플릿",
+            "description": "AI 도구의 규칙 또는 설정 파일(예: CLAUDE.md, .cursorrules, copilot-instructions.md)에 복사하세요.",
+            "copy": "클립보드에 복사",
+            "copied": "복사됨!"
           }
         }
       }

@@ -1,3 +1,4 @@
+export { WritingGuideContent } from "./writing-guide-content";
 export { DocsSidebar } from "./docs-sidebar";
 export { DocsSidebarItem } from "./docs-sidebar-item";
 export { GithubAccessContent } from "./github-access-content";

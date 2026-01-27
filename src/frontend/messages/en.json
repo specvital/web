@@ -251,7 +251,9 @@
   "navigation": {
     "ariaLabel": "Main navigation",
     "dashboard": "Dashboard",
-    "explore": "Explore"
+    "explore": "Explore",
+    "pricing": "Pricing",
+    "docs": "Docs"
   },
   "specView": {
     "toc": {
@@ -772,13 +774,6 @@
       }
     }
   },
-  "navigation": {
-    "ariaLabel": "Main navigation",
-    "dashboard": "Dashboard",
-    "explore": "Explore",
-    "pricing": "Pricing",
-    "docs": "Docs"
-  },
   "docs": {
     "landing": {
       "title": "Documentation",
@@ -816,6 +811,11 @@
         "title": "AI Spec Generation",
         "description": "How AI transforms your tests into structured specification documents.",
         "slug": "specview-generation"
+      },
+      "writingGuide": {
+        "title": "Test Writing Guide",
+        "description": "Learn how to write tests and organize your project for optimal analysis results.",
+        "slug": "writing-guide"
       }
     },
     "usageBilling": {
@@ -1460,6 +1460,188 @@
           "q4": {
             "question": "How often should I regenerate specs?",
             "answer": "Regenerate when you make significant changes to your test suite. For active projects, we recommend regenerating after each sprint or major feature completion."
+          }
+        }
+      }
+    },
+    "writingGuide": {
+      "meta": {
+        "title": "Test Writing Guide | SpecVital Docs",
+        "description": "Learn how to write tests and organize your project for optimal analysis results."
+      },
+      "title": "Test Writing Guide",
+      "subtitle": "Structure your tests for accurate analysis and high-quality spec documents.",
+      "sections": {
+        "pipeline": {
+          "title": "How SpecVital Works",
+          "description": "SpecVital uses AST-based static analysis to understand your test codebase. Knowing how this pipeline works helps you get the most accurate results.",
+          "steps": {
+            "detect": {
+              "title": "Test Detection",
+              "description": "Scans your repository for test files using naming patterns and directory conventions."
+            },
+            "parse": {
+              "title": "AST Parsing",
+              "description": "Statically analyzes test files with tree-sitter to extract test structure, suite hierarchy, and status."
+            },
+            "analyze": {
+              "title": "Analysis",
+              "description": "Generates a comprehensive test inventory with framework detection, status breakdown, and structural insights."
+            },
+            "specDocument": {
+              "title": "Spec Document",
+              "description": "Optionally, AI organizes analysis results into domain-grouped specification documents."
+            }
+          },
+          "keyPoint": {
+            "title": "Well-Structured Code, Better Results",
+            "description": "Well-structured test code leads to more accurate analysis. If you also use spec document generation, analysis quality directly impacts document quality."
+          }
+        },
+        "testNaming": {
+          "title": "Naming Tests",
+          "description": "Test names are the single most impactful factor for analysis quality. Descriptive names improve both the analysis breakdown and spec document generation.",
+          "contextNote": {
+            "title": "Domain Context Enhances Results",
+            "description": "SpecVital uses domain information (suite path, file path, imports) alongside test names. Even brief test names can produce reasonable descriptions when rich domain context is available."
+          },
+          "table": {
+            "testName": "Test Name",
+            "context": "Suite Context",
+            "result": "Expected Description",
+            "confidence": "Confidence"
+          },
+          "confidence": {
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+          },
+          "tips": {
+            "pattern": {
+              "title": "Use should/when Pattern",
+              "description": "Names like 'should [action] when [condition]' or '[action] when [condition]' produce the clearest analysis results."
+            },
+            "specific": {
+              "title": "Be Specific",
+              "description": "Include specific conditions, expected values, and edge cases in the test name. Avoid generic verbs like 'works' or 'handles'."
+            }
+          }
+        },
+        "testStructure": {
+          "title": "Structuring Tests",
+          "description": "Suite hierarchy is key structural information that SpecVital extracts. Nesting tests into meaningful groups provides rich context for both analysis and spec generation.",
+          "bad": {
+            "title": "Flat Structure",
+            "description": "Without suite hierarchy, analysis lacks grouping context."
+          },
+          "good": {
+            "title": "Nested Structure",
+            "description": "Nested test groups provide clear structural context for analysis."
+          },
+          "tip": {
+            "title": "Suite Path = Structural Context",
+            "description": "The full suite path (e.g., 'AuthService > Login') gives SpecVital the context needed to understand how tests relate to each other and to your application's architecture."
+          }
+        },
+        "fileOrganization": {
+          "title": "Organizing Test Files",
+          "description": "File paths are a strong signal for understanding your project structure. Well-organized test files lead to accurate grouping in both analysis and spec documents.",
+          "bad": {
+            "title": "Avoid",
+            "description": "All tests in a single directory lose path-based structural signals."
+          },
+          "good": {
+            "title": "Recommended",
+            "description": "Domain-aligned directories provide strong structural signals."
+          },
+          "tips": {
+            "naming": {
+              "title": "Follow Framework Conventions",
+              "description": "Use standard naming patterns your framework expects: *.test.ts, *.spec.ts, *_test.go, *Test.java, test_*.py, and so on."
+            },
+            "colocation": {
+              "title": "Co-locate Tests with Source",
+              "description": "Keeping tests near source code (e.g., __tests__/ in the same directory) provides clear path-based structural signals."
+            },
+            "separation": {
+              "title": "Separate by Domain",
+              "description": "Organize test directories by business domain (auth/, payment/, user/) rather than by test type (unit/, integration/)."
+            }
+          }
+        },
+        "architecture": {
+          "title": "Project Architecture",
+          "description": "Import statements and function calls within tests are extracted as domain hints during analysis. These signals help SpecVital understand which parts of your application each test covers.",
+          "signalStrength": {
+            "title": "Analysis Signal Strength",
+            "strongest": "Imports and function calls (strongest)",
+            "strong": "File path (strong)",
+            "moderate": "Test names (moderate)",
+            "weak": "Test content patterns (weak)"
+          },
+          "bad": {
+            "title": "Weak Signals",
+            "description": "Generic utility imports provide no domain context."
+          },
+          "good": {
+            "title": "Strong Signals",
+            "description": "Domain-specific imports clearly indicate business area."
+          },
+          "tip": {
+            "title": "Domain-Specific Imports Matter Most",
+            "description": "When your tests import from domain-specific modules (e.g., @/services/auth, @/api/payment), SpecVital can accurately identify which part of your application is being tested. Generic utility imports provide no useful signal."
+          }
+        },
+        "roadmap": {
+          "title": "Coming Soon: AI-Guided Tools",
+          "description": "We're building MCP (Model Context Protocol) integration that brings SpecVital's analysis capabilities directly into your IDE. These tools will help you improve your test code based on analysis results.",
+          "comingSoon": "Coming Soon",
+          "features": {
+            "naming": {
+              "title": "Test Name Improvement",
+              "description": "Detect cryptic test names and suggest descriptive alternatives for better analysis results."
+            },
+            "structure": {
+              "title": "Structure Refactoring",
+              "description": "Suggest converting flat test files into well-organized suite hierarchies."
+            },
+            "preview": {
+              "title": "Analysis Preview",
+              "description": "Preview how your tests will be analyzed and grouped before committing changes."
+            },
+            "architecture": {
+              "title": "Architecture Diagnostics",
+              "description": "Analyze your project's test file organization and import patterns, with suggestions for improvement."
+            }
+          }
+        },
+        "aiToolConfig": {
+          "title": "AI Tool Configuration",
+          "description": "Most tests today are written with AI coding assistants. Add SpecVital-aware rules to your AI tool so generated tests produce optimal analysis results.",
+          "principles": {
+            "suiteHierarchy": {
+              "title": "Require Suite Hierarchy",
+              "description": "Instruct your AI to always wrap tests in nested suite groups that name the domain and feature. The suite path is the strongest structural signal."
+            },
+            "behaviorNames": {
+              "title": "Enforce Behavior Names",
+              "description": "Test names should describe behavior, not implementation. Names like \"rejects expired token\" are converted directly into spec descriptions."
+            },
+            "domainPaths": {
+              "title": "Mirror Domain in Paths",
+              "description": "Tell your AI to place test files in directories that reflect business domains (e.g., tests/auth/, tests/order/) instead of generic directories."
+            },
+            "domainImports": {
+              "title": "Import Real Modules",
+              "description": "Require importing actual domain services and modules under test. Import statements are the strongest signal for domain classification."
+            }
+          },
+          "viewTemplate": "View Recommended Prompt Template",
+          "dialog": {
+            "title": "Recommended Prompt Template",
+            "description": "Copy this into your AI tool's rule or configuration file (e.g., CLAUDE.md, .cursorrules, copilot-instructions.md).",
+            "copy": "Copy to Clipboard",
+            "copied": "Copied!"
           }
         }
       }

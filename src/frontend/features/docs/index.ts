@@ -1,4 +1,5 @@
 export {
+  WritingGuideContent,
   DocsSidebar,
   DocsSidebarItem,
   GithubAccessContent,
