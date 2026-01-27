@@ -378,7 +378,7 @@ export const WritingGuideContent = () => {
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="border-l-4 border-l-red-400">
+          <Card className="overflow-hidden border-l-4 border-l-red-400">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <XCircle className="size-4 text-red-500" />
@@ -397,7 +397,7 @@ export const WritingGuideContent = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-400">
+          <Card className="overflow-hidden border-l-4 border-l-green-400">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-green-500" />
@@ -438,7 +438,7 @@ export const WritingGuideContent = () => {
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="border-l-4 border-l-red-400">
+          <Card className="overflow-hidden border-l-4 border-l-red-400">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <XCircle className="size-4 text-red-500" />
@@ -457,7 +457,7 @@ export const WritingGuideContent = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-400">
+          <Card className="overflow-hidden border-l-4 border-l-green-400">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-green-500" />
@@ -526,7 +526,7 @@ export const WritingGuideContent = () => {
         </Card>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="border-l-4 border-l-red-400">
+          <Card className="overflow-hidden border-l-4 border-l-red-400">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <XCircle className="size-4 text-red-500" />
@@ -545,7 +545,7 @@ export const WritingGuideContent = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-400">
+          <Card className="overflow-hidden border-l-4 border-l-green-400">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-green-500" />
