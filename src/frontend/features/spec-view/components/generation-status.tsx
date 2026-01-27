@@ -2,10 +2,13 @@
 
 import { AlertCircle, CheckCircle2, Clock, Loader2 } from "lucide-react";
 
+import { PulseRing, ShimmerBar } from "@/components/feedback";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import type { SpecGenerationStatusEnum } from "../types";
+import { isGenerationActive } from "../utils";
 
 type GenerationStatusProps = {
   errorMessage?: string;
@@ -63,10 +66,15 @@ const STATUS_CONFIG: Record<
 export const GenerationStatus = ({ errorMessage, onRetry, status }: GenerationStatusProps) => {
   const config = STATUS_CONFIG[status];
   const Icon = config.icon;
+  const isActive = isGenerationActive(status);
 
   return (
-    <Alert variant={config.variant}>
-      <Icon className={config.isAnimated ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+    <Alert className="relative overflow-hidden" variant={config.variant}>
+      {isActive ? (
+        <PulseRing aria-hidden="true" size="xs" />
+      ) : (
+        <Icon className={cn("h-4 w-4", config.isAnimated && "animate-spin")} />
+      )}
       <AlertTitle>{config.title}</AlertTitle>
       <AlertDescription className="flex flex-col gap-3">
         <span>{errorMessage || config.description}</span>
@@ -76,6 +84,16 @@ export const GenerationStatus = ({ errorMessage, onRetry, status }: GenerationSt
           </Button>
         )}
       </AlertDescription>
+      {isActive && (
+        <div className="absolute bottom-0 left-0 right-0">
+          <ShimmerBar
+            aria-hidden="true"
+            color={status === "pending" ? "var(--chart-2)" : "var(--ai-primary)"}
+            duration={status === "pending" ? 3 : 2}
+            height="xs"
+          />
+        </div>
+      )}
     </Alert>
   );
 };

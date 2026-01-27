@@ -7,6 +7,19 @@ import { type BackgroundTask, useTaskStore } from "./task-store";
 export const useBackgroundTasks = (): BackgroundTask[] =>
   useTaskStore(useShallow((state) => Array.from(state.tasks.values())));
 
+export const useActiveTasks = (): BackgroundTask[] =>
+  useTaskStore(
+    useShallow((state) => {
+      const activeTasks: BackgroundTask[] = [];
+      state.tasks.forEach((task) => {
+        if (task.status === "queued" || task.status === "processing") {
+          activeTasks.push(task);
+        }
+      });
+      return activeTasks;
+    })
+  );
+
 export const useActiveTaskCount = (): number =>
   useTaskStore((state) => {
     let count = 0;

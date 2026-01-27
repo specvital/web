@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 
+import { ShimmerBar } from "@/components/feedback";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -87,7 +88,11 @@ export const AnalysisSkeleton = ({
         {/* Status banner */}
         <div
           aria-live="polite"
-          className={cn("rounded-lg border-l-4 px-4 py-3", config.border, config.bg)}
+          className={cn(
+            "relative overflow-hidden rounded-lg border-l-4 px-4 py-3",
+            config.border,
+            config.bg
+          )}
           role="status"
         >
           <div className="flex items-center gap-3">
@@ -96,6 +101,9 @@ export const AnalysisSkeleton = ({
               <p className="font-medium text-foreground">{displayTitle}</p>
               <p className="text-sm text-muted-foreground">{displayDescription}</p>
             </div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0">
+            <ShimmerBar aria-hidden="true" color="var(--primary)" duration={2} height="xs" />
           </div>
         </div>
 
