@@ -455,15 +455,13 @@ test.describe("Dashboard Page (Mocked API)", () => {
         timeout: 10000,
       });
 
-      // Empty state should show Explore button to analyze first repo
+      // Empty state should show "Analyze a repository" button (AnalyzeDialog with empty-state variant)
       await expect(
-        page
-          .getByRole("link", { name: /explore|analyze|get started/i })
-          .or(page.getByRole("button", { name: /explore|analyze|get started/i }))
+        page.getByRole("button", { name: /analyze a repository/i })
       ).toBeVisible({ timeout: 10000 });
     });
 
-    test("should navigate to explore page from empty state", async ({ page }) => {
+    test("should open analyze dialog from empty state", async ({ page }) => {
       await setupMockHandlers(page, {
         repositories: mockRepositoriesEmpty,
         stats: mockStatsEmpty,
@@ -476,15 +474,14 @@ test.describe("Dashboard Page (Mocked API)", () => {
         timeout: 10000,
       });
 
-      // Click the Explore/Analyze button
-      const exploreLink = page.getByRole("link", { name: /explore/i }).first();
-      const hasExploreLink = await exploreLink.isVisible({ timeout: 5000 }).catch(() => false);
+      // Click the Analyze button to open dialog
+      const analyzeButton = page.getByRole("button", { name: /analyze a repository/i });
+      await analyzeButton.click();
 
-      if (hasExploreLink) {
-        await exploreLink.click();
-        // Should navigate to explore page
-        await expect(page).toHaveURL(/\/explore/);
-      }
+      // Verify dialog opens
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+      await expect(dialog.getByRole("heading", { name: /analyze repository/i })).toBeVisible();
     });
   });
 

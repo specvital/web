@@ -53,11 +53,12 @@ test.describe("Documentation - Test Writing Guide", () => {
     await expect(table).toBeVisible();
 
     // Verify key sample data that should appear in the table
-    await expect(page.getByText("tc_01")).toBeVisible();
-    await expect(page.getByText("AuthService > Login")).toBeVisible();
-    await expect(page.getByText("OrderService > Sorting")).toBeVisible();
+    // Use first() to avoid strict mode violation when text appears in both table and code blocks
+    await expect(page.getByText("tc_01").first()).toBeVisible();
+    await expect(page.getByText("AuthService > Login").first()).toBeVisible();
+    await expect(page.getByText("OrderService > Sorting").first()).toBeVisible();
     await expect(
-      page.getByText("should reject with expired token")
+      page.getByText("should reject with expired token").first()
     ).toBeVisible();
   });
 
@@ -100,8 +101,9 @@ test.describe("Documentation - Test Writing Guide", () => {
     ).toBeVisible();
 
     // Verify both example types are shown
-    await expect(page.getByText("Avoid")).toBeVisible();
-    await expect(page.getByText("Recommended")).toBeVisible();
+    // Use first() to avoid strict mode violation when text appears multiple times
+    await expect(page.getByText("Avoid").first()).toBeVisible();
+    await expect(page.getByText("Recommended").first()).toBeVisible();
 
     // Verify best practice list items exist
     await expect(page.getByText("Follow Framework Conventions")).toBeVisible();

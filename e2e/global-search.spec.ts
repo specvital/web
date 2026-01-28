@@ -163,9 +163,11 @@ test.describe("Global Search", () => {
 
     test("should open search dialog by tapping icon button", async ({ page }) => {
       await page.goto("/en");
+      await page.waitForLoadState("networkidle");
 
-      // Click mobile search icon button in header
-      await page.getByRole("button", { name: /search/i }).click();
+      // Click mobile search icon button in header (visible one on mobile)
+      const searchButton = page.getByRole("button", { name: /search/i });
+      await searchButton.click();
 
       // Verify dialog is open
       await expect(page.getByRole("dialog")).toBeVisible();
@@ -173,8 +175,10 @@ test.describe("Global Search", () => {
 
     test("should display full-screen dialog on mobile", async ({ page }) => {
       await page.goto("/en");
+      await page.waitForLoadState("networkidle");
 
-      await page.getByRole("button", { name: /search/i }).click();
+      const searchButton = page.getByRole("button", { name: /search/i });
+      await searchButton.click();
 
       // Verify dialog takes full screen
       const dialog = page.getByRole("dialog");
@@ -187,23 +191,33 @@ test.describe("Global Search", () => {
 
     test("should display close button on mobile", async ({ page }) => {
       await page.goto("/en");
+      await page.waitForLoadState("networkidle");
 
-      await page.getByRole("button", { name: /search/i }).click();
+      const searchButton = page.getByRole("button", { name: /search/i });
+      await searchButton.click();
 
-      // Verify close button is visible
-      const closeButton = page.getByRole("button", { name: /close/i });
+      // Verify dialog is open first
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+
+      // Verify close button is visible in dialog
+      const closeButton = dialog.getByRole("button", { name: /close/i });
       await expect(closeButton).toBeVisible();
     });
 
     test("should close dialog with close button", async ({ page }) => {
       await page.goto("/en");
+      await page.waitForLoadState("networkidle");
 
-      await page.getByRole("button", { name: /search/i }).click();
-      await expect(page.getByRole("dialog")).toBeVisible();
+      const searchButton = page.getByRole("button", { name: /search/i });
+      await searchButton.click();
 
-      // Click close button
-      await page.getByRole("button", { name: /close/i }).click();
-      await expect(page.getByRole("dialog")).not.toBeVisible();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+
+      // Click close button inside dialog
+      await dialog.getByRole("button", { name: /close/i }).click();
+      await expect(dialog).not.toBeVisible();
     });
 
     test("should hide keyboard hints on mobile", async ({ page }) => {

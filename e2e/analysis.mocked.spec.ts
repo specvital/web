@@ -488,8 +488,8 @@ test.describe("Analysis Page - AI Spec Tab (Mocked API)", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
-    // Click language selector
-    const languageCombobox = dialog.getByRole("combobox", { name: /output language/i });
+    // Click language selector (aria-label is "Select language")
+    const languageCombobox = dialog.getByRole("combobox", { name: /select language/i });
     await expect(languageCombobox).toBeVisible();
     await languageCombobox.click();
 
@@ -1182,10 +1182,9 @@ test.describe("Analysis Page - Spec 403 Handling (Mocked API)", () => {
     await confirmButton.click();
 
     // Verify error message or subscription link appears
-    // This could be a toast notification or inline error (use first() for multiple matches)
+    // Look for "Subscription Required" which is the dialog title
     await expect(
-      page.getByText(/subscription|upgrade|plan/i).first()
-        .or(page.getByRole("link", { name: /subscription|upgrade|pricing/i }))
+      page.getByText("Subscription Required")
     ).toBeVisible({ timeout: 5000 });
   });
 });

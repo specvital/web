@@ -116,7 +116,7 @@ test.describe("Documentation Pages", () => {
   });
 
   test.describe("Individual Page Content", () => {
-    test("should display Test Detection page with supported frameworks table", async ({
+    test("should display Test Detection page with test status section", async ({
       page,
     }) => {
       await page.goto("/en/docs/test-detection");
@@ -126,19 +126,18 @@ test.describe("Documentation Pages", () => {
         page.getByRole("heading", { name: "Test Detection", level: 1 })
       ).toBeVisible();
 
-      // Verify supported frameworks section
+      // Verify test status detection section
       await expect(
-        page.getByRole("heading", { name: "Supported Frameworks", level: 2 })
+        page.getByRole("heading", { name: "Test Status Detection", level: 2 })
       ).toBeVisible();
 
-      // Verify frameworks table exists with content
-      const table = page.getByRole("table").first();
-      await expect(table).toBeVisible();
-      await expect(table.getByText("JavaScript / TypeScript")).toBeVisible();
-      await expect(table.getByText(/Jest.*Vitest/)).toBeVisible();
+      // Verify status cards exist with content (use first() to avoid strict mode violation)
+      await expect(page.getByText("Active").first()).toBeVisible();
+      await expect(page.getByText("Skipped").first()).toBeVisible();
+      await expect(page.getByText("Focused").first()).toBeVisible();
     });
 
-    test("should display Usage & Billing page with plan limits table", async ({
+    test("should display Usage & Billing page with billing cycle section", async ({
       page,
     }) => {
       await page.goto("/en/docs/usage-billing");
@@ -148,20 +147,19 @@ test.describe("Documentation Pages", () => {
         page.getByRole("heading", { name: "Usage & Billing", level: 1 })
       ).toBeVisible();
 
-      // Verify plan limits section
+      // Verify billing cycle section
       await expect(
-        page.getByRole("heading", { name: "Plan Limits", level: 2 })
+        page.getByRole("heading", { name: "Billing Cycle", level: 2 })
       ).toBeVisible();
 
-      // Verify plan limits table
-      const table = page.locator("table").filter({ hasText: "Plan" });
-      await expect(table.getByText("Free")).toBeVisible();
-      // Use exact match to avoid matching "Pro+"
-      await expect(table.getByText("Pro", { exact: true })).toBeVisible();
+      // Verify usage events table exists
+      const table = page.getByRole("table").first();
+      await expect(table).toBeVisible();
+      await expect(page.getByText("Analysis Run").first()).toBeVisible();
     });
 
 
-    test("should display AI Spec Generation page with test classification table", async ({
+    test("should display AI Spec Generation page with output section", async ({
       page,
     }) => {
       await page.goto("/en/docs/specview-generation");
@@ -171,16 +169,14 @@ test.describe("Documentation Pages", () => {
         page.getByRole("heading", { name: "AI Spec Generation", level: 1 })
       ).toBeVisible();
 
-      // Verify test classification section
+      // Verify output section
       await expect(
-        page.getByRole("heading", { name: "Test Classification", level: 2 })
+        page.getByRole("heading", { name: "What You Get", level: 2 })
       ).toBeVisible();
 
-      // Verify classification types are displayed in table
-      const table = page.locator("table").filter({ hasText: "Functional" });
-      await expect(table).toBeVisible();
-      await expect(table.getByText("Edge Case")).toBeVisible();
-      await expect(table.getByText("Integration")).toBeVisible();
+      // Verify output features are displayed in cards
+      await expect(page.getByText("Organized by Domain").first()).toBeVisible();
+      await expect(page.getByText("Readable Descriptions").first()).toBeVisible();
     });
   });
 });
