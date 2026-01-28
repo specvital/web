@@ -1,9 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { toast } from "sonner";
-
-import { getTask, removeTask, useBackgroundTasks } from "@/lib/background-tasks";
+import { removeTask, useBackgroundTasks } from "@/lib/background-tasks";
 import type { BackgroundTask } from "@/lib/background-tasks";
 
 import { useSpecGenerationStatus } from "../hooks/use-spec-generation-status";
@@ -27,6 +24,10 @@ type SpecGenerationTaskPollerProps = {
  * Deduplication: getTask() check before removeTask() ensures only one
  * handler (this or SpecPanel) processes the completion — execution order
  * between siblings is irrelevant.
+ *
+ * Intent: This monitor only cleans up completed tasks from the store.
+ * Toast notifications are handled exclusively by SpecPanel, which has
+ * page-context awareness (knows whether user is viewing the originating repo).
  */
 const SpecGenerationTaskPoller = ({
   analysisId,
@@ -35,27 +36,13 @@ const SpecGenerationTaskPoller = ({
   repo,
   taskId,
 }: SpecGenerationTaskPollerProps) => {
-  const t = useTranslations("specView.toast");
+  const cleanupTask = () => removeTask(taskId);
 
   useSpecGenerationStatus(analysisId, {
     enabled: Boolean(analysisId),
     language,
-    onCompleted: () => {
-      const task = getTask(taskId);
-      if (task) {
-        removeTask(taskId);
-        toast.success(t("generationComplete.title"), {
-          description: t("generationComplete.description"),
-        });
-      }
-    },
-    onFailed: () => {
-      const task = getTask(taskId);
-      if (task) {
-        removeTask(taskId);
-        toast.error(t("generateFailed.title"));
-      }
-    },
+    onCompleted: cleanupTask,
+    onFailed: cleanupTask,
     owner,
     repo,
   });

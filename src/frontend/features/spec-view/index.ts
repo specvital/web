@@ -25,6 +25,7 @@ export {
   useRepoSpecView,
   useRepoVersionHistory,
   useSpecGenerationStatus,
+  useSpecGenerationTask,
   useSpecView,
   useVersionHistory,
 } from "./hooks";

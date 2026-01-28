@@ -16,4 +16,5 @@ export {
   getTask,
   removeTask,
   updateTask,
+  useTaskStore,
 } from "./task-store";

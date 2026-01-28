@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 type OpenOptions = {
   analysisId: string;
+  onSwitchToBackground?: () => void;
   onViewDocument?: () => void;
 };
 
@@ -13,6 +14,7 @@ type GenerationProgressStore = {
   close: () => void;
   isInBackground: boolean;
   isOpen: boolean;
+  onSwitchToBackground: (() => void) | null;
   onViewDocument: (() => void) | null;
   open: (options: OpenOptions) => void;
   switchToBackground: () => void;
@@ -30,22 +32,27 @@ const useGenerationProgressStore = create<GenerationProgressStore>((set, get) =>
       analysisId: null,
       isInBackground: false,
       isOpen: false,
+      onSwitchToBackground: null,
       onViewDocument: null,
     });
   },
   isInBackground: false,
   isOpen: false,
+  onSwitchToBackground: null,
   onViewDocument: null,
-  open: ({ analysisId, onViewDocument }: OpenOptions) => {
+  open: ({ analysisId, onSwitchToBackground, onViewDocument }: OpenOptions) => {
     set({
       analysisId,
       isInBackground: false,
       isOpen: true,
+      onSwitchToBackground: onSwitchToBackground ?? null,
       onViewDocument: onViewDocument ?? null,
     });
   },
   switchToBackground: () => {
+    const { onSwitchToBackground } = get();
     set({ isInBackground: true, isOpen: false });
+    onSwitchToBackground?.();
   },
 }));
 

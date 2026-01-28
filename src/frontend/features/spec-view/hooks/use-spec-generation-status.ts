@@ -52,7 +52,6 @@ export const useSpecGenerationStatus = (
   const queryClient = useQueryClient();
   const pollingStartTimeRef = useRef<number | null>(null);
   const previousStatusRef = useRef<SpecGenerationStatusEnum | null>(null);
-  const hasSetStartedAtRef = useRef(false);
 
   // Store callbacks in refs to avoid dependency issues
   const onCompletedRef = useRef(onCompleted);
@@ -68,7 +67,6 @@ export const useSpecGenerationStatus = (
     if (enabled) {
       pollingStartTimeRef.current = null;
       previousStatusRef.current = null;
-      hasSetStartedAtRef.current = false;
     }
   }, [analysisId, enabled, language]);
 
@@ -112,21 +110,19 @@ export const useSpecGenerationStatus = (
 
     const prevStatus = previousStatusRef.current;
 
-    // Set startedAt once when transitioning to pending or running
-    // Goal: Track when generation actually begins for accurate elapsed time display
-    if (
-      !hasSetStartedAtRef.current &&
-      ((status === "pending" && prevStatus !== "pending") ||
-        (status === "running" && prevStatus !== "running"))
-    ) {
+    // Sync task store with server status for accurate UI feedback
+    if (status === "pending" || status === "running") {
       const taskId = getSpecGenerationTaskId(analysisId);
       const task = getTask(taskId);
-      if (task && !task.startedAt) {
-        updateTask(taskId, {
-          startedAt: new Date().toISOString(),
-          ...(status === "running" && { status: "processing" }),
-        });
-        hasSetStartedAtRef.current = true;
+      if (task) {
+        const needsStartedAt = !task.startedAt;
+        const needsProcessing = status === "running" && task.status !== "processing";
+        if (needsStartedAt || needsProcessing) {
+          updateTask(taskId, {
+            ...(needsStartedAt && { startedAt: new Date().toISOString() }),
+            ...(needsProcessing && { status: "processing" as const }),
+          });
+        }
       }
     }
 
