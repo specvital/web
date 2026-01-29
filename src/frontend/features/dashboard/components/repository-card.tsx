@@ -211,15 +211,15 @@ const UnanalyzedRepositoryCard = ({ isAnalyzed = false, repo }: UnanalyzedCardPr
     >
       <Card
         className={cn(
-          "relative h-full p-4 flex flex-col transition-all duration-200",
+          "relative h-56 p-4 flex flex-col transition-all duration-200",
           "hover:shadow-md hover:border-primary/20",
           "group-focus-visible:shadow-md group-focus-visible:border-primary/20"
         )}
       >
-        <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-start gap-2 min-w-0 flex-1">
             <ResponsiveTooltip content={fullName}>
-              <h3 className="font-semibold text-sm line-clamp-2 break-all">{fullName}</h3>
+              <h3 className="font-semibold text-sm line-clamp-2 break-all h-10">{fullName}</h3>
             </ResponsiveTooltip>
             {isPrivate && (
               <Lock aria-label="Private" className="size-3 text-muted-foreground shrink-0 mt-0.5" />
@@ -238,32 +238,29 @@ const UnanalyzedRepositoryCard = ({ isAnalyzed = false, repo }: UnanalyzedCardPr
           </Badge>
         </div>
 
-        <div className="space-y-2 flex-1">
-          {description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">{description}</p>
-          )}
+        {description && <p className="text-xs text-muted-foreground line-clamp-3">{description}</p>}
 
+        <div className="mt-auto">
           {pushedAt && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mb-2">
               {t("lastPush")}: {format.relativeTime(new Date(pushedAt), now)}
             </p>
           )}
-        </div>
-
-        <div className="flex items-center justify-end gap-2 pt-3 border-t">
-          <Button
-            aria-label="GitHub"
-            className="h-7"
-            onClick={handleGitHubClick}
-            size="sm"
-            variant="ghost"
-          >
-            <ExternalLink aria-hidden="true" className="size-3 mr-1" />
-            GitHub
-          </Button>
-          <Button className="h-7" size="sm" variant={isAnalyzed ? "outline" : "cta"}>
-            {isAnalyzed ? t("view") : t("analyze")}
-          </Button>
+          <div className="flex items-center justify-end gap-2 pt-2 border-t">
+            <Button
+              aria-label="GitHub"
+              className="h-7"
+              onClick={handleGitHubClick}
+              size="sm"
+              variant="ghost"
+            >
+              <ExternalLink aria-hidden="true" className="size-3 mr-1" />
+              GitHub
+            </Button>
+            <Button className="h-7" size="sm" variant={isAnalyzed ? "outline" : "cta"}>
+              {isAnalyzed ? t("view") : t("analyze")}
+            </Button>
+          </div>
         </div>
       </Card>
     </Link>
