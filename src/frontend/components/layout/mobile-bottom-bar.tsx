@@ -38,12 +38,21 @@ import { TaskBadge, TasksDropdownSection } from "@/lib/background-tasks";
 import { slideInUp, useReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
-const MobileLanguageSelector = () => {
+const MobileAuthAction = () => {
+  const t = useTranslations("header");
+  const tAuth = useTranslations("auth");
+  const { isAuthenticated, isLoading, logout, logoutPending, user } = useAuth();
+  const { open: openLoginModal } = useLoginModal();
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
   const [isPending, startTransition] = useTransition();
-  const t = useTranslations("header");
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const localeParam = params.locale;
   const currentLocale =
@@ -57,78 +66,11 @@ const MobileLanguageSelector = () => {
     });
   };
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label={t("selectLanguage")}
-          className="flex-col gap-0.5"
-          disabled={isPending}
-          size="mobile-nav"
-          variant="mobile-nav"
-        >
-          <Globe className="size-5" />
-          <span className="text-[10px] font-normal">{t("language")}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" side="top" sideOffset={12}>
-        {routing.locales.map((locale) => (
-          <DropdownMenuItem
-            disabled={locale === currentLocale}
-            key={locale}
-            onClick={() => handleLocaleChange(locale)}
-          >
-            {LANGUAGE_NAMES[locale]}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
-const MobileThemeToggle = () => {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const t = useTranslations("header");
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
   const isDark = resolvedTheme === "dark";
-
-  if (!mounted) {
-    return (
-      <Button className="flex-col gap-0.5" disabled size="mobile-nav" variant="mobile-nav">
-        <Sun className="size-5" />
-        <span className="text-[10px] font-normal">{t("theme")}</span>
-      </Button>
-    );
-  }
-
-  return (
-    <Button
-      aria-label={t("toggleTheme")}
-      className="flex-col gap-0.5"
-      onClick={toggleTheme}
-      size="mobile-nav"
-      variant="mobile-nav"
-    >
-      {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
-      <span className="text-[10px] font-normal">{t("theme")}</span>
-    </Button>
-  );
-};
-
-const MobileAuthAction = () => {
-  const t = useTranslations("header");
-  const tAuth = useTranslations("auth");
-  const { isAuthenticated, isLoading, logout, logoutPending, user } = useAuth();
-  const { open: openLoginModal } = useLoginModal();
 
   if (isLoading) {
     return (
@@ -174,7 +116,39 @@ const MobileAuthAction = () => {
               {t("dashboard")}
             </Link>
           </DropdownMenuItem>
+
           <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            disabled={!mounted}
+            onClick={toggleTheme}
+            onSelect={(e) => e.preventDefault()}
+          >
+            {isDark ? <Sun className="mr-2 size-4" /> : <Moon className="mr-2 size-4" />}
+            {t("theme")}
+          </DropdownMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <DropdownMenuItem disabled={isPending} onSelect={(e) => e.preventDefault()}>
+                <Globe className="mr-2 size-4" />
+                {t("language")}
+              </DropdownMenuItem>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="right">
+              {routing.locales.map((locale) => (
+                <DropdownMenuItem
+                  disabled={locale === currentLocale}
+                  key={locale}
+                  onClick={() => handleLocaleChange(locale)}
+                >
+                  {LANGUAGE_NAMES[locale]}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem disabled={logoutPending} onClick={logout}>
             <LogOut className="mr-2 size-4" />
             {tAuth("logout")}
@@ -225,10 +199,37 @@ const MobileMoreMenu = () => {
   const tNav = useTranslations("navigation");
   const t = useTranslations("header");
   const pathname = usePathname();
+  const router = useRouter();
+  const params = useParams();
+  const [isPending, startTransition] = useTransition();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isDocsActive = pathname === "/docs" || pathname.startsWith("/docs/");
   const isPricingActive = pathname === "/pricing" || pathname.startsWith("/pricing/");
   const isMoreActive = isDocsActive || isPricingActive;
+
+  const localeParam = params.locale;
+  const currentLocale =
+    typeof localeParam === "string" && isValidLocale(localeParam)
+      ? localeParam
+      : routing.defaultLocale;
+
+  const handleLocaleChange = (locale: string) => {
+    startTransition(() => {
+      router.replace(pathname, { locale });
+    });
+  };
+
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
+
+  const isDark = resolvedTheme === "dark";
 
   return (
     <DropdownMenu>
@@ -257,6 +258,36 @@ const MobileMoreMenu = () => {
             {tNav("pricing")}
           </Link>
         </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          disabled={!mounted}
+          onClick={toggleTheme}
+          onSelect={(e) => e.preventDefault()}
+        >
+          {isDark ? <Sun className="mr-2 size-4" /> : <Moon className="mr-2 size-4" />}
+          {t("theme")}
+        </DropdownMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <DropdownMenuItem disabled={isPending} onSelect={(e) => e.preventDefault()}>
+              <Globe className="mr-2 size-4" />
+              {t("language")}
+            </DropdownMenuItem>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="right">
+            {routing.locales.map((locale) => (
+              <DropdownMenuItem
+                disabled={locale === currentLocale}
+                key={locale}
+                onClick={() => handleLocaleChange(locale)}
+              >
+                {LANGUAGE_NAMES[locale]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -308,8 +339,6 @@ export const MobileBottomBar = () => {
               </Button>
             </AnalyzeDialog>
           )}
-          <MobileThemeToggle />
-          <MobileLanguageSelector />
           <MobileAuthAction />
         </div>
       </div>
