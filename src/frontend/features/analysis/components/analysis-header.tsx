@@ -75,7 +75,7 @@ export const AnalysisHeader = ({
           {/* Action buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
             <ShareButton />
-            <Button asChild size="sm" variant="ghost">
+            <Button asChild size="sm" variant="outline">
               <a
                 href={`https://github.com/${owner}/${repo}`}
                 rel="noopener noreferrer"
