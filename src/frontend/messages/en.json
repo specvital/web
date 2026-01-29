@@ -368,9 +368,9 @@
       "viewAccount": "View Account"
     },
     "quotaConfirm": {
-      "title": "Generate AI Specification",
+      "title": "Generate Specification",
       "description": "This will use your AI Spec Doc generation quota. Please review your current usage before proceeding.",
-      "regenerateTitle": "Regenerate AI Specification",
+      "regenerateTitle": "Regenerate Specification",
       "regenerateDescription": "This will replace your existing document with a newly generated one.",
       "outputLanguage": "Output Language",
       "selectLanguage": "Select language",

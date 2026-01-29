@@ -1,15 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  Gauge,
-  Globe,
-  Infinity as InfinityIcon,
-  RefreshCw,
-  Sparkles,
-  Zap,
-} from "lucide-react";
+import { Globe, Infinity as InfinityIcon, RefreshCw, Sparkles, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -31,40 +23,11 @@ import { LanguageCombobox } from "./language-combobox";
 import { useQuotaConfirmDialog } from "../hooks/use-quota-confirm-dialog";
 import { formatQuotaNumber, getQuotaLevel, isQuotaExceeded, type QuotaLevel } from "../utils/quota";
 
-const LEVEL_CONFIG: Record<
-  QuotaLevel,
-  {
-    bgClass: string;
-    iconColor: string;
-    progressColor: string;
-  }
-> = {
-  danger: {
-    bgClass: "bg-destructive/10",
-    iconColor: "text-destructive",
-    progressColor: "bg-destructive",
-  },
-  normal: {
-    bgClass: "bg-muted",
-    iconColor: "text-muted-foreground",
-    progressColor: "bg-primary",
-  },
-  unlimited: {
-    bgClass: "bg-primary/10",
-    iconColor: "text-primary",
-    progressColor: "bg-primary",
-  },
-  warning: {
-    bgClass: "bg-amber-500/10",
-    iconColor: "text-amber-500",
-    progressColor: "bg-amber-500",
-  },
-};
-
-const getIcon = (level: QuotaLevel, isUnlimited: boolean) => {
-  if (isUnlimited) return InfinityIcon;
-  if (level === "danger" || level === "warning") return AlertTriangle;
-  return Gauge;
+const LEVEL_CONFIG: Record<QuotaLevel, { progressColor: string }> = {
+  danger: { progressColor: "bg-destructive" },
+  normal: { progressColor: "bg-primary" },
+  unlimited: { progressColor: "bg-primary" },
+  warning: { progressColor: "bg-amber-500" },
 };
 
 export const QuotaConfirmDialog = () => {
@@ -115,21 +78,20 @@ export const QuotaConfirmDialog = () => {
   const wouldExceed =
     !isUnlimited && specview?.limit && estimatedCost ? afterUsage > specview.limit : false;
 
-  const Icon = getIcon(level, isUnlimited);
-
   return (
     <Dialog onOpenChange={onOpenChange} open={isOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="overflow-hidden sm:max-w-md">
+        {/* AI indicator gradient line */}
+        <div className="absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
+
         <DialogHeader className="text-center sm:text-center">
-          <div
-            className={cn(
-              "mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full",
-              config.bgClass
-            )}
-          >
-            <Icon className={cn("h-6 w-6", config.iconColor)} />
-          </div>
-          <DialogTitle>{isRegenerate ? t("regenerateTitle") : t("title")}</DialogTitle>
+          <DialogTitle className="flex items-center justify-center gap-2">
+            {isRegenerate ? t("regenerateTitle") : t("title")}
+            <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:bg-violet-400/10 dark:text-violet-400">
+              <Sparkles className="size-3" />
+              AI
+            </span>
+          </DialogTitle>
           <DialogDescription>
             {isRegenerate ? t("regenerateDescription") : t("description")}
           </DialogDescription>
@@ -329,7 +291,6 @@ export const QuotaConfirmDialog = () => {
             onClick={confirm}
             variant="default"
           >
-            <Sparkles className="mr-2 h-4 w-4" />
             {isRegenerate ? t("regenerate") : t("generate")}
           </Button>
         </DialogFooter>
