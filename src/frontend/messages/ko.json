@@ -143,9 +143,6 @@
       "spec": "AI 스펙"
     },
     "status": {
-      "loading": "로딩 중...",
-      "loadingTitle": "준비 중",
-      "loadingDescription": "분석을 준비하고 있습니다",
       "queued": "대기열에서 대기 중...",
       "queuedTitle": "대기 중",
       "queuedDescription": "곧 분석이 시작됩니다",

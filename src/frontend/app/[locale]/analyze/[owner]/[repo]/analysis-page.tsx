@@ -18,30 +18,10 @@ type AnalysisPageProps = {
   repo: string;
 };
 
-const getSkeletonProps = (
-  status: string,
-  t: ReturnType<typeof useTranslations<"analyze">>
-): { description: string; status: AnalysisStatus; title: string } => {
-  switch (status) {
-    case "queued":
-      return {
-        description: t("status.queuedDescription"),
-        status: "queued",
-        title: t("status.queuedTitle"),
-      };
-    case "analyzing":
-      return {
-        description: t("status.analyzingDescription"),
-        status: "analyzing",
-        title: t("status.analyzingTitle"),
-      };
-    default:
-      return {
-        description: t("status.loadingDescription"),
-        status: "loading",
-        title: t("status.loadingTitle"),
-      };
-  }
+const mapToSkeletonStatus = (status: string): AnalysisStatus => {
+  if (status === "queued") return "queued";
+  if (status === "analyzing") return "analyzing";
+  return "loading";
 };
 
 const getDisplayErrorMessage = (
@@ -67,10 +47,10 @@ export const AnalysisPage = ({ owner, repo }: AnalysisPageProps) => {
   if (isLoading) {
     return (
       <AnalysisSkeleton
-        {...getSkeletonProps(status, t)}
         owner={owner}
         repo={repo}
         startedAt={startedAt}
+        status={mapToSkeletonStatus(status)}
       />
     );
   }

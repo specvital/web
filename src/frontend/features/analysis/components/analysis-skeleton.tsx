@@ -1,8 +1,4 @@
-import { Loader2 } from "lucide-react";
-
-import { ShimmerBar } from "@/components/feedback";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 import type { AnalysisStatus } from "../types";
 import { AnalysisWaitingCard } from "./analysis-waiting-card";
@@ -10,50 +6,19 @@ import { InlineStatsSkeleton } from "./inline-stats-skeleton";
 import { TestListSkeleton } from "./test-list-skeleton";
 
 type AnalysisSkeletonProps = {
-  description?: string;
   owner?: string;
   repo?: string;
   startedAt?: string | null;
   status?: AnalysisStatus;
-  title?: string;
-};
-
-const STATUS_CONFIG: Record<
-  AnalysisStatus,
-  { bg: string; border: string; defaultDescription: string; defaultTitle: string; icon: string }
-> = {
-  analyzing: {
-    bg: "bg-chart-1/10",
-    border: "border-l-chart-1",
-    defaultDescription: "Scanning test files...",
-    defaultTitle: "Analyzing",
-    icon: "text-chart-1",
-  },
-  loading: {
-    bg: "bg-accent/30",
-    border: "border-l-muted-foreground",
-    defaultDescription: "Preparing analysis...",
-    defaultTitle: "Loading",
-    icon: "text-muted-foreground",
-  },
-  queued: {
-    bg: "bg-chart-2/10",
-    border: "border-l-chart-2",
-    defaultDescription: "Analysis will start shortly",
-    defaultTitle: "Queued",
-    icon: "text-chart-2",
-  },
 };
 
 export const AnalysisSkeleton = ({
-  description,
   owner,
   repo,
   startedAt,
   status = "loading",
-  title,
 }: AnalysisSkeletonProps) => {
-  // Render AnalysisWaitingCard for queued/analyzing states
+  // Render AnalysisWaitingCard for queued/analyzing states (backend status known)
   if ((status === "queued" || status === "analyzing") && owner && repo) {
     return (
       <AnalysisWaitingCard
@@ -65,11 +30,7 @@ export const AnalysisSkeleton = ({
     );
   }
 
-  // Render traditional skeleton for loading state
-  const config = STATUS_CONFIG[status];
-  const displayTitle = title ?? config.defaultTitle;
-  const displayDescription = description ?? config.defaultDescription;
-
+  // Pure skeleton for loading state (waiting for backend response)
   return (
     <main aria-busy="true" className="container mx-auto px-4 py-8">
       <div className="space-y-6">
@@ -85,27 +46,8 @@ export const AnalysisSkeleton = ({
           </div>
         </header>
 
-        {/* Status banner */}
-        <div
-          aria-live="polite"
-          className={cn(
-            "relative overflow-hidden rounded-lg border-l-4 px-4 py-3",
-            config.border,
-            config.bg
-          )}
-          role="status"
-        >
-          <div className="flex items-center gap-3">
-            <Loader2 className={cn("h-5 w-5 animate-spin shrink-0", config.icon)} />
-            <div className="min-w-0">
-              <p className="font-medium text-foreground">{displayTitle}</p>
-              <p className="text-sm text-muted-foreground">{displayDescription}</p>
-            </div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0">
-            <ShimmerBar aria-hidden="true" color="var(--primary)" duration={2} height="xs" />
-          </div>
-        </div>
+        {/* Loading indicator - simple skeleton bar instead of status text */}
+        <Skeleton className="h-16 w-full rounded-lg" />
 
         <InlineStatsSkeleton />
 

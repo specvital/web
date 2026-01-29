@@ -143,9 +143,6 @@
       "spec": "AI Spec"
     },
     "status": {
-      "loading": "Loading...",
-      "loadingTitle": "Preparing",
-      "loadingDescription": "Getting ready to analyze",
       "queued": "Waiting in queue...",
       "queuedTitle": "Queued",
       "queuedDescription": "Analysis will start shortly",
