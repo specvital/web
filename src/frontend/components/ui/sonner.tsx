@@ -11,11 +11,14 @@ export const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
+      closeButton
       theme={theme as ToasterProps["theme"]}
       toastOptions={{
         classNames: {
           actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          closeButton:
+            "group-[.toast]:bg-background group-[.toast]:border group-[.toast]:border-border",
           description: "group-[.toast]:text-muted-foreground",
           toast:
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
