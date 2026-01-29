@@ -143,7 +143,7 @@ export const ExecutiveSummary = ({
                   {/* Available Languages Section */}
                   {availableLanguages.length > 0 && (
                     <>
-                      <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <DropdownMenuLabel className="flex items-center gap-2 px-2 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 bg-muted/40 -mx-1 mb-1 border-b border-border/50">
                         <Check className="h-3 w-3" />
                         {t("executiveSummary.availableLanguages")}
                       </DropdownMenuLabel>
@@ -189,7 +189,7 @@ export const ExecutiveSummary = ({
                   {/* Generate New Section */}
                   {newLanguages.length > 0 && onGenerateNewLanguage && (
                     <>
-                      <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <DropdownMenuLabel className="flex items-center gap-2 px-2 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 bg-muted/40 -mx-1 mt-1 mb-1 border-b border-border/50">
                         <Plus className="h-3 w-3" />
                         {t("executiveSummary.generateNew")}
                       </DropdownMenuLabel>
@@ -251,7 +251,7 @@ export const ExecutiveSummary = ({
                   <TooltipContent>{t("executiveSummary.switchVersionTooltip")}</TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="end" className="w-56 max-h-80 overflow-y-auto">
-                  <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <DropdownMenuLabel className="flex items-center gap-2 px-2 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 bg-muted/40 -mx-1 mb-1 border-b border-border/50">
                     <History className="h-3 w-3" />
                     {t("executiveSummary.versionHistory")}
                   </DropdownMenuLabel>
