@@ -292,14 +292,6 @@ export const QuotaConfirmDialog = () => {
               </div>
             )}
 
-            {isRegenerate && (
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
-                <p className="text-sm text-amber-600 dark:text-amber-500">
-                  {t("regenerateWarning")}
-                </p>
-              </div>
-            )}
-
             {level === "warning" && (
               <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
                 <p className="text-sm text-amber-600 dark:text-amber-500">{t("warningMessage")}</p>

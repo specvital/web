@@ -372,7 +372,6 @@
       "description": "This will use your AI Spec Doc generation quota. Please review your current usage before proceeding.",
       "regenerateTitle": "Regenerate AI Specification",
       "regenerateDescription": "This will replace your existing document with a newly generated one.",
-      "regenerateWarning": "Your current document will be permanently replaced. This action cannot be undone.",
       "outputLanguage": "Output Language",
       "selectLanguage": "Select language",
       "searchLanguage": "Search languages...",
