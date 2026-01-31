@@ -1,4 +1,8 @@
 {
+  "maintenance": {
+    "title": "Under Maintenance",
+    "description": "We're updating our systems to serve you better. Please check back shortly."
+  },
   "common": {
     "appName": "SpecVital",
     "loading": "Loading...",

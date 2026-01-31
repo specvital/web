@@ -5,6 +5,10 @@ import createIntlMiddleware from "next-intl/middleware";
 import { defaultLocale, type Locale, locales } from "@/i18n/config";
 import { routing } from "@/i18n/routing";
 
+// Maintenance Mode
+const MAINTENANCE_MODE = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true";
+const MAINTENANCE_ALLOWED_PATHS = ["/maintenance", "/_next", "/favicon", "/api/health"];
+
 const AUTH_COOKIE_NAME = "auth_token";
 const REFRESH_COOKIE_NAME = "refresh_token";
 const SESSION_INDICATOR_COOKIE = "has_session";
@@ -217,8 +221,21 @@ const setSessionIndicator = (response: NextResponse): void => {
 
 const proxy = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
-  const hasCookie = hasValidAuthCookie(request);
   const locale = getLocaleFromRequest(request, pathname);
+
+  // Maintenance mode: redirect all routes except allowed paths
+  if (MAINTENANCE_MODE) {
+    const isAllowedPath = MAINTENANCE_ALLOWED_PATHS.some((path) => pathname.startsWith(path));
+    const isMaintenancePath = pathname.includes("/maintenance");
+    const isStaticFile = /\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff2?)$/i.test(pathname);
+
+    if (!isAllowedPath && !isMaintenancePath && !isStaticFile) {
+      const maintenanceUrl = new URL(`/${locale}/maintenance`, request.url);
+      return NextResponse.redirect(maintenanceUrl, 307);
+    }
+  }
+
+  const hasCookie = hasValidAuthCookie(request);
 
   // Protected routes: require authentication
   if (isProtectedRoute(pathname)) {

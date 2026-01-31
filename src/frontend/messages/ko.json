@@ -1,4 +1,8 @@
 {
+  "maintenance": {
+    "title": "서비스 점검 중입니다",
+    "description": "더 나은 서비스를 위해 시스템을 업데이트하고 있습니다. 잠시 후 다시 방문해 주세요."
+  },
   "common": {
     "appName": "SpecVital",
     "loading": "로딩 중...",
