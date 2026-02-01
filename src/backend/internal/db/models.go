@@ -398,6 +398,16 @@ type BehaviorCach struct {
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 }
 
+type ClassificationCach struct {
+	ID           pgtype.UUID        `json:"id"`
+	ContentHash  []byte             `json:"content_hash"`
+	Language     string             `json:"language"`
+	ModelID      string             `json:"model_id"`
+	Phase1Output []byte             `json:"phase1_output"`
+	TestIndexMap []byte             `json:"test_index_map"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
 type Codebasis struct {
 	ID             pgtype.UUID        `json:"id"`
 	Host           string             `json:"host"`
@@ -446,6 +456,16 @@ type OauthAccount struct {
 	Scope            pgtype.Text        `json:"scope"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+type QuotaReservation struct {
+	ID             pgtype.UUID        `json:"id"`
+	UserID         pgtype.UUID        `json:"user_id"`
+	EventType      UsageEventType     `json:"event_type"`
+	ReservedAmount int32              `json:"reserved_amount"`
+	JobID          int64              `json:"job_id"`
+	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 }
 
 type RefreshToken struct {
