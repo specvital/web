@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { ShimmerBar } from "@/components/feedback";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "@/i18n/navigation";
 
 import { useBackgroundTasks } from "../hooks";
@@ -37,10 +38,15 @@ const TaskItem = ({ task }: TaskItemProps) => {
   const content = (
     <div className="flex w-full flex-col gap-0.5">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Icon className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate text-sm font-medium">{displayName}</span>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex min-w-0 items-center gap-2">
+              <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="truncate text-sm font-medium">{displayName}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">{displayName}</TooltipContent>
+        </Tooltip>
         {pageUrl && <span className="shrink-0 text-xs text-primary">{tDropdown("viewPage")}</span>}
       </div>
       <div className="flex items-center justify-between gap-2">

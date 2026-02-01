@@ -42,7 +42,7 @@ export const UserMenu = () => {
           <span className="sr-only">{t("openUserMenu")}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-72">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             {user.name && <p className="text-sm font-medium leading-none">{user.name}</p>}
