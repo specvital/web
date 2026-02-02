@@ -4,6 +4,7 @@ import {
   Check,
   ChevronDown,
   FileText,
+  GitCommit,
   Globe,
   History,
   Languages,
@@ -41,6 +42,12 @@ import { calculateDocumentStats } from "../utils/stats";
 
 type VersionInfoWithCommit = VersionInfo | RepoVersionInfo;
 
+type VersionGroup = {
+  commitSha: string;
+  isLatest: boolean;
+  versions: RepoVersionInfo[];
+};
+
 type ExecutiveSummaryProps = {
   behaviorCacheStats?: BehaviorCacheStats;
   commitSha?: string;
@@ -65,7 +72,46 @@ const formatShortDate = (dateString: string, locale: string): string => {
   });
 };
 
+const formatShortDateTime = (dateString: string, locale: string): string => {
+  return new Date(dateString).toLocaleString(locale, {
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+  });
+};
+
 const formatCommitSha = (sha: string): string => (sha.length < 7 ? sha : sha.slice(0, 7));
+
+const groupVersionsByCommit = (
+  versions: VersionInfoWithCommit[],
+  latestDocumentId?: string
+): VersionGroup[] => {
+  const groups = new Map<string, RepoVersionInfo[]>();
+
+  for (const version of versions) {
+    if (!("commitSha" in version)) continue;
+    const sha = version.commitSha;
+    if (!groups.has(sha)) {
+      groups.set(sha, []);
+    }
+    groups.get(sha)!.push(version);
+  }
+
+  const result: VersionGroup[] = [];
+  let isFirst = true;
+
+  for (const [commitSha, groupVersions] of groups) {
+    result.push({
+      commitSha,
+      isLatest: isFirst && groupVersions.some((v) => v.id === latestDocumentId),
+      versions: groupVersions,
+    });
+    isFirst = false;
+  }
+
+  return result;
+};
 
 export const ExecutiveSummary = ({
   behaviorCacheStats,
@@ -93,6 +139,7 @@ export const ExecutiveSummary = ({
   const availableLanguages = document.availableLanguages ?? [];
   const isDisabled = isRegenerating || isGeneratingOtherLanguage;
   const isLatestVersion = latestDocumentId === undefined || document.id === latestDocumentId;
+  const versionGroups = groupVersionsByCommit(versions, latestDocumentId);
 
   // Build sets for available vs new languages
   const availableLanguageSet = new Set(availableLanguages.map((l) => l.language));
@@ -251,50 +298,61 @@ export const ExecutiveSummary = ({
                   </TooltipTrigger>
                   <TooltipContent>{t("executiveSummary.switchVersionTooltip")}</TooltipContent>
                 </Tooltip>
-                <DropdownMenuContent align="end" className="w-56 max-h-80 overflow-y-auto">
+                <DropdownMenuContent align="end" className="w-64 max-h-80 overflow-y-auto">
                   <DropdownMenuLabel className="flex items-center gap-2 px-2 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 bg-muted/40 -mx-1 mb-1 border-b border-border/50">
                     <History className="h-3 w-3" />
                     {t("executiveSummary.versionHistory")}
                   </DropdownMenuLabel>
-                  {versions.map((versionInfo) => {
-                    const isCurrentVersion = versionInfo.version === currentVersion;
-                    // Use document ID for latest check (createdAt DESC sort order)
-                    const isLatest = "id" in versionInfo && versionInfo.id === latestDocumentId;
-                    const versionCommitSha =
-                      "commitSha" in versionInfo ? versionInfo.commitSha : undefined;
-                    return (
-                      <DropdownMenuItem
-                        className={cn(
-                          "flex items-center justify-between",
-                          isCurrentVersion && "bg-muted font-medium"
-                        )}
-                        key={versionInfo.version}
-                        onClick={() => onVersionSwitch(versionInfo.version)}
-                      >
-                        <div className="flex items-center gap-2">
-                          {isCurrentVersion ? (
-                            <Check className="h-3.5 w-3.5 text-primary" />
-                          ) : (
-                            <span className="w-3.5" />
-                          )}
-                          <span>{formatShortDate(versionInfo.createdAt, locale)}</span>
-                          {versionCommitSha && (
-                            <code className="text-[10px] text-muted-foreground/70 font-mono">
-                              {formatCommitSha(versionCommitSha)}
-                            </code>
-                          )}
-                          {isLatest && (
-                            <span className="text-muted-foreground">
-                              ({t("executiveSummary.latestLabel")})
-                            </span>
-                          )}
+                  {versionGroups.map((group, groupIndex) => (
+                    <div key={group.commitSha}>
+                      {/* Commit group header */}
+                      <div className="flex items-center justify-between px-2 py-1.5 text-xs">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <GitCommit className="h-3 w-3" />
+                          <code className="font-mono">{formatCommitSha(group.commitSha)}</code>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {t("executiveSummary.versionLabel", { version: versionInfo.version })}
-                        </span>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                        {group.isLatest && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {t("executiveSummary.latestLabel")}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Version items */}
+                      {group.versions.map((versionInfo) => {
+                        const isCurrentVersion = versionInfo.version === currentVersion;
+                        return (
+                          <DropdownMenuItem
+                            className={cn(
+                              "flex items-center justify-between ml-4",
+                              isCurrentVersion && "bg-muted font-medium"
+                            )}
+                            key={versionInfo.id}
+                            onClick={() => onVersionSwitch(versionInfo.version)}
+                          >
+                            <div className="flex items-center gap-2">
+                              {isCurrentVersion ? (
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                              ) : (
+                                <span className="w-3.5" />
+                              )}
+                              <span>{formatShortDateTime(versionInfo.createdAt, locale)}</span>
+                            </div>
+                            {group.versions.length > 1 && (
+                              <span className="text-xs text-muted-foreground">
+                                {t("executiveSummary.versionLabel", {
+                                  version: versionInfo.version,
+                                })}
+                              </span>
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
+
+                      {/* Separator between groups */}
+                      {groupIndex < versionGroups.length - 1 && <DropdownMenuSeparator />}
+                    </div>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
