@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github.com/specvital/web/compare/v1.4.0...v1.4.1) (2026-02-02)
+
+### 🔧 Maintenance
+
+#### 🔧 Internal Fixes
+
+- fix release failure due to semantic-release plugin version mismatch ([0426f2d](https://github.com/specvital/web/commit/0426f2dee52237c2a8063ebd9d32379722cc8b39))
+
 ## [1.4.0](https://github.com/specvital/web/compare/v1.3.1...v1.4.0) (2026-02-02)
 
 ### 🎯 Highlights
