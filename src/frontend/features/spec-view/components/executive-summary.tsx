@@ -48,7 +48,7 @@ type ExecutiveSummaryProps = {
   isGeneratingOtherLanguage?: boolean;
   isLoadingVersions?: boolean;
   isRegenerating?: boolean;
-  latestVersion?: number;
+  latestDocumentId?: string;
   onGenerateNewLanguage?: (language: SpecLanguage) => void;
   onLanguageSwitch?: (language: SpecLanguage) => void;
   onRegenerate?: () => void;
@@ -74,7 +74,7 @@ export const ExecutiveSummary = ({
   isGeneratingOtherLanguage = false,
   isLoadingVersions = false,
   isRegenerating = false,
-  latestVersion,
+  latestDocumentId,
   onGenerateNewLanguage,
   onLanguageSwitch,
   onRegenerate,
@@ -92,7 +92,7 @@ export const ExecutiveSummary = ({
   const currentVersion = document.version;
   const availableLanguages = document.availableLanguages ?? [];
   const isDisabled = isRegenerating || isGeneratingOtherLanguage;
-  const isLatestVersion = latestVersion === undefined || currentVersion === latestVersion;
+  const isLatestVersion = latestDocumentId === undefined || document.id === latestDocumentId;
 
   // Build sets for available vs new languages
   const availableLanguageSet = new Set(availableLanguages.map((l) => l.language));
@@ -258,7 +258,8 @@ export const ExecutiveSummary = ({
                   </DropdownMenuLabel>
                   {versions.map((versionInfo) => {
                     const isCurrentVersion = versionInfo.version === currentVersion;
-                    const isLatest = versionInfo.version === latestVersion;
+                    // Use document ID for latest check (createdAt DESC sort order)
+                    const isLatest = "id" in versionInfo && versionInfo.id === latestDocumentId;
                     const versionCommitSha =
                       "commitSha" in versionInfo ? versionInfo.commitSha : undefined;
                     return (

@@ -344,13 +344,18 @@ export const SpecPanel = ({
       if (hasFilter && matchCount === 0) {
         return <FilterEmptyState filterInfo={filterInfo} onReset={resetFilters} />;
       }
-      // Suppress latestVersion while either query is refetching to avoid
+      // Suppress latestVersion/latestDocumentId while either query is refetching to avoid
       // a race condition where version history updates before the document,
       // causing a transient isViewingOldVersion=true flash (banner flicker).
       const isRefetchingEither = isFetching || isFetchingVersions;
       const latestVersion =
         !isRefetchingEither && repoVersionHistory?.data && repoVersionHistory.data.length > 0
           ? Math.max(...repoVersionHistory.data.map((v) => v.version))
+          : undefined;
+      // Latest document ID based on createdAt DESC sort order (first item is newest)
+      const latestDocumentId =
+        !isRefetchingEither && repoVersionHistory?.data && repoVersionHistory.data.length > 0
+          ? repoVersionHistory.data[0].id
           : undefined;
 
       return (
@@ -362,6 +367,7 @@ export const SpecPanel = ({
           isGeneratingOtherLanguage={isGeneratingOtherLanguage}
           isLoadingVersions={isLoadingVersions}
           isRegenerating={isGenerating && !isGeneratingOtherLanguage}
+          latestDocumentId={latestDocumentId}
           latestVersion={latestVersion}
           onGenerateForCurrentCommit={handleGenerate}
           onGenerateNewLanguage={handleGenerateNewLanguage}

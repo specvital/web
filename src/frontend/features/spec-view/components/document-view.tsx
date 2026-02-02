@@ -25,6 +25,7 @@ type DocumentViewProps = {
   isGeneratingOtherLanguage?: boolean;
   isLoadingVersions?: boolean;
   isRegenerating?: boolean;
+  latestDocumentId?: string;
   latestVersion?: number;
   onGenerateForCurrentCommit?: () => void;
   onGenerateNewLanguage?: (language: SpecLanguage) => void;
@@ -45,6 +46,7 @@ export const DocumentView = ({
   isGeneratingOtherLanguage,
   isLoadingVersions,
   isRegenerating,
+  latestDocumentId,
   latestVersion,
   onGenerateForCurrentCommit,
   onGenerateNewLanguage,
@@ -91,7 +93,7 @@ export const DocumentView = ({
             isGeneratingOtherLanguage={isGeneratingOtherLanguage}
             isLoadingVersions={isLoadingVersions}
             isRegenerating={isRegenerating}
-            latestVersion={latestVersion}
+            latestDocumentId={latestDocumentId}
             onGenerateNewLanguage={onGenerateNewLanguage}
             onLanguageSwitch={onLanguageSwitch}
             onRegenerate={isOutdatedCommit ? onGenerateForCurrentCommit : onRegenerate}
