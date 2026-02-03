@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname as useNextPathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -28,6 +29,7 @@ const checkSessionCookie = (): boolean => {
 };
 
 export const useAuth = (): UseAuthReturn => {
+  const t = useTranslations("auth.toast");
   const queryClient = useQueryClient();
   const nextPathname = useNextPathname();
   const pathname = usePathname();
@@ -52,7 +54,7 @@ export const useAuth = (): UseAuthReturn => {
 
   const loginMutation = useMutation({
     mutationFn: fetchLogin,
-    onError: () => toast.error("Failed to start login process"),
+    onError: () => toast.error(t("loginFailed")),
     onSuccess: (data) => {
       if (typeof window !== "undefined") {
         // Store returnTo in cookie (readable by server)

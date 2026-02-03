@@ -35,7 +35,16 @@
     "account": "계정",
     "login": "로그인",
     "logout": "로그아웃",
-    "openUserMenu": "사용자 메뉴 열기"
+    "openUserMenu": "사용자 메뉴 열기",
+    "toast": {
+      "authFailed": "인증에 실패했습니다",
+      "invalidCode": "잘못된 인증 코드입니다",
+      "invalidState": "세션이 만료되었습니다. 다시 시도해주세요.",
+      "loginFailed": "로그인을 시작할 수 없습니다",
+      "missingOAuthParams": "OAuth 파라미터가 누락되었습니다",
+      "networkError": "인증 중 네트워크 오류가 발생했습니다",
+      "unknownError": "인증 오류: {error}"
+    }
   },
   "loginModal": {
     "continueWithGitHub": "GitHub으로 계속하기",
@@ -601,7 +610,15 @@
     "toast": {
       "addFailed": "대시보드 추가 실패",
       "addSuccess": "대시보드에 추가됨",
-      "goToDashboard": "대시보드로 이동"
+      "bookmarkAddFailed": "북마크 추가에 실패했습니다",
+      "bookmarkAdded": "북마크가 추가되었습니다",
+      "bookmarkRemoveFailed": "북마크 제거에 실패했습니다",
+      "bookmarkRemoved": "북마크가 제거되었습니다",
+      "goToDashboard": "대시보드로 이동",
+      "refreshFailed": "새로고침에 실패했습니다",
+      "refreshOrgFailed": "{org} 새로고침에 실패했습니다",
+      "refreshed": "GitHub에서 새로고침됨",
+      "refreshedOrg": "GitHub에서 {org} 새로고침됨"
     },
     "discovery": {
       "title": "새 저장소 발견",

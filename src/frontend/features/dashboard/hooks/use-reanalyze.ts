@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -46,6 +47,7 @@ const updateRepoStatus = (
   }));
 
 export const useReanalyze = (): UseReanalyzeReturn => {
+  const t = useTranslations("analysis.updateBanner");
   const queryClient = useQueryClient();
   const [pollingTarget, setPollingTarget] = useState<{ owner: string; repo: string } | null>(null);
 
@@ -93,7 +95,7 @@ export const useReanalyze = (): UseReanalyzeReturn => {
           () => context.previousData
         );
       }
-      toast.error("Failed to trigger reanalysis", {
+      toast.error(t("reanalyzeFailed"), {
         description: error instanceof Error ? error.message : String(error),
       });
     },
@@ -116,7 +118,7 @@ export const useReanalyze = (): UseReanalyzeReturn => {
       return { previousData };
     },
     onSuccess: (_data, { owner, repo }) => {
-      toast.success("Reanalysis queued");
+      toast.success(t("reanalyzeQueued"));
 
       const taskId = createTaskId(owner, repo);
       addTask({

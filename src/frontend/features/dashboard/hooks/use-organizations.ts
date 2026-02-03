@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import type { GitHubOrganization } from "@/lib/api/types";
@@ -21,6 +22,7 @@ type UseOrganizationsReturn = {
 };
 
 export const useOrganizations = (): UseOrganizationsReturn => {
+  const t = useTranslations("dashboard.toast");
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -33,9 +35,9 @@ export const useOrganizations = (): UseOrganizationsReturn => {
     try {
       const freshData = await fetchUserGitHubOrganizations({ refresh: true });
       queryClient.setQueryData(organizationsKeys.list(), freshData);
-      toast.success("Refreshed from GitHub");
+      toast.success(t("refreshed"));
     } catch (error) {
-      toast.error("Failed to refresh", {
+      toast.error(t("refreshFailed"), {
         description: error instanceof Error ? error.message : String(error),
       });
     }

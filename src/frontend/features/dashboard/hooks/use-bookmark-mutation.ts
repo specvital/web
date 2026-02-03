@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import type { RepositoryCard } from "@/lib/api/types";
@@ -36,6 +37,7 @@ const toggleBookmarkInPages = (
   }));
 
 export const useAddBookmark = (): UseAddBookmarkReturn => {
+  const t = useTranslations("dashboard.toast");
   const queryClient = useQueryClient();
 
   const mutation = useMutation<unknown, Error, MutationVariables, MutationContext>({
@@ -50,7 +52,7 @@ export const useAddBookmark = (): UseAddBookmarkReturn => {
           () => context.previousData
         );
       }
-      toast.error("Failed to add bookmark", {
+      toast.error(t("bookmarkAddFailed"), {
         description: error instanceof Error ? error.message : String(error),
       });
     },
@@ -74,7 +76,7 @@ export const useAddBookmark = (): UseAddBookmarkReturn => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: paginatedRepositoriesKeys.all });
-      toast.success("Bookmark added");
+      toast.success(t("bookmarkAdded"));
     },
   });
 
@@ -85,6 +87,7 @@ export const useAddBookmark = (): UseAddBookmarkReturn => {
 };
 
 export const useRemoveBookmark = (): UseRemoveBookmarkReturn => {
+  const t = useTranslations("dashboard.toast");
   const queryClient = useQueryClient();
 
   const mutation = useMutation<unknown, Error, MutationVariables, MutationContext>({
@@ -99,7 +102,7 @@ export const useRemoveBookmark = (): UseRemoveBookmarkReturn => {
           () => context.previousData
         );
       }
-      toast.error("Failed to remove bookmark", {
+      toast.error(t("bookmarkRemoveFailed"), {
         description: error instanceof Error ? error.message : String(error),
       });
     },
@@ -123,7 +126,7 @@ export const useRemoveBookmark = (): UseRemoveBookmarkReturn => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: paginatedRepositoriesKeys.all });
-      toast.success("Bookmark removed");
+      toast.success(t("bookmarkRemoved"));
     },
   });
 

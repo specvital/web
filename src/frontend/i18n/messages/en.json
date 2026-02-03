@@ -35,7 +35,16 @@
     "account": "Account",
     "login": "Sign in",
     "logout": "Sign out",
-    "openUserMenu": "Open user menu"
+    "openUserMenu": "Open user menu",
+    "toast": {
+      "authFailed": "Authentication failed",
+      "invalidCode": "Invalid authorization code",
+      "invalidState": "Session expired. Please try again.",
+      "loginFailed": "Failed to start login process",
+      "missingOAuthParams": "Missing OAuth parameters",
+      "networkError": "Network error during authentication",
+      "unknownError": "Authentication error: {error}"
+    }
   },
   "loginModal": {
     "continueWithGitHub": "Continue with GitHub",
@@ -601,7 +610,15 @@
     "toast": {
       "addFailed": "Failed to add to dashboard",
       "addSuccess": "Added to dashboard",
-      "goToDashboard": "Go to Dashboard"
+      "bookmarkAddFailed": "Failed to add bookmark",
+      "bookmarkAdded": "Bookmark added",
+      "bookmarkRemoveFailed": "Failed to remove bookmark",
+      "bookmarkRemoved": "Bookmark removed",
+      "goToDashboard": "Go to Dashboard",
+      "refreshFailed": "Failed to refresh",
+      "refreshOrgFailed": "Failed to refresh {org}",
+      "refreshed": "Refreshed from GitHub",
+      "refreshedOrg": "Refreshed {org} from GitHub"
     },
     "discovery": {
       "title": "Discover New Repos",

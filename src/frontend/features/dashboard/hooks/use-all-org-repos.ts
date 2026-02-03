@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import type { GitHubOrganization, GitHubRepository, RepositoryCard } from "@/lib/api/types";
@@ -31,6 +32,7 @@ export const useAllOrgRepos = ({
   analyzedRepositories,
   organizations,
 }: UseAllOrgReposParams): UseAllOrgReposReturn => {
+  const t = useTranslations("dashboard.toast");
   const queryClient = useQueryClient();
 
   const analyzedFullNames = new Set(analyzedRepositories.map((r) => r.fullName.toLowerCase()));
@@ -76,9 +78,9 @@ export const useAllOrgRepos = ({
     try {
       const freshData = await fetchOrganizationRepositories(org, { refresh: true });
       queryClient.setQueryData(organizationReposKeys.byOrg(org), freshData);
-      toast.success(`Refreshed ${org} from GitHub`);
+      toast.success(t("refreshedOrg", { org }));
     } catch (error) {
-      toast.error(`Failed to refresh ${org}`, {
+      toast.error(t("refreshOrgFailed", { org }), {
         description: error instanceof Error ? error.message : String(error),
       });
     }

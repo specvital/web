@@ -1,18 +1,20 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-const ERROR_MESSAGES: Record<string, string> = {
-  auth_failed: "Authentication failed",
-  invalid_code: "Invalid authorization code",
-  invalid_state: "Session expired. Please try again.",
-  missing_oauth_params: "Missing OAuth parameters",
-  network_error: "Network error during authentication",
+const ERROR_KEYS: Record<string, string> = {
+  auth_failed: "authFailed",
+  invalid_code: "invalidCode",
+  invalid_state: "invalidState",
+  missing_oauth_params: "missingOAuthParams",
+  network_error: "networkError",
 };
 
 export function OAuthErrorHandler() {
+  const t = useTranslations("auth.toast");
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -20,7 +22,8 @@ export function OAuthErrorHandler() {
 
     const error = searchParams.get("error");
     if (error) {
-      const message = ERROR_MESSAGES[error] || `Authentication error: ${error}`;
+      const messageKey = ERROR_KEYS[error];
+      const message = messageKey ? t(messageKey) : t("unknownError", { error });
       toast.error(message);
 
       // Clean up URL (remove error param)
@@ -28,7 +31,7 @@ export function OAuthErrorHandler() {
       url.searchParams.delete("error");
       window.history.replaceState({}, "", url.toString());
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   return null;
 }
