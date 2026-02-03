@@ -11,6 +11,7 @@ import {
   AnalysisSkeleton,
   useAnalysis,
   useAutoTrackHistory,
+  useCommitSelect,
 } from "@/features/analysis";
 import type { AnalysisStatus } from "@/features/analysis";
 import { useAuth } from "@/features/auth";
@@ -65,11 +66,13 @@ export const AnalysisPage = ({ owner, repo }: AnalysisPageProps) => {
   const locale = useLocale();
   const { isAuthenticated } = useAuth();
   const { data: usageData, isLoading: isLoadingUsage } = useUsage(isAuthenticated);
+  const { commitSha: selectedCommit } = useCommitSelect();
 
   // Check if analysis quota is exceeded for authenticated users
   const quotaExceeded = isAuthenticated && isQuotaExceeded(usageData?.analysis);
 
   const { data, error, isLoading, refetch, startedAt, status } = useAnalysis(owner, repo, {
+    commit: selectedCommit,
     enabled: !quotaExceeded,
   });
 

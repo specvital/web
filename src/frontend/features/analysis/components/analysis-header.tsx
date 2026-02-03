@@ -20,7 +20,7 @@ type AnalysisHeaderProps = {
   branchName?: string;
   commitSha: string;
   committedAt?: string;
-  onCommitSelect?: (commitSha: string) => void;
+  onCommitSelect?: (commitSha: string | null) => void;
   owner: string;
   parserVersion?: string;
   repo: string;

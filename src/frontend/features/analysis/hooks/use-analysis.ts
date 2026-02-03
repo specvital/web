@@ -23,13 +23,17 @@ const MAX_WAIT_MS = 5 * 60 * 1000; // 5 minutes
 
 export const analysisKeys = {
   all: ["analysis"] as const,
-  detail: (owner: string, repo: string) => [...analysisKeys.all, owner, repo] as const,
+  detail: (owner: string, repo: string, commit?: string | null) =>
+    commit
+      ? ([...analysisKeys.all, owner, repo, commit] as const)
+      : ([...analysisKeys.all, owner, repo] as const),
 };
 
 const isTerminalStatus = (response: AnalysisResponse): boolean =>
   response.status === "completed" || response.status === "failed";
 
 type UseAnalysisOptions = {
+  commit?: string | null;
   enabled?: boolean;
 };
 
@@ -47,7 +51,7 @@ export const useAnalysis = (
   repo: string,
   options: UseAnalysisOptions = {}
 ): UseAnalysisReturn => {
-  const { enabled = true } = options;
+  const { commit, enabled = true } = options;
   const queryClient = useQueryClient();
   const intervalRef = useRef(INITIAL_INTERVAL_MS);
   const startTimeRef = useRef(Date.now());
@@ -57,18 +61,26 @@ export const useAnalysis = (
     intervalRef.current = INITIAL_INTERVAL_MS;
     startTimeRef.current = Date.now();
     hasTriggeredInvalidation.current = false;
-  }, [owner, repo]);
+  }, [owner, repo, commit]);
+
+  // Specific commit query: no polling (already completed)
+  const isSpecificCommitQuery = !!commit;
 
   const query = useQuery({
     enabled,
     queryFn: async () => {
-      if (Date.now() - startTimeRef.current > MAX_WAIT_MS) {
+      if (!isSpecificCommitQuery && Date.now() - startTimeRef.current > MAX_WAIT_MS) {
         throw new AnalysisTimeoutError();
       }
-      return fetchAnalysis(owner, repo);
+      return fetchAnalysis(owner, repo, { commit });
     },
-    queryKey: analysisKeys.detail(owner, repo),
+    queryKey: analysisKeys.detail(owner, repo, commit),
     refetchInterval: (query) => {
+      // Specific commit queries don't need polling
+      if (isSpecificCommitQuery) {
+        return false;
+      }
+
       const response = query.state.data;
 
       if (response && isTerminalStatus(response)) {

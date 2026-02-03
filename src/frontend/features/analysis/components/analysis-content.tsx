@@ -11,6 +11,7 @@ import { SpecPanel } from "./spec-panel";
 import { TabNavigation } from "./tab-navigation";
 import { TestsPanel } from "./tests-panel";
 import { UpdateBanner } from "./update-banner";
+import { useCommitSelect } from "../hooks/use-commit-select";
 import { usePrimaryTab } from "../hooks/use-primary-tab";
 
 type AnalysisContentProps = {
@@ -21,6 +22,7 @@ const pageStaggerContainer = createStaggerContainer(0.08, 0);
 
 export const AnalysisContent = ({ result }: AnalysisContentProps) => {
   const { setTab, tab } = usePrimaryTab();
+  const { selectCommit } = useCommitSelect();
   const shouldReduceMotion = useReducedMotion();
 
   const containerVariants = shouldReduceMotion ? {} : pageStaggerContainer;
@@ -45,6 +47,7 @@ export const AnalysisContent = ({ result }: AnalysisContentProps) => {
             branchName={result.branchName}
             commitSha={result.commitSha}
             committedAt={result.committedAt}
+            onCommitSelect={selectCommit}
             owner={result.owner}
             parserVersion={result.parserVersion}
             repo={result.repo}

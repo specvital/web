@@ -1,5 +1,6 @@
 export { analysisKeys, useAnalysis } from "./use-analysis";
 export { analysisHistoryKeys, useAnalysisHistory } from "./use-analysis-history";
+export { useCommitSelect } from "./use-commit-select";
 export { useAutoTrackHistory } from "./use-auto-track-history";
 export { useDataViewMode } from "./use-data-view-mode";
 export { useFilterState } from "./use-filter-state";

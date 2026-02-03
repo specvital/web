@@ -18,7 +18,7 @@ import { useAnalysisHistory } from "../hooks";
 
 type CommitSelectorProps = {
   currentCommitSha: string;
-  onCommitSelect?: (commitSha: string) => void;
+  onCommitSelect?: (commitSha: string | null) => void;
   owner: string;
   repo: string;
 };
