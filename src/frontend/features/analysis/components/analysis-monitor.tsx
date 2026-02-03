@@ -10,7 +10,7 @@ import type { AnalysisResponse } from "@/lib/api/types";
 import { getTask, removeTask, useBackgroundTasks } from "@/lib/background-tasks";
 import type { BackgroundTask } from "@/lib/background-tasks";
 
-import { fetchAnalysis } from "../api";
+import { fetchAnalysisStatus } from "../api";
 import { analysisKeys } from "../hooks/use-analysis";
 import { updateStatusKeys } from "../hooks/use-update-status";
 
@@ -28,13 +28,10 @@ type AnalysisTaskPollerProps = {
 /**
  * Polls analysis status for a single background task.
  *
- * Uses `analysisKeys.detail` + `fetchAnalysis` (same as useAnalysis) so React Query
- * deduplicates requests when both are mounted. When both are active, the shorter
- * refetchInterval wins — useAnalysis backoff (300ms→5000ms) is capped at 2000ms.
- * This is acceptable: the monitor exists primarily for when useAnalysis is unmounted.
- *
- * fetchAnalysis can trigger a new analysis if none exists, but the monitor only
- * runs for tasks already in the store (queued/processing), so no side effect.
+ * Uses dedicated `analysisMonitorPolling` queryKey with `fetchAnalysisStatus` (read-only)
+ * to check job progress without triggering new analysis. This prevents false completion
+ * detection that occurred when using `fetchAnalysis` which could return cached completed
+ * results from previous commits.
  *
  * Deduplication: getTask() check before removeTask() ensures only one
  * handler (this or local component) processes the completion.
@@ -45,13 +42,15 @@ const AnalysisTaskPoller = ({ owner, repo, taskId }: AnalysisTaskPollerProps) =>
   const completedRef = useRef(false);
 
   const pollingQuery = useQuery({
-    queryFn: () => fetchAnalysis(owner, repo),
-    queryKey: analysisKeys.detail(owner, repo),
+    queryFn: () => fetchAnalysisStatus(owner, repo),
+    queryKey: ["analysisMonitorPolling", owner, repo],
     refetchInterval: (query) => {
       const data = query.state.data;
       if (!data) return POLL_INTERVAL_MS;
       return isTerminalStatus(data.status) ? false : POLL_INTERVAL_MS;
     },
+    // Prevent returning cached "completed" status from previous polling sessions
+    gcTime: 0,
     staleTime: 0,
   });
 
@@ -63,6 +62,8 @@ const AnalysisTaskPoller = ({ owner, repo, taskId }: AnalysisTaskPollerProps) =>
 
     completedRef.current = true;
 
+    // Invalidate analysis data to refresh with new results
+    queryClient.invalidateQueries({ queryKey: analysisKeys.detail(owner, repo) });
     queryClient.invalidateQueries({ queryKey: paginatedRepositoriesKeys.all });
     queryClient.invalidateQueries({ queryKey: updateStatusKeys.detail(owner, repo) });
 
