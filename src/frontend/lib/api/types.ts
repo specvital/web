@@ -74,3 +74,7 @@ export type GitHubAppInstallUrlResponse = components["schemas"]["GitHubAppInstal
 
 // AI Spec types
 export type AiSpecSummary = components["schemas"]["AiSpecSummary"];
+
+// Active Tasks types
+export type ActiveTask = components["schemas"]["ActiveTask"];
+export type UserActiveTasksResponse = components["schemas"]["UserActiveTasksResponse"];

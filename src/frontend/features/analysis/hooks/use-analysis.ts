@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 import { paginatedRepositoriesKeys } from "@/features/dashboard";
 import type { AnalysisResponse, AnalysisResult } from "@/lib/api/types";
-import { addTask, getTask, removeTask, updateTask } from "@/lib/background-tasks";
+import { userActiveTasksKeys } from "@/lib/background-tasks";
 
 import { fetchAnalysis } from "../api";
 
@@ -56,11 +56,14 @@ export const useAnalysis = (
   const intervalRef = useRef(INITIAL_INTERVAL_MS);
   const startTimeRef = useRef(Date.now());
   const hasTriggeredInvalidation = useRef(false);
+  // Track when analysis started for elapsed time display
+  const analyzingStartedAtRef = useRef<string | null>(null);
 
   useEffect(() => {
     intervalRef.current = INITIAL_INTERVAL_MS;
     startTimeRef.current = Date.now();
     hasTriggeredInvalidation.current = false;
+    analyzingStartedAtRef.current = null;
   }, [owner, repo, commit]);
 
   // Specific commit query: no polling (already completed)
@@ -104,6 +107,7 @@ export const useAnalysis = (
   const refetch = () => {
     intervalRef.current = INITIAL_INTERVAL_MS;
     startTimeRef.current = Date.now();
+    analyzingStartedAtRef.current = null;
     query.refetch();
   };
 
@@ -118,65 +122,29 @@ export const useAnalysis = (
 
   const data = response?.status === "completed" ? response.data : null;
 
+  // Track when analysis transitions to "analyzing" status
+  useEffect(() => {
+    if (status === "analyzing" && !analyzingStartedAtRef.current) {
+      analyzingStartedAtRef.current = new Date().toISOString();
+    }
+  }, [status]);
+
   useEffect(() => {
     if (response?.status === "completed" && !hasTriggeredInvalidation.current) {
       hasTriggeredInvalidation.current = true;
       queryClient.removeQueries({ queryKey: paginatedRepositoriesKeys.all });
       // Invalidate usage for fresh quota display
       queryClient.invalidateQueries({ queryKey: ["user", "usage"] });
+      // Refresh active tasks list from server
+      queryClient.invalidateQueries({ queryKey: userActiveTasksKeys.all });
     }
   }, [response?.status, queryClient]);
-
-  // Sync with global TaskStore for background progress tracking
-  const taskId = `analysis-${owner}-${repo}`;
-  useEffect(() => {
-    if (status === "queued") {
-      const existingTask = getTask(taskId);
-      if (!existingTask) {
-        addTask({
-          id: taskId,
-          metadata: { owner, repo },
-          startedAt: null,
-          status: "queued",
-          type: "analysis",
-        });
-      }
-    } else if (status === "analyzing") {
-      const existingTask = getTask(taskId);
-      if (existingTask && existingTask.status !== "processing") {
-        updateTask(taskId, { startedAt: new Date().toISOString(), status: "processing" });
-      } else if (!existingTask) {
-        addTask({
-          id: taskId,
-          metadata: { owner, repo },
-          startedAt: new Date().toISOString(),
-          status: "processing",
-          type: "analysis",
-        });
-      }
-    } else if (status === "completed" || status === "failed" || status === "error") {
-      // Deduplication with AnalysisMonitor (global)
-      const existingTask = getTask(taskId);
-      if (existingTask) {
-        removeTask(taskId);
-      }
-    }
-  }, [status, owner, repo, taskId]);
 
   const isLoading =
     query.isPending || status === "queued" || status === "analyzing" || status === "pending";
 
-  // Get startedAt from TaskStore with fallback for race condition
-  const taskFromStore = getTask(taskId);
-  let startedAt = taskFromStore?.startedAt ?? null;
-
-  // Fallback: If analyzing but no startedAt, use current time as approximation
-  if (status === "analyzing" && !startedAt) {
-    startedAt = new Date().toISOString();
-    if (process.env.NODE_ENV === "development") {
-      console.warn(`[useAnalysis] TaskStore missing startedAt for ${taskId}, using fallback`);
-    }
-  }
+  // Use local tracking for startedAt (when analysis started on this page)
+  const startedAt = analyzingStartedAtRef.current;
 
   return {
     data,

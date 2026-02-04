@@ -47,3 +47,56 @@ func (q *Queries) FindActiveRiverJobByRepo(ctx context.Context, arg FindActiveRi
 	err := row.Scan(&i.CommitSha, &i.State, &i.AttemptedAt)
 	return i, err
 }
+
+const getUserActiveJobs = `-- name: GetUserActiveJobs :many
+SELECT
+    id,
+    kind,
+    state::text as state,
+    args,
+    created_at,
+    attempted_at
+FROM river_job
+WHERE
+    args->>'user_id' = $1::text
+    AND state IN ('available', 'pending', 'running', 'retryable', 'scheduled')
+ORDER BY created_at DESC
+`
+
+type GetUserActiveJobsRow struct {
+	ID          int64              `json:"id"`
+	Kind        string             `json:"kind"`
+	State       string             `json:"state"`
+	Args        []byte             `json:"args"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	AttemptedAt pgtype.Timestamptz `json:"attempted_at"`
+}
+
+// Get all active jobs for a specific user.
+// Returns jobs in non-terminal states (available, pending, running, retryable, scheduled).
+func (q *Queries) GetUserActiveJobs(ctx context.Context, userID string) ([]GetUserActiveJobsRow, error) {
+	rows, err := q.db.Query(ctx, getUserActiveJobs, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserActiveJobsRow
+	for rows.Next() {
+		var i GetUserActiveJobsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.State,
+			&i.Args,
+			&i.CreatedAt,
+			&i.AttemptedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

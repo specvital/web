@@ -29,6 +29,7 @@ import (
 	githubusecase "github.com/specvital/web/src/backend/modules/github/usecase"
 	useradapter "github.com/specvital/web/src/backend/modules/user/adapter"
 	userhandler "github.com/specvital/web/src/backend/modules/user/handler"
+	activetaskuc "github.com/specvital/web/src/backend/modules/user/usecase/activetask"
 	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
 	historyuc "github.com/specvital/web/src/backend/modules/user/usecase/history"
 
@@ -145,20 +146,23 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 
 	bookmarkRepo := useradapter.NewBookmarkRepository(queries)
 	historyRepo := useradapter.NewHistoryRepository(queries)
+	activeTaskRepo := useradapter.NewActiveTaskRepository(queries)
 
 	addAnalyzedRepoUC := historyuc.NewAddAnalyzedRepoUseCase(historyRepo)
 	addBookmarkUC := bookmarkuc.NewAddBookmarkUseCase(bookmarkRepo)
 	getBookmarksUC := bookmarkuc.NewGetBookmarksUseCase(bookmarkRepo)
 	removeBookmarkUC := bookmarkuc.NewRemoveBookmarkUseCase(bookmarkRepo)
 	getAnalyzedReposUC := historyuc.NewGetAnalyzedReposUseCase(historyRepo)
+	getUserActiveTasksUC := activetaskuc.NewGetUserActiveTasksUseCase(activeTaskRepo)
 
 	userHandler, err := userhandler.NewHandler(&userhandler.HandlerConfig{
-		AddAnalyzedRepo:  addAnalyzedRepoUC,
-		AddBookmark:      addBookmarkUC,
-		GetAnalyzedRepos: getAnalyzedReposUC,
-		GetBookmarks:     getBookmarksUC,
-		Logger:           log,
-		RemoveBookmark:   removeBookmarkUC,
+		AddAnalyzedRepo:    addAnalyzedRepoUC,
+		AddBookmark:        addBookmarkUC,
+		GetAnalyzedRepos:   getAnalyzedReposUC,
+		GetBookmarks:       getBookmarksUC,
+		GetUserActiveTasks: getUserActiveTasksUC,
+		Logger:             log,
+		RemoveBookmark:     removeBookmarkUC,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("create user handler: %w", err)
@@ -293,7 +297,7 @@ func initHandlers(ctx context.Context, container *infra.Container) (*Handlers, [
 		return nil, nil, fmt.Errorf("create subscription handler: %w", err)
 	}
 
-	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, subscriptionHandler, analyzerHandler, specViewHandler, subscriptionHandler, usageHandler, webhookHandler)
+	apiHandlers := api.NewAPIHandlers(analyzerHandler, userHandler, authHandler, userHandler, githubHandler, ghAppAPIHandler, subscriptionHandler, analyzerHandler, specViewHandler, subscriptionHandler, usageHandler, userHandler, webhookHandler)
 
 	return &Handlers{
 		API:     apiHandlers,

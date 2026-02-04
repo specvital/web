@@ -11,6 +11,7 @@ type MockHandler struct{}
 
 var _ api.AnalysisHistoryHandlers = (*MockHandler)(nil)
 var _ api.BookmarkHandlers = (*MockHandler)(nil)
+var _ api.UserActiveTasksHandlers = (*MockHandler)(nil)
 
 func NewMockHandler() *MockHandler {
 	return &MockHandler{}
@@ -34,4 +35,8 @@ func (h *MockHandler) AddUserAnalyzedRepository(_ context.Context, _ api.AddUser
 
 func (h *MockHandler) GetUserAnalyzedRepositories(_ context.Context, _ api.GetUserAnalyzedRepositoriesRequestObject) (api.GetUserAnalyzedRepositoriesResponseObject, error) {
 	return api.GetUserAnalyzedRepositories200JSONResponse{Data: []api.RepositoryCard{}, HasNext: false}, nil
+}
+
+func (h *MockHandler) GetUserActiveTasks(_ context.Context, _ api.GetUserActiveTasksRequestObject) (api.GetUserActiveTasksResponseObject, error) {
+	return api.GetUserActiveTasks200JSONResponse{Tasks: []api.ActiveTask{}}, nil
 }

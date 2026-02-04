@@ -14,3 +14,19 @@ WHERE
     AND args->>'repo' = @repo::text
 ORDER BY created_at DESC
 LIMIT 1;
+
+-- name: GetUserActiveJobs :many
+-- Get all active jobs for a specific user.
+-- Returns jobs in non-terminal states (available, pending, running, retryable, scheduled).
+SELECT
+    id,
+    kind,
+    state::text as state,
+    args,
+    created_at,
+    attempted_at
+FROM river_job
+WHERE
+    args->>'user_id' = @user_id::text
+    AND state IN ('available', 'pending', 'running', 'retryable', 'scheduled')
+ORDER BY created_at DESC;

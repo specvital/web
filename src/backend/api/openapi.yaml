@@ -1122,6 +1122,28 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  # User Active Tasks API
+  /api/user/active-tasks:
+    get:
+      operationId: getUserActiveTasks
+      summary: Get user's active background tasks
+      description: Returns list of currently active background tasks (queued or analyzing) for the authenticated user
+      tags:
+        - User
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Active tasks retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserActiveTasksResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   # User Subscription APIs
   /api/user/subscription:
     get:
@@ -3049,6 +3071,57 @@ components:
         - pro: Pro tier with expanded limits
         - pro_plus: Pro Plus tier with higher limits
         - enterprise: Enterprise tier with unlimited usage
+
+    # User Active Tasks Schemas
+    UserActiveTasksResponse:
+      type: object
+      required:
+        - tasks
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActiveTask"
+          description: List of active background tasks
+
+    ActiveTask:
+      type: object
+      required:
+        - id
+        - type
+        - status
+        - owner
+        - repo
+        - createdAt
+      properties:
+        id:
+          type: string
+          description: Task ID (job ID)
+        type:
+          type: string
+          enum:
+            - analysis
+          description: Type of background task
+        status:
+          type: string
+          enum:
+            - queued
+            - analyzing
+          description: Current task status
+        owner:
+          type: string
+          description: Repository owner
+        repo:
+          type: string
+          description: Repository name
+        createdAt:
+          type: string
+          format: date-time
+          description: When the task was created (ISO 8601)
+        startedAt:
+          type: string
+          format: date-time
+          description: When the task started processing (ISO 8601)
 
     UserSubscriptionResponse:
       type: object

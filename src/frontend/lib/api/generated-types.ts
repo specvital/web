@@ -790,6 +790,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user/active-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user's active background tasks
+         * @description Returns list of currently active background tasks (queued or analyzing) for the authenticated user
+         */
+        get: operations["getUserActiveTasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user/subscription": {
         parameters: {
             query?: never;
@@ -2014,6 +2034,38 @@ export interface components {
          * @enum {string}
          */
         PlanTier: "free" | "pro" | "pro_plus" | "enterprise";
+        UserActiveTasksResponse: {
+            /** @description List of active background tasks */
+            tasks: components["schemas"]["ActiveTask"][];
+        };
+        ActiveTask: {
+            /** @description Task ID (job ID) */
+            id: string;
+            /**
+             * @description Type of background task
+             * @enum {string}
+             */
+            type: "analysis";
+            /**
+             * @description Current task status
+             * @enum {string}
+             */
+            status: "queued" | "analyzing";
+            /** @description Repository owner */
+            owner: string;
+            /** @description Repository name */
+            repo: string;
+            /**
+             * Format: date-time
+             * @description When the task was created (ISO 8601)
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the task started processing (ISO 8601)
+             */
+            startedAt?: string;
+        };
         UserSubscriptionResponse: {
             plan: components["schemas"]["PlanInfo"];
             /**
@@ -3148,6 +3200,28 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    getUserActiveTasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active tasks retrieved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserActiveTasksResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalError"];
         };
     };

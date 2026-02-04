@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import type { AnalysisResponse, RepositoryCard } from "@/lib/api/types";
-import { addTask, getTask, removeTask } from "@/lib/background-tasks/task-store";
+import { userActiveTasksKeys } from "@/lib/background-tasks";
 import { validateRepositoryIdentifiers } from "@/lib/validations/github";
 
 import { fetchAnalysisStatus } from "../../analysis/api";
@@ -25,8 +25,6 @@ type UseReanalyzeReturn = {
   isPending: boolean;
   reanalyze: (owner: string, repo: string) => void;
 };
-
-const createTaskId = (owner: string, repo: string): string => `reanalysis:${owner}/${repo}`;
 
 const isTerminalStatus = (status: AnalysisResponse["status"]): boolean =>
   status === "completed" || status === "failed";
@@ -69,17 +67,13 @@ export const useReanalyze = (): UseReanalyzeReturn => {
   });
 
   // Clean up polling state on completion
-  // Task removal uses getTask() for deduplication with AnalysisMonitor (global)
   useEffect(() => {
     if (!pollingTarget || !pollingQuery.data) return;
     if (!isTerminalStatus(pollingQuery.data.status)) return;
 
-    const taskId = createTaskId(pollingTarget.owner, pollingTarget.repo);
-    const task = getTask(taskId);
-    if (task) {
-      removeTask(taskId);
-    }
     queryClient.invalidateQueries({ queryKey: paginatedRepositoriesKeys.all });
+    // Refresh active tasks list from server
+    queryClient.invalidateQueries({ queryKey: userActiveTasksKeys.all });
     setPollingTarget(null);
   }, [pollingTarget, pollingQuery.data, queryClient]);
 
@@ -120,18 +114,12 @@ export const useReanalyze = (): UseReanalyzeReturn => {
     onSuccess: (_data, { owner, repo }) => {
       toast.success(t("reanalyzeQueued"));
 
-      const taskId = createTaskId(owner, repo);
-      addTask({
-        id: taskId,
-        metadata: { owner, repo },
-        startedAt: new Date().toISOString(),
-        status: "processing",
-        type: "analysis",
-      });
-
       // Clear cached polling data before starting new polling session
       // Prevents refetchInterval from seeing stale "completed" status
       queryClient.removeQueries({ queryKey: ["reanalyzePolling", owner, repo] });
+
+      // Refresh active tasks list from server (new task will appear)
+      queryClient.invalidateQueries({ queryKey: userActiveTasksKeys.all });
 
       setPollingTarget({ owner, repo });
     },

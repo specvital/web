@@ -35,6 +35,10 @@ type AnalysisHistoryHandlers interface {
 	GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error)
 }
 
+type UserActiveTasksHandlers interface {
+	GetUserActiveTasks(ctx context.Context, request GetUserActiveTasksRequestObject) (GetUserActiveTasksResponseObject, error)
+}
+
 type GitHubHandlers interface {
 	GetOrganizationRepositories(ctx context.Context, request GetOrganizationRepositoriesRequestObject) (GetOrganizationRepositoriesResponseObject, error)
 	GetUserGitHubOrganizations(ctx context.Context, request GetUserGitHubOrganizationsRequestObject) (GetUserGitHubOrganizationsResponseObject, error)
@@ -89,6 +93,7 @@ type APIHandlers struct {
 	specView        SpecViewHandlers
 	subscription    SubscriptionHandlers
 	usage           UsageHandlers
+	userActiveTasks UserActiveTasksHandlers
 	webhook         WebhookHandlers
 }
 
@@ -106,6 +111,7 @@ func NewAPIHandlers(
 	specView SpecViewHandlers,
 	subscription SubscriptionHandlers,
 	usage UsageHandlers,
+	userActiveTasks UserActiveTasksHandlers,
 	webhook WebhookHandlers,
 ) *APIHandlers {
 	return &APIHandlers{
@@ -120,6 +126,7 @@ func NewAPIHandlers(
 		specView:        specView,
 		subscription:    subscription,
 		usage:           usage,
+		userActiveTasks: userActiveTasks,
 		webhook:         webhook,
 	}
 }
@@ -194,6 +201,10 @@ func (h *APIHandlers) AddUserAnalyzedRepository(ctx context.Context, request Add
 
 func (h *APIHandlers) GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error) {
 	return h.analysisHistory.GetUserAnalyzedRepositories(ctx, request)
+}
+
+func (h *APIHandlers) GetUserActiveTasks(ctx context.Context, request GetUserActiveTasksRequestObject) (GetUserActiveTasksResponseObject, error) {
+	return h.userActiveTasks.GetUserActiveTasks(ctx, request)
 }
 
 func (h *APIHandlers) GetOrganizationRepositories(ctx context.Context, request GetOrganizationRepositoriesRequestObject) (GetOrganizationRepositoriesResponseObject, error) {

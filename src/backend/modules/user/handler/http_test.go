@@ -17,6 +17,7 @@ import (
 	specviewhandler "github.com/specvital/web/src/backend/modules/spec-view/handler"
 	domainentity "github.com/specvital/web/src/backend/modules/user/domain/entity"
 	"github.com/specvital/web/src/backend/modules/user/domain/port"
+	activetaskuc "github.com/specvital/web/src/backend/modules/user/usecase/activetask"
 	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
 	historyuc "github.com/specvital/web/src/backend/modules/user/usecase/history"
 )
@@ -94,7 +95,8 @@ func setupTestRouter(handler *Handler) *chi.Mux {
 		specviewhandler.NewMockHandler(),
 		&mockSubscriptionHandler{},
 		&mockUsageHandler{},
-		nil, // webhook
+		handler, // userActiveTasks
+		nil,     // webhook
 	)
 	strictHandler := api.NewStrictHandler(apiHandlers, nil)
 	api.HandlerFromMux(strictHandler, r)
@@ -179,22 +181,38 @@ func (m *mockUsageHandler) GetCurrentUsage(_ context.Context, _ api.GetCurrentUs
 	return api.GetCurrentUsage200JSONResponse{}, nil
 }
 
+type mockActiveTaskRepository struct {
+	tasks []domainentity.ActiveTask
+	err   error
+}
+
+func (m *mockActiveTaskRepository) GetUserActiveTasks(_ context.Context, _ string) ([]domainentity.ActiveTask, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.tasks, nil
+}
+
 func createTestHandler(t *testing.T, bookmarkRepo *mockBookmarkRepository, historyRepo *mockHistoryRepository) *Handler {
 	t.Helper()
+
+	activeTaskRepo := &mockActiveTaskRepository{tasks: []domainentity.ActiveTask{}}
 
 	addAnalyzedRepoUC := historyuc.NewAddAnalyzedRepoUseCase(historyRepo)
 	addBookmarkUC := bookmarkuc.NewAddBookmarkUseCase(bookmarkRepo)
 	getBookmarksUC := bookmarkuc.NewGetBookmarksUseCase(bookmarkRepo)
 	removeBookmarkUC := bookmarkuc.NewRemoveBookmarkUseCase(bookmarkRepo)
 	getAnalyzedReposUC := historyuc.NewGetAnalyzedReposUseCase(historyRepo)
+	getUserActiveTasksUC := activetaskuc.NewGetUserActiveTasksUseCase(activeTaskRepo)
 
 	handler, err := NewHandler(&HandlerConfig{
-		AddAnalyzedRepo:  addAnalyzedRepoUC,
-		AddBookmark:      addBookmarkUC,
-		GetAnalyzedRepos: getAnalyzedReposUC,
-		GetBookmarks:     getBookmarksUC,
-		Logger:           logger.New(),
-		RemoveBookmark:   removeBookmarkUC,
+		AddAnalyzedRepo:    addAnalyzedRepoUC,
+		AddBookmark:        addBookmarkUC,
+		GetAnalyzedRepos:   getAnalyzedReposUC,
+		GetBookmarks:       getBookmarksUC,
+		GetUserActiveTasks: getUserActiveTasksUC,
+		Logger:             logger.New(),
+		RemoveBookmark:     removeBookmarkUC,
 	})
 	if err != nil {
 		t.Fatalf("failed to create handler: %v", err)

@@ -12,6 +12,7 @@ import (
 	"github.com/specvital/web/src/backend/modules/user/adapter/mapper"
 	"github.com/specvital/web/src/backend/modules/user/domain"
 	"github.com/specvital/web/src/backend/modules/user/domain/entity"
+	activetaskuc "github.com/specvital/web/src/backend/modules/user/usecase/activetask"
 	bookmarkuc "github.com/specvital/web/src/backend/modules/user/usecase/bookmark"
 	historyuc "github.com/specvital/web/src/backend/modules/user/usecase/history"
 )
@@ -24,25 +25,28 @@ const (
 )
 
 type Handler struct {
-	addAnalyzedRepo  *historyuc.AddAnalyzedRepoUseCase
-	addBookmark      *bookmarkuc.AddBookmarkUseCase
-	getAnalyzedRepos *historyuc.GetAnalyzedReposUseCase
-	getBookmarks     *bookmarkuc.GetBookmarksUseCase
-	logger           *logger.Logger
-	removeBookmark   *bookmarkuc.RemoveBookmarkUseCase
+	addAnalyzedRepo    *historyuc.AddAnalyzedRepoUseCase
+	addBookmark        *bookmarkuc.AddBookmarkUseCase
+	getAnalyzedRepos   *historyuc.GetAnalyzedReposUseCase
+	getBookmarks       *bookmarkuc.GetBookmarksUseCase
+	getUserActiveTasks *activetaskuc.GetUserActiveTasksUseCase
+	logger             *logger.Logger
+	removeBookmark     *bookmarkuc.RemoveBookmarkUseCase
 }
 
 type HandlerConfig struct {
-	AddAnalyzedRepo  *historyuc.AddAnalyzedRepoUseCase
-	AddBookmark      *bookmarkuc.AddBookmarkUseCase
-	GetAnalyzedRepos *historyuc.GetAnalyzedReposUseCase
-	GetBookmarks     *bookmarkuc.GetBookmarksUseCase
-	Logger           *logger.Logger
-	RemoveBookmark   *bookmarkuc.RemoveBookmarkUseCase
+	AddAnalyzedRepo    *historyuc.AddAnalyzedRepoUseCase
+	AddBookmark        *bookmarkuc.AddBookmarkUseCase
+	GetAnalyzedRepos   *historyuc.GetAnalyzedReposUseCase
+	GetBookmarks       *bookmarkuc.GetBookmarksUseCase
+	GetUserActiveTasks *activetaskuc.GetUserActiveTasksUseCase
+	Logger             *logger.Logger
+	RemoveBookmark     *bookmarkuc.RemoveBookmarkUseCase
 }
 
 var _ api.BookmarkHandlers = (*Handler)(nil)
 var _ api.AnalysisHistoryHandlers = (*Handler)(nil)
+var _ api.UserActiveTasksHandlers = (*Handler)(nil)
 
 func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	if cfg == nil {
@@ -66,13 +70,17 @@ func NewHandler(cfg *HandlerConfig) (*Handler, error) {
 	if cfg.GetAnalyzedRepos == nil {
 		return nil, errors.New("getAnalyzedRepos usecase is required")
 	}
+	if cfg.GetUserActiveTasks == nil {
+		return nil, errors.New("getUserActiveTasks usecase is required")
+	}
 	return &Handler{
-		addAnalyzedRepo:  cfg.AddAnalyzedRepo,
-		addBookmark:      cfg.AddBookmark,
-		getAnalyzedRepos: cfg.GetAnalyzedRepos,
-		getBookmarks:     cfg.GetBookmarks,
-		logger:           cfg.Logger,
-		removeBookmark:   cfg.RemoveBookmark,
+		addAnalyzedRepo:    cfg.AddAnalyzedRepo,
+		addBookmark:        cfg.AddBookmark,
+		getAnalyzedRepos:   cfg.GetAnalyzedRepos,
+		getBookmarks:       cfg.GetBookmarks,
+		getUserActiveTasks: cfg.GetUserActiveTasks,
+		logger:             cfg.Logger,
+		removeBookmark:     cfg.RemoveBookmark,
 	}, nil
 }
 
@@ -235,6 +243,30 @@ func (h *Handler) GetUserAnalyzedRepositories(
 	}
 
 	return api.GetUserAnalyzedRepositories200JSONResponse(mapper.ToUserAnalyzedRepositoriesResponse(result)), nil
+}
+
+func (h *Handler) GetUserActiveTasks(
+	ctx context.Context,
+	_ api.GetUserActiveTasksRequestObject,
+) (api.GetUserActiveTasksResponseObject, error) {
+	userID := middleware.GetUserID(ctx)
+	if userID == "" {
+		return api.GetUserActiveTasks401ApplicationProblemPlusJSONResponse{
+			UnauthorizedApplicationProblemPlusJSONResponse: api.NewUnauthorized("authentication required"),
+		}, nil
+	}
+
+	result, err := h.getUserActiveTasks.Execute(ctx, activetaskuc.GetUserActiveTasksInput{
+		UserID: userID,
+	})
+	if err != nil {
+		h.logger.Error(ctx, "failed to get user active tasks", "error", err, "userID", userID)
+		return api.GetUserActiveTasks500ApplicationProblemPlusJSONResponse{
+			InternalErrorApplicationProblemPlusJSONResponse: api.NewInternalError("failed to retrieve active tasks"),
+		}, nil
+	}
+
+	return api.GetUserActiveTasks200JSONResponse(mapper.ToActiveTasksResponse(result.Tasks)), nil
 }
 
 func validateOwnerRepo(owner, repo string) error {

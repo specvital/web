@@ -1,8 +1,10 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as hooks from "../hooks";
+import * as hooksModule from "../hooks";
+import * as useUserActiveTasksModule from "../use-user-active-tasks";
 import { TaskBadge } from "./task-badge";
 
 const messages = {
@@ -13,17 +15,30 @@ const messages = {
   },
 };
 
-const renderWithIntl = (ui: React.ReactElement) => {
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  const queryClient = createQueryClient();
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      {ui}
-    </NextIntlClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        {ui}
+      </NextIntlClientProvider>
+    </QueryClientProvider>
   );
 };
 
 describe("TaskBadge", () => {
   beforeEach(() => {
-    vi.spyOn(hooks, "useActiveTaskCount");
+    vi.spyOn(useUserActiveTasksModule, "useUserActiveTasks");
+    vi.spyOn(hooksModule, "useActiveTasks").mockReturnValue([]);
   });
 
   afterEach(() => {
@@ -32,35 +47,51 @@ describe("TaskBadge", () => {
   });
 
   it("should render nothing when no active tasks", () => {
-    vi.mocked(hooks.useActiveTaskCount).mockReturnValue(0);
+    vi.mocked(useUserActiveTasksModule.useUserActiveTasks).mockReturnValue({
+      activeTaskCount: 0,
+      data: null,
+      isLoading: false,
+    });
 
-    const { container } = renderWithIntl(<TaskBadge />);
+    const { container } = renderWithProviders(<TaskBadge />);
 
     expect(container.firstChild).toBeNull();
   });
 
   it("should render badge when tasks are active", () => {
-    vi.mocked(hooks.useActiveTaskCount).mockReturnValue(1);
+    vi.mocked(useUserActiveTasksModule.useUserActiveTasks).mockReturnValue({
+      activeTaskCount: 1,
+      data: { tasks: [] },
+      isLoading: false,
+    });
 
-    renderWithIntl(<TaskBadge />);
+    renderWithProviders(<TaskBadge />);
 
     const badge = screen.getByLabelText("1 task in progress");
     expect(badge).toBeInTheDocument();
   });
 
   it("should render badge with multiple tasks", () => {
-    vi.mocked(hooks.useActiveTaskCount).mockReturnValue(3);
+    vi.mocked(useUserActiveTasksModule.useUserActiveTasks).mockReturnValue({
+      activeTaskCount: 3,
+      data: { tasks: [] },
+      isLoading: false,
+    });
 
-    renderWithIntl(<TaskBadge />);
+    renderWithProviders(<TaskBadge />);
 
     const badge = screen.getByLabelText("3 tasks in progress");
     expect(badge).toBeInTheDocument();
   });
 
   it("should apply custom className", () => {
-    vi.mocked(hooks.useActiveTaskCount).mockReturnValue(1);
+    vi.mocked(useUserActiveTasksModule.useUserActiveTasks).mockReturnValue({
+      activeTaskCount: 1,
+      data: { tasks: [] },
+      isLoading: false,
+    });
 
-    renderWithIntl(<TaskBadge className="custom-class" />);
+    renderWithProviders(<TaskBadge className="custom-class" />);
 
     const badge = screen.getByLabelText("1 task in progress");
     expect(badge).toHaveClass("custom-class");

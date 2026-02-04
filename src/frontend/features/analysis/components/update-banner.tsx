@@ -3,13 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GitCommit, Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { paginatedRepositoriesKeys } from "@/features/dashboard";
-import { addTask, getTask, removeTask } from "@/lib/background-tasks";
+import { userActiveTasksKeys } from "@/lib/background-tasks";
 
 import { fetchAnalysisStatus, triggerReanalyze } from "../api";
 import { analysisKeys } from "../hooks/use-analysis";
@@ -23,7 +23,6 @@ type UpdateBannerProps = {
 type BannerMessageKey = "analyzing" | "newCommitsDetected" | "parserUpdated";
 
 const POLL_INTERVAL_MS = 1000;
-const createTaskId = (owner: string, repo: string): string => `update-banner:${owner}/${repo}`;
 
 const isTerminalStatus = (status: string): boolean => status === "completed" || status === "failed";
 
@@ -32,6 +31,7 @@ export const UpdateBanner = ({ owner, repo }: UpdateBannerProps) => {
   const queryClient = useQueryClient();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const hasShownFailedToast = useRef(false);
 
   const {
     isLoading: isCheckingStatus,
@@ -59,25 +59,22 @@ export const UpdateBanner = ({ owner, repo }: UpdateBannerProps) => {
   });
 
   // Clean up polling state and dismiss banner on completion
-  // Task removal is handled by AnalysisMonitor (global) for deduplication
   useEffect(() => {
     if (!isPolling || !pollingQuery.data) return;
 
     const { status: pollingStatus } = pollingQuery.data;
     if (!isTerminalStatus(pollingStatus)) return;
 
-    const taskId = createTaskId(owner, repo);
-    const task = getTask(taskId);
-    if (task) {
-      removeTask(taskId);
-      if (pollingStatus === "failed") {
-        toast.error(t("reanalyzeFailed"));
-      }
+    if (pollingStatus === "failed" && !hasShownFailedToast.current) {
+      hasShownFailedToast.current = true;
+      toast.error(t("reanalyzeFailed"));
     }
 
     queryClient.invalidateQueries({ queryKey: analysisKeys.detail(owner, repo) });
     queryClient.invalidateQueries({ queryKey: updateStatusKeys.detail(owner, repo) });
     queryClient.invalidateQueries({ queryKey: paginatedRepositoriesKeys.all });
+    // Refresh active tasks list from server
+    queryClient.invalidateQueries({ queryKey: userActiveTasksKeys.all });
 
     setIsPolling(false);
     setIsDismissed(true);
@@ -92,20 +89,14 @@ export const UpdateBanner = ({ owner, repo }: UpdateBannerProps) => {
     },
     onSuccess: () => {
       toast.success(t("reanalyzeQueued"));
-
-      // Register task in TaskStore for Account badge
-      const taskId = createTaskId(owner, repo);
-      addTask({
-        id: taskId,
-        metadata: { owner, repo },
-        startedAt: new Date().toISOString(),
-        status: "processing",
-        type: "analysis",
-      });
+      hasShownFailedToast.current = false;
 
       // Clear cached polling data before starting new polling session
       // Prevents refetchInterval from seeing stale "completed" status
       queryClient.removeQueries({ queryKey: ["updateBannerPolling", owner, repo] });
+
+      // Refresh active tasks list from server (new task will appear)
+      queryClient.invalidateQueries({ queryKey: userActiveTasksKeys.all });
 
       // Start polling for completion
       setIsPolling(true);

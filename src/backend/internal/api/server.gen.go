@@ -21,6 +21,17 @@ const (
 	CookieAuthScopes = "cookieAuth.Scopes"
 )
 
+// Defines values for ActiveTaskStatus.
+const (
+	Analyzing ActiveTaskStatus = "analyzing"
+	Queued    ActiveTaskStatus = "queued"
+)
+
+// Defines values for ActiveTaskType.
+const (
+	ActiveTaskTypeAnalysis ActiveTaskType = "analysis"
+)
+
 // Defines values for GitHubAppInstallationAccountType.
 const (
 	GitHubAppInstallationAccountTypeOrganization GitHubAppInstallationAccountType = "organization"
@@ -135,8 +146,8 @@ const (
 
 // Defines values for UsageEventType.
 const (
-	Analysis UsageEventType = "analysis"
-	Specview UsageEventType = "specview"
+	UsageEventTypeAnalysis UsageEventType = "analysis"
+	UsageEventTypeSpecview UsageEventType = "specview"
 )
 
 // Defines values for ViewFilterParam.
@@ -158,6 +169,36 @@ const (
 	GetUserAnalyzedRepositoriesParamsOwnershipMine         GetUserAnalyzedRepositoriesParamsOwnership = "mine"
 	GetUserAnalyzedRepositoriesParamsOwnershipOrganization GetUserAnalyzedRepositoriesParamsOwnership = "organization"
 )
+
+// ActiveTask defines model for ActiveTask.
+type ActiveTask struct {
+	// CreatedAt When the task was created (ISO 8601)
+	CreatedAt time.Time `json:"createdAt"`
+
+	// ID Task ID (job ID)
+	ID string `json:"id"`
+
+	// Owner Repository owner
+	Owner string `json:"owner"`
+
+	// Repo Repository name
+	Repo string `json:"repo"`
+
+	// StartedAt When the task started processing (ISO 8601)
+	StartedAt *time.Time `json:"startedAt,omitempty"`
+
+	// Status Current task status
+	Status ActiveTaskStatus `json:"status"`
+
+	// Type Type of background task
+	Type ActiveTaskType `json:"type"`
+}
+
+// ActiveTaskStatus Current task status
+type ActiveTaskStatus string
+
+// ActiveTaskType Type of background task
+type ActiveTaskType string
 
 // AddAnalyzedRepositoryRequest defines model for AddAnalyzedRepositoryRequest.
 type AddAnalyzedRepositoryRequest struct {
@@ -1166,6 +1207,12 @@ type UsageStatusResponse struct {
 	Specview UsageMetric `json:"specview"`
 }
 
+// UserActiveTasksResponse defines model for UserActiveTasksResponse.
+type UserActiveTasksResponse struct {
+	// Tasks List of active background tasks
+	Tasks []ActiveTask `json:"tasks"`
+}
+
 // UserAnalyzedRepositoriesResponse defines model for UserAnalyzedRepositoriesResponse.
 type UserAnalyzedRepositoriesResponse struct {
 	// Data Analyzed repositories in the current page
@@ -1872,6 +1919,9 @@ type ServerInterface interface {
 	// Get current usage status
 	// (GET /api/usage/current)
 	GetCurrentUsage(w http.ResponseWriter, r *http.Request)
+	// Get user's active background tasks
+	// (GET /api/user/active-tasks)
+	GetUserActiveTasks(w http.ResponseWriter, r *http.Request)
 	// Get user's analyzed repositories
 	// (GET /api/user/analyzed-repositories)
 	GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request, params GetUserAnalyzedRepositoriesParams)
@@ -2061,6 +2111,12 @@ func (_ Unimplemented) CheckQuota(w http.ResponseWriter, r *http.Request) {
 // Get current usage status
 // (GET /api/usage/current)
 func (_ Unimplemented) GetCurrentUsage(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get user's active background tasks
+// (GET /api/user/active-tasks)
+func (_ Unimplemented) GetUserActiveTasks(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3050,6 +3106,26 @@ func (siw *ServerInterfaceWrapper) GetCurrentUsage(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetUserActiveTasks operation middleware
+func (siw *ServerInterfaceWrapper) GetUserActiveTasks(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserActiveTasks(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetUserAnalyzedRepositories operation middleware
 func (siw *ServerInterfaceWrapper) GetUserAnalyzedRepositories(w http.ResponseWriter, r *http.Request) {
 
@@ -3587,6 +3663,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/usage/current", wrapper.GetCurrentUsage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/user/active-tasks", wrapper.GetUserActiveTasks)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/analyzed-repositories", wrapper.GetUserAnalyzedRepositories)
@@ -5076,6 +5155,44 @@ func (response GetCurrentUsage500ApplicationProblemPlusJSONResponse) VisitGetCur
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetUserActiveTasksRequestObject struct {
+}
+
+type GetUserActiveTasksResponseObject interface {
+	VisitGetUserActiveTasksResponse(w http.ResponseWriter) error
+}
+
+type GetUserActiveTasks200JSONResponse UserActiveTasksResponse
+
+func (response GetUserActiveTasks200JSONResponse) VisitGetUserActiveTasksResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserActiveTasks401ApplicationProblemPlusJSONResponse struct {
+	UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserActiveTasks401ApplicationProblemPlusJSONResponse) VisitGetUserActiveTasksResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetUserActiveTasks500ApplicationProblemPlusJSONResponse struct {
+	InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserActiveTasks500ApplicationProblemPlusJSONResponse) VisitGetUserActiveTasksResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type GetUserAnalyzedRepositoriesRequestObject struct {
 	Params GetUserAnalyzedRepositoriesParams
 }
@@ -5641,6 +5758,9 @@ type StrictServerInterface interface {
 	// Get current usage status
 	// (GET /api/usage/current)
 	GetCurrentUsage(ctx context.Context, request GetCurrentUsageRequestObject) (GetCurrentUsageResponseObject, error)
+	// Get user's active background tasks
+	// (GET /api/user/active-tasks)
+	GetUserActiveTasks(ctx context.Context, request GetUserActiveTasksRequestObject) (GetUserActiveTasksResponseObject, error)
 	// Get user's analyzed repositories
 	// (GET /api/user/analyzed-repositories)
 	GetUserAnalyzedRepositories(ctx context.Context, request GetUserAnalyzedRepositoriesRequestObject) (GetUserAnalyzedRepositoriesResponseObject, error)
@@ -6388,6 +6508,30 @@ func (sh *strictHandler) GetCurrentUsage(w http.ResponseWriter, r *http.Request)
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetCurrentUsageResponseObject); ok {
 		if err := validResponse.VisitGetCurrentUsageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserActiveTasks operation middleware
+func (sh *strictHandler) GetUserActiveTasks(w http.ResponseWriter, r *http.Request) {
+	var request GetUserActiveTasksRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserActiveTasks(ctx, request.(GetUserActiveTasksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserActiveTasks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserActiveTasksResponseObject); ok {
+		if err := validResponse.VisitGetUserActiveTasksResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

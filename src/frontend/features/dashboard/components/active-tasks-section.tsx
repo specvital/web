@@ -10,23 +10,65 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Link } from "@/i18n/navigation";
-import { type BackgroundTask, TaskStatusBadge, useBackgroundTasks } from "@/lib/background-tasks";
-import { getTaskPageUrl } from "@/lib/background-tasks/utils";
+import type { ActiveTask } from "@/lib/api/types";
+import {
+  type BackgroundTask,
+  TaskStatusBadge,
+  useActiveTasks,
+  useUserActiveTasks,
+} from "@/lib/background-tasks";
 import { cn } from "@/lib/utils";
 
+// Unified task type for display
+type DisplayTask = {
+  id: string;
+  owner: string;
+  repo: string;
+  startedAt: string | null;
+  status: "processing" | "queued";
+  type: "analysis" | "spec-generation";
+};
+
+// Map server status to UI status
+const mapServerStatusToUiStatus = (status: ActiveTask["status"]): "processing" | "queued" => {
+  if (status === "analyzing") return "processing";
+  return "queued";
+};
+
+// Convert server task to display task
+const serverTaskToDisplayTask = (task: ActiveTask): DisplayTask => ({
+  id: task.id,
+  owner: task.owner,
+  repo: task.repo,
+  startedAt: task.startedAt ?? null,
+  status: mapServerStatusToUiStatus(task.status),
+  type: task.type,
+});
+
+// Convert local task to display task (spec-generation only)
+const localTaskToDisplayTask = (task: BackgroundTask): DisplayTask | null => {
+  if (task.type !== "spec-generation") return null;
+  if (!task.metadata.owner || !task.metadata.repo) return null;
+  return {
+    id: task.id,
+    owner: task.metadata.owner,
+    repo: task.metadata.repo,
+    startedAt: task.startedAt,
+    status: task.status === "processing" ? "processing" : "queued",
+    type: task.type,
+  };
+};
+
 type TaskRowProps = {
-  task: BackgroundTask;
+  task: DisplayTask;
 };
 
 const TaskRow = ({ task }: TaskRowProps) => {
   const tType = useTranslations("backgroundTasks.taskType");
   const tActiveTasks = useTranslations("backgroundTasks.activeTasks");
 
-  const pageUrl = getTaskPageUrl(task);
-  const displayName =
-    task.metadata.owner && task.metadata.repo
-      ? `${task.metadata.owner}/${task.metadata.repo}`
-      : tType(task.type);
+  const pageUrl = `/analyze/${task.owner}/${task.repo}`;
+  const displayName = `${task.owner}/${task.repo}`;
 
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 px-4 py-3">
@@ -36,27 +78,35 @@ const TaskRow = ({ task }: TaskRowProps) => {
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <TaskStatusBadge size="sm" startedAt={task.startedAt} status={task.status} />
-        {pageUrl && (
-          <Button asChild size="sm" variant="ghost">
-            <Link href={pageUrl}>
-              {tActiveTasks("viewTask")}
-              <ExternalLink className="ml-1 size-3" />
-            </Link>
-          </Button>
-        )}
+        <Button asChild size="sm" variant="ghost">
+          <Link href={pageUrl}>
+            {tActiveTasks("viewTask")}
+            <ExternalLink className="ml-1 size-3" />
+          </Link>
+        </Button>
       </div>
     </div>
   );
 };
 
+/**
+ * Dashboard section showing active tasks for authenticated users.
+ * Combines server API tasks (analysis) and sessionStorage tasks (spec-generation).
+ */
 export const ActiveTasksSection = () => {
   const t = useTranslations("backgroundTasks.activeTasks");
-  const tasks = useBackgroundTasks();
+  // Always enabled - this component is only rendered for authenticated users
+  const { data } = useUserActiveTasks({ enabled: true });
+  const localTasks = useActiveTasks();
   const searchParams = useSearchParams();
 
-  const activeTasks = tasks.filter(
-    (task) => task.status === "queued" || task.status === "processing"
-  );
+  // Combine server tasks and local spec-generation tasks
+  const serverTasks: DisplayTask[] = (data?.tasks ?? []).map(serverTaskToDisplayTask);
+  const specGenTasks: DisplayTask[] = localTasks
+    .map(localTaskToDisplayTask)
+    .filter((task): task is DisplayTask => task !== null);
+
+  const activeTasks = [...serverTasks, ...specGenTasks];
 
   const shouldAutoExpand = searchParams.get("section") === "tasks";
   const [isOpen, setIsOpen] = useState(shouldAutoExpand);
