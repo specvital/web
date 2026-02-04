@@ -17,7 +17,7 @@ export const LoadingFallback = ({
     <main
       className={cn(
         "flex flex-col items-center justify-center p-8",
-        fullScreen && "min-h-screen",
+        fullScreen && "flex-1",
         className
       )}
     >
