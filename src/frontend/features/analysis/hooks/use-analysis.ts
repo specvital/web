@@ -17,7 +17,7 @@ class AnalysisTimeoutError extends Error {
 }
 
 const INITIAL_INTERVAL_MS = 300;
-const MAX_INTERVAL_MS = 5000;
+const MAX_INTERVAL_MS = 1000;
 const BACKOFF_MULTIPLIER = 1.5;
 const MAX_WAIT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -56,14 +56,14 @@ export const useAnalysis = (
   const intervalRef = useRef(INITIAL_INTERVAL_MS);
   const startTimeRef = useRef(Date.now());
   const hasTriggeredInvalidation = useRef(false);
-  // Track when analysis started for elapsed time display
-  const analyzingStartedAtRef = useRef<string | null>(null);
+  // Track when waiting started (queued or analyzing) for elapsed time display
+  const waitingStartedAtRef = useRef<string | null>(null);
 
   useEffect(() => {
     intervalRef.current = INITIAL_INTERVAL_MS;
     startTimeRef.current = Date.now();
     hasTriggeredInvalidation.current = false;
-    analyzingStartedAtRef.current = null;
+    waitingStartedAtRef.current = null;
   }, [owner, repo, commit]);
 
   // Specific commit query: no polling (already completed)
@@ -106,7 +106,7 @@ export const useAnalysis = (
   const refetch = () => {
     intervalRef.current = INITIAL_INTERVAL_MS;
     startTimeRef.current = Date.now();
-    analyzingStartedAtRef.current = null;
+    waitingStartedAtRef.current = null;
     query.refetch();
   };
 
@@ -121,10 +121,12 @@ export const useAnalysis = (
 
   const data = response?.status === "completed" ? response.data : null;
 
-  // Track when analysis transitions to "analyzing" status
+  // Track when analysis enters waiting state (queued or analyzing)
+  // Only used as fallback when server doesn't provide startedAt
   useEffect(() => {
-    if (status === "analyzing" && !analyzingStartedAtRef.current) {
-      analyzingStartedAtRef.current = new Date().toISOString();
+    const isWaitingStatus = status === "queued" || status === "analyzing";
+    if (isWaitingStatus && !waitingStartedAtRef.current) {
+      waitingStartedAtRef.current = new Date().toISOString();
     }
   }, [status]);
 
@@ -142,8 +144,9 @@ export const useAnalysis = (
   const isLoading =
     query.isPending || status === "queued" || status === "analyzing" || status === "pending";
 
-  // Use local tracking for startedAt (when analysis started on this page)
-  const startedAt = analyzingStartedAtRef.current;
+  // Prefer server startedAt (analyzing state), fallback to client tracking (queued state)
+  const serverStartedAt = response?.status === "analyzing" ? response.startedAt : undefined;
+  const startedAt = serverStartedAt ?? waitingStartedAtRef.current;
 
   return {
     data,
