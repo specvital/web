@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.6.2](https://github.com/specvital/web/compare/v1.6.1...v1.6.2) (2026-02-05)
+
+### 🎯 Highlights
+
+#### 🐛 Bug Fixes
+
+- **analysis:** resolve polling delay and elapsed time display issues ([15542fb](https://github.com/specvital/web/commit/15542fb7e4c0e14f2339c1893388ced9fab12a69))
+- **auth:** overhaul React Query cache policy to resolve stale data bugs ([dfa6aae](https://github.com/specvital/web/commit/dfa6aaeaecae6fab4dc9ac9f86fae7d3248403fe))
+- **dashboard:** summary cards not updating on task completion ([5eab7ee](https://github.com/specvital/web/commit/5eab7eef6de5fcfc001d61b06e938c0fefafc244))
+
+### 🔧 Maintenance
+
+#### ♻️ Refactoring
+
+- **background-tasks:** replace sessionStorage-based task-store with server API ([7456bdf](https://github.com/specvital/web/commit/7456bdf1da20aeef0788fd6c945a443a1b8c7dc0))
+
+#### 🔨 Chore
+
+- claude code execution command modified to always run in a new terminal ([8c97ed6](https://github.com/specvital/web/commit/8c97ed60ab7643c060d53f732c3f02bec8c89d09))
+- sync ai & container config from kubrickcode/ai-config-toolkit ([38bd132](https://github.com/specvital/web/commit/38bd132bc6634cabeb32be8a8f60c76796891f92))
+
 ## [1.6.1](https://github.com/specvital/web/compare/v1.6.0...v1.6.1) (2026-02-04)
 
 ### 🎯 Highlights
